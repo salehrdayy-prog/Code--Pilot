@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>انتخاب ایده | دستیار هوشمند</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="themes.css">
+
+    <style>
+        /* 🔥 ضروری */
+        .hidden {
+            display: none !important;
+        }
+
+        /* UX بهتر */
+        .sample-card.active,
+        .exercise-card.active {
+            border: 2px solid #00ffd5;
+            transform: scale(1.03);
+        }
+
+        .build-btn:disabled {
+            opacity: 0.5;
+        }
+
+        /* ===== لیست زیر کارت ===== */
+        .choice-card-wrapper {
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        .choice-card-wrapper .section {
+            margin-top: 12px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .choice-card-wrapper .section h3 {
+            margin-bottom: 12px;
+            font-size: 16px;
+            color: #c4b5fd;
+        }
+
+        .samples-grid,
+        .exercises-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 10px;
+        }
+
+        .sample-card,
+        .exercise-card {
+            background: #161b22;
+            padding: 14px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.25s;
+            border: 1px solid transparent;
+            text-align: center;
+        }
+
+        .sample-card:hover,
+        .exercise-card:hover {
+            background: #1f2937;
+            transform: translateY(-2px);
+        }
+
+        .sample-card h4,
+        .exercise-card h4 {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .sample-card p,
+        .exercise-card p {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        /* ===== برچسب سطح تمرین ===== */
+        .exercise-card .level-tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 6px;
+        }
+
+        .level-tag.beginner {
+            background: #1e3a2f;
+            color: #4ade80;
+        }
+
+        .level-tag.intermediate {
+            background: #3b2e1e;
+            color: #facc15;
+        }
+
+        .level-tag.advanced {
+            background: #3a1e1e;
+            color: #f87171;
+        }
+
+        /* ===== دکمه‌ها ===== */
+        .build-btn {
+            margin-top: 12px;
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .build-btn:hover:not(:disabled) {
+            transform: scale(0.98);
+        }
+
+        .build-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ===== حالت انتخاب شده ===== */
+        .choice-card.selected {
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.08);
+        }
+
+        .idea-choices {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .choice-card {
+            padding: 16px;
+            background: #161b22;
+            border-radius: 14px;
+            border: 1px solid #262a33;
+            cursor: pointer;
+            transition: 0.25s;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .choice-card:hover {
+            border-color: #4a5a7a;
+        }
+
+        .choice-icon {
+            font-size: 24px;
+        }
+
+        .choice-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .choice-desc {
+            font-size: 13px;
+            opacity: 0.6;
+        }
+
+        .custom-textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #262a33;
+            background: #0d1117;
+            color: #e8edf5;
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .custom-textarea:focus {
+            border-color: #8b5cf6;
+        }
+        /* ===== تور راهنما (Overlay) ===== */
+.tour-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.tour-overlay.active {
+    display: flex;
+}
+
+.tour-card {
+    max-width: 500px;
+    width: 90%;
+    background: #1a1a2e;
+    border-radius: 24px;
+    padding: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes popIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.tour-card h3 {
+    font-size: 22px;
+    color: #c4b5fd;
+    margin-bottom: 16px;
+}
+
+.tour-card p {
+    color: #a0b0d0;
+    line-height: 1.6;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+.tour-card .code-block {
+    background: #0d1117;
+    padding: 12px;
+    border-radius: 12px;
+    font-family: monospace;
+    color: #4ade80;
+    font-size: 13px;
+    margin: 10px 0;
+    direction: ltr;
+    text-align: left;
+    overflow-x: auto;
+}
+
+.tour-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.tour-actions button {
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.tour-actions .btn-primary {
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    color: #fff;
+    flex: 1;
+}
+
+.tour-actions .btn-secondary {
+    background: rgba(255, 255, 255, 0.06);
+    color: #a0b0d0;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.tour-actions .btn-primary:hover {
+    transform: scale(0.96);
+}
+    </style>
+
+</head>
+
+<body class="ideas-page">
+
+    <!-- 🔝 NAVBAR -->
+    <nav class="navbar glass">
+        <div class="nav-container">
+
+            <button class="hamburger" onclick="toggleMenu()">☰</button>
+
+            <span class="nav-title">💡 انتخاب ایده</span>
+
+            <div class="user-box">
+                <div class="user-avatar" id="header-avatar" onclick="goToProfile()">
+                    <span class="status-dot"></span>
+                </div>
+            </div>
+
+        </div>
+    </nav>
+
+
+    <!-- 📱 SIDE MENU -->
+    <div class="side-menu" id="side-menu">
+
+        <div class="menu-header">
+            <span id="menu-username">👤 کاربر</span>
+            <span class="menu-level" id="menu-level">🟢 مبتدی</span>
+        </div>
+        <a href="subscribe.html"><i class="fas fa-crown"></i> 👑اشتراک</a>
+        <a href="store.html">🛒 فروشگاه 🛒 </a>
+        <a href="dashboard.html">📁 پروژه‌های من</a>
+        <a href="ideas.html">🏠 صفحه اصلی</a>
+        <a href="practice.html">🎯 تمرین‌ها</a>
+        <a href="reviews.html">📝 نظرات</a>
+        <a href="contact.html">📞 ارتباط با ما</a>
+        <a href="help.html">❓ راهنما</a>
+        <a href="index.html" onclick="logout()">🚪 خروج</a>
+
+    </div>
+
+
+    <!-- 🔥 OVERLAY -->
+    <div id="menu-overlay" class="menu-overlay" onclick="toggleMenu()"></div>
+
+
+    <!-- 📦 MAIN -->
+    <div class="ideas-container fade-in">
+
+        <h2 class="title">💡 چی می‌خوای بسازی؟</h2>
+
+        <div class="idea-choices">
+
+            <!-- ===== نمونه‌کارها ===== -->
+            <div class="choice-card-wrapper">
+                <div class="choice-card" onclick="selectMode('samples', this)">
+                    <span class="choice-icon">📋</span>
+                    <div>
+                        <div class="choice-title">نمونه‌کارها</div>
+                        <div class="choice-desc">انتخاب از پروژه‌های آماده</div>
+                    </div>
+                </div>
+
+                <div id="samples-section" class="section hidden">
+                    <h3>🔥 پروژه‌های پیشنهادی</h3>
+                    <div class="samples-grid" id="samples-grid"></div>
+                    <button id="build-btn" class="build-btn hidden" disabled onclick="goToBuild()">
+                        🚀 شروع ساخت پروژه
+                    </button>
+                </div>
+            </div>
+
+            <!-- ===== تمرین‌ها ===== -->
+            <div class="choice-card-wrapper">
+                <div class="choice-card" onclick="selectMode('exercises', this)">
+                    <span class="choice-icon">🎯</span>
+                    <div>
+                        <div class="choice-title">تمرین‌ها</div>
+                        <div class="choice-desc">تمرین برنامه‌نویسی با هوش مصنوعی</div>
+                    </div>
+                </div>
+
+                <div id="exercises-section" class="section hidden">
+                    <h3>🎯 تمرین‌های برنامه‌نویسی</h3>
+                    <div class="exercises-grid" id="exercises-grid"></div>
+                    <button id="exercise-btn" class="build-btn hidden" disabled onclick="goToExercise()">
+                        🚀 شروع تمرین
+                    </button>
+                </div>
+            </div>
+
+            <!-- ===== ایده خودم ===== -->
+            <div class="choice-card-wrapper">
+                <div class="choice-card" onclick="selectMode('custom', this)">
+                    <span class="choice-icon">✨</span>
+                    <div>
+                        <div class="choice-title">ایده خودم</div>
+                        <div class="choice-desc">ایده شخصی خودتو بنویس</div>
+                    </div>
+                </div>
+
+                <div id="custom-idea-section" class="section hidden">
+                    <h3>🧠 ایده‌ات رو بگو</h3>
+                    <textarea id="custom-idea" class="custom-textarea" placeholder="مثلاً: یه سایت فروشگاهی ساده..."></textarea>
+                    <button class="build-btn" onclick="submitCustomIdea()">
+                        🚀 ساخت پروژه
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- 📜 SCRIPTS -->
+    <script src="ideas.js"></script>
+    <script src="storage.js"></script>
+    <script src="utils.js"></script>
+    <script src="app.js"></script>
+
+    <script>
+        (function() {
+            const headerAvatar = document.getElementById('header-avatar');
+
+            function setAvatar(imageData) {
+                if (imageData) {
+                    headerAvatar.style.backgroundImage = `url(${imageData})`;
+                    headerAvatar.style.backgroundSize = 'cover';
+                    headerAvatar.style.backgroundPosition = 'center';
+                    headerAvatar.style.backgroundColor = 'transparent';
+                } else {
+                    headerAvatar.style.backgroundImage = '';
+                    headerAvatar.style.backgroundColor = '';
+                }
+            }
+
+            const saved = localStorage.getItem('userAvatar');
+            if (saved) {
+                setAvatar(saved);
+            }
+        })();
+    </script>
+<!-- 👁️ تور راهنما برای ایده خودم -->
+<div class="tour-overlay" id="tourOverlay">
+    <div class="tour-card">
+        <h3>🧠 چطور ایده‌ت رو بنویسی؟</h3>
+        <p>برای اینکه هوش مصنوعی دقیقاً بفهمه چی می‌خوای، بهتره ایده‌ت رو به این شکل بنویسی:</p>
+        
+        <div class="code-block">
+            هدف: یک سایت فروشگاهی برای فروش محصولات دیجیتال<br>
+            امکانات: لیست محصولات، سبد خرید، پرداخت آنلاین<br>
+            مخاطب: کاربران ایرانی
+        </div>
+
+        <p><strong>💡 نکته:</strong> هرچه جزئیات بیشتر باشه، خروجی حرفه‌ای‌تر میشه!</p>
+
+        <div class="tour-actions">
+            <button class="btn-secondary" onclick="closeTour()">ببند</button>
+            <button class="btn-primary" onclick="closeTour()">متوجه شدم 🚀</button>
+        </div>
+    </div>
+</div>
+<script>
+    // ===== تور راهنما =====
+    let tourShown = false;
+
+    function showTour() {
+        if (!tourShown) {
+            document.getElementById('tourOverlay').classList.add('active');
+            tourShown = true;
+        }
+    }
+
+    function closeTour() {
+        document.getElementById('tourOverlay').classList.remove('active');
+    }
+
+    // وقتی کاربر روی کارت "ایده خودم" کلیک کرد، تور نمایش داده بشه
+    document.querySelector('.choice-card-wrapper:last-child .choice-card').addEventListener('click', function() {
+        setTimeout(showTour, 300);
+    });
+</script>
+<script>
+    // ===== نمایش دکمه ثبت تمرین (فقط در حالت تمرین) =====
+    document.addEventListener('DOMContentLoaded', function() {
+        const project = JSON.parse(localStorage.getItem('currentProject'));
+        const btn = document.getElementById('submitExerciseBtn');
+
+        if (btn && project && project.isExercise) {
+            btn.style.display = 'flex';
+        } else if (btn) {
+            btn.style.display = 'none';
+        }
+    });
+
+    // ===== تابع ثبت تمرین =====
+    function submitExercise() {
+        const project = JSON.parse(localStorage.getItem('currentProject'));
+        if (!project || !project.isExercise) {
+            showToast('⚠️ این فقط برای تمرین‌هاست!');
+            return;
+        }
+
+        const userCode = document.getElementById('codeEditor').value.trim();
+
+        if (!userCode) {
+            showToast('⚠️ لطفاً کد تمرین را بنویسید!');
+            return;
+        }
+
+        // بررسی ساده: حداقل ۱۰ کاراکتر
+        if (userCode.length < 10) {
+            showToast('⚠️ کد شما خیلی کوتاه است! لطفاً بیشتر بنویسید.');
+            return;
+        }
+
+        showToast('✅ تمرین با موفقیت ثبت شد!');
+
+        // هدایت به done.html
+        setTimeout(() => {
+            window.location.href = 'done.html';
+        }, 500);
+    }
+</script>
+</body>
+</html>

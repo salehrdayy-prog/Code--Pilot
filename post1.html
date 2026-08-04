@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<title>چطور برنامه‌نویس شویم؟</title>
+
+<style>
+body {
+    margin: 0;
+    background: #0f0f1a;
+    color: #fff;
+    font-family: sans-serif;
+}
+/* هدر */
+.hero {
+    height: 100vh;
+    background: linear-gradient(rgba(0,0,0,0.7), rgba(10,10,30,0.95)),
+    url("post1.jpg.png") center/cover no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+    <div class="scroll-down">⬇️</div>
+}
+
+.hero h1 {
+    font-size: 32px;
+    line-height: 1.6;
+    max-width: 600px;
+}
+
+
+/* کارت اصلی */
+.post-container {
+    max-width: 800px;
+    margin: -80px auto 40px;
+    padding: 30px;
+    background: #1a1a2e;
+    border-radius: 20px;
+    box-shadow: 0 0 25px rgba(124,77,255,0.3);
+    transition: 0.3s;
+}
+
+.post-container:hover {
+    box-shadow: 0 0 50px rgba(124,77,255,0.6);
+}
+
+/* انیمیشن ورود */
+.fade-in {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: 0.8s;
+}
+
+.fade-in.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* عکس */
+.post-image {
+    width: 100%;
+    border-radius: 15px;
+    margin: 20px 0;
+    transition: 0.4s;
+}
+
+.post-image:hover {
+    transform: scale(1.03);
+}
+
+/* لیست */
+ul {
+    padding-right: 20px;
+}
+
+li {
+    margin-bottom: 8px;
+}
+
+/* نکته */
+.tip {
+    background: #111;
+    padding: 15px;
+    border-radius: 12px;
+    border-right: 4px solid #7c4dff;
+    margin: 20px 0;
+}
+
+/* دکمه */
+.back {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 12px 20px;
+    background: #7c4dff;
+    color: #fff;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.back:hover {
+    transform: scale(1.05);
+    background: #5b35d6;
+}
+
+/* موبایل */
+@media(max-width:768px){
+.hero h1 {
+    font-size: 24px;
+}
+.post-container {
+    margin: -50px 15px 30px;
+}
+}
+</style>
+</head>
+
+<body>
+
+<!-- هدر -->
+<div class="hero">
+    <div>
+        <h1>🚀 چطور برنامه‌نویس شویم؟</h1>
+        <p style="text-align:center; opacity:0.8;">
+            مسیر ساده برای شروع از صفر👇👇
+        </p>
+    </div>
+
+    <div class="scroll-down">👇</div>
+</div>
+<!-- محتوا -->
+<div class="post-container fade-in">
+
+<img src="post1.jpg.png" class="post-image">
+
+<p>
+برای شروع برنامه‌نویسی نیازی به دانش قبلی نداری.
+فقط کافیه مسیر درست رو انتخاب کنی و شروع کنی.
+</p>
+
+<h3>🧠 مسیر پیشنهادی</h3>
+<ul>
+<li>HTML و CSS</li>
+<li>JavaScript</li>
+<li>ساخت پروژه واقعی</li>
+</ul>
+
+<div class="tip">
+⚠️ مهم: فقط آموزش دیدن کافی نیست، باید تمرین کنی!
+</div>
+
+<p>
+اگر روزی فقط ۱ ساعت تمرین کنی، بعد از چند ماه می‌تونی پروژه واقعی بسازی.
+</p>
+
+<a href="blog.html" class="back">⬅ بازگشت به وبلاگ</a>
+
+</div>
+
+<!-- انیمیشن اسکرول -->
+<script>
+const els = document.querySelectorAll('.fade-in');
+
+window.addEventListener('scroll', () => {
+els.forEach(el => {
+if(el.getBoundingClientRect().top < window.innerHeight - 100){
+el.classList.add('show');
+}
+});
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>فراموشی رمز</title>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+.password-rules{
+  display:none;
+  text-align:right;
+  font-size:13px;
+  margin-top:5px;
+}
+
+.password-rules div{
+  margin:3px 0;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="forgot-box">
+
+<h2>بازیابی رمز</h2>
+
+<input type="text" id="contact" placeholder="ایمیل یا شماره">
+
+<input type="password" id="newpass" placeholder="رمز جدید">
+
+<!-- 🔥 قوانین پسورد -->
+<div class="password-rules">
+  <div id="rule-length">حداقل ۸ کاراکتر</div>
+  <div id="rule-lower">حرف کوچک</div>
+  <div id="rule-upper">حرف بزرگ</div>
+  <div id="rule-number">عدد</div>
+  <div id="rule-special">کاراکتر خاص (@,#,...)</div>
+</div>
+
+<button onclick="resetPass()">تغییر رمز</button>
+
+</div>
+
+<script src="forgot.js"></script>
+
+</body>
+</html>

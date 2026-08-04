@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>راهنمای کامل | نابغه‌کد</title>
+
+    <!-- ===== Font Awesome ===== -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="themes.css">
+
+    <style>
+        /* ===== تنظیمات پایه ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background: #02030a;
+            color: #e8edf5;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ===== نوار بالا ===== */
+        .navbar {
+            background: rgba(13, 17, 23, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 14px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar .nav-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #d4dcec;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .navbar .nav-title i { color: #8b5cf6; }
+
+        .hamburger {
+            background: transparent;
+            border: none;
+            color: #8aa3c9;
+            font-size: 24px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .hamburger:hover { color: #c4b5fd; }
+
+        /* ===== منوی کناری ===== */
+        .side-menu {
+            position: fixed;
+            top: 0;
+            right: -280px;
+            width: 260px;
+            height: 100vh;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(16px);
+            padding: 24px 18px;
+            z-index: 100;
+            transition: 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+            overflow-y: auto;
+            border-left: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .side-menu.open { right: 0; }
+
+        .menu-header {
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .menu-header span {
+            display: block;
+            margin: 6px 0;
+            font-size: 16px;
+        }
+        .menu-level {
+            font-size: 14px;
+            color: #8aa3c9;
+        }
+
+        .side-menu a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            color: #a0b0d0;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            transition: 0.2s;
+            font-size: 15px;
+        }
+        .side-menu a i { width: 20px; text-align: center; color: #8aa3c9; }
+        .side-menu a:hover {
+            color: #c4b5fd;
+            padding-right: 14px;
+        }
+        .side-menu a:hover i { color: #8b5cf6; }
+
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 90;
+            display: none;
+        }
+        .menu-overlay.show { display: block; }
+
+        /* ===== کانتینر اصلی ===== */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px 16px 40px;
+            animation: fadeSlideUp 0.6s ease;
+        }
+
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #d4dcec;
+        }
+        .title i { color: #8b5cf6; }
+
+        /* ===== جستجو ===== */
+        .search-box {
+            width: 100%;
+            padding: 14px 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.04);
+            color: #e8edf5;
+            font-size: 15px;
+            outline: none;
+            transition: 0.2s;
+            margin-bottom: 30px;
+            font-family: inherit;
+        }
+        .search-box:focus {
+            border-color: rgba(139, 92, 246, 0.3);
+            background: rgba(255, 255, 255, 0.06);
+        }
+        .search-box::placeholder { color: #4a5a7a; }
+
+        /* ===== بخش‌های راهنما ===== */
+        .help-section {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 24px 20px;
+            margin-bottom: 24px;
+            transition: 0.3s;
+        }
+        .help-section:hover {
+            border-color: rgba(139, 92, 246, 0.2);
+            box-shadow: 0 8px 32px rgba(139, 92, 246, 0.05);
+        }
+
+        .help-section h3 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #c4b5fd;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .help-section h3 i { font-size: 22px; }
+
+        .help-section p {
+            color: #a0b0d0;
+            line-height: 1.6;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+        .help-section p strong { color: #c4b5fd; }
+
+        .help-section ul {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0;
+        }
+        .help-section ul li {
+            padding: 6px 0;
+            color: #a0b0d0;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .help-section ul li i { color: #4ade80; font-size: 14px; }
+
+        .help-section .quick-link {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 18px;
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 12px;
+            color: #c4b5fd;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        .help-section .quick-link:hover {
+            background: rgba(139, 92, 246, 0.25);
+            transform: scale(0.96);
+        }
+
+        /* ===== سوالات متداول (FAQ) ===== */
+        .faq-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 14px;
+            padding: 16px 18px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .faq-item:hover {
+            border-color: rgba(139, 92, 246, 0.15);
+        }
+        .faq-item .question {
+            font-weight: 600;
+            color: #e8edf5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .faq-item .question i { transition: 0.3s; color: #8aa3c9; }
+        .faq-item .answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: 0.3s;
+            color: #a0b0d0;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        .faq-item.open .answer { max-height: 200px; margin-top: 12px; }
+        .faq-item.open .question i { transform: rotate(180deg); }
+
+        /* ===== پشتیبانی ===== */
+        .support-box {
+            text-align: center;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(109, 40, 217, 0.04));
+            border: 1px solid rgba(139, 92, 246, 0.15);
+            border-radius: 20px;
+            padding: 30px 20px;
+            margin-top: 10px;
+        }
+        .support-box p {
+            font-size: 16px;
+            color: #a0b0d0;
+            margin-bottom: 12px;
+        }
+        .support-box button {
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            border: none;
+            color: #fff;
+            padding: 12px 28px;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .support-box button:hover { transform: scale(0.96); }
+
+        /* ===== واکنش‌گرا ===== */
+        @media (max-width: 480px) {
+            .container { padding: 16px 12px 30px; }
+            .title { font-size: 24px; }
+            .help-section { padding: 18px 16px; }
+            .help-section h3 { font-size: 18px; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ===== نوار بالا ===== -->
+    <nav class="navbar">
+        <button class="hamburger" onclick="toggleMenu()">
+            <i class="fas fa-bars"></i>
+        </button>
+        <span class="nav-title">
+            <i class="fas fa-question-circle"></i> راهنمای کامل
+        </span>
+        <div></div>
+    </nav>
+
+    <!-- ===== منوی کناری ===== -->
+    <div class="side-menu" id="side-menu">
+        <div class="menu-header">
+            <span>👤 <span id="menu-username">کاربر</span></span>
+            <span class="menu-level" id="menu-level">🟢 مبتدی</span>
+        </div>
+        <a href="dashboard.html"><i class="fas fa-folder-open"></i> پروژه‌های من</a>
+        <a href="ideas.html"><i class="fas fa-arrow-left"></i> صفحه اصلی</a>
+        <a href="store.html"><i class="fas fa-store"></i> فروشگاه</a>
+        <a href="subscribe.html"><i class="fas fa-crown"></i> اشتراک</a>
+        <a href="contact.html"><i class="fas fa-phone"></i> ارتباط با ما</a>
+        <a href="help.html"><i class="fas fa-question-circle"></i> راهنما</a>
+        <a href="index.html" onclick="logout()"><i class="fas fa-sign-out-alt"></i> خروج</a>
+    </div>
+
+    <!-- ===== اوورلی ===== -->
+    <div id="menu-overlay" class="menu-overlay" onclick="toggleMenu()"></div>
+
+    <!-- ===== محتوای اصلی ===== -->
+    <div class="container">
+
+        <h1 class="title"><i class="fas fa-graduation-cap"></i> راهنمای کامل استفاده</h1>
+
+        <!-- ===== جستجو ===== -->
+        <input 
+            type="text" 
+            id="help-search" 
+            class="search-box"
+            placeholder="🔍 جستجو در راهنما..."
+            oninput="searchHelp()"
+        />
+
+        <!-- ===== بخش ۱: شروع کار ===== -->
+        <div class="help-section searchable">
+            <h3><i class="fas fa-flag-checkered"></i> شروع کار</h3>
+            <p>
+                به <strong>نابغه‌کد</strong> خوش آمدید! این پلتفرم به شما کمک می‌کند تا برنامه‌نویسی را
+                یاد بگیرید، پروژه‌های واقعی بسازید و مهارت‌های خود را با تمرین و هوش مصنوعی تقویت کنید.
+            </p>
+            <p><strong>مراحل شروع:</strong></p>
+            <ul>
+                <li><i class="fas fa-check"></i> ثبت‌نام با ایمیل یا شماره موبایل</li>
+                <li><i class="fas fa-check"></i> تکمیل سنجش سطح (اختیاری اما پیشنهادی)</li>
+                <li><i class="fas fa-check"></i> انتخاب یک پروژه یا تمرین از صفحه اصلی</li>
+                <li><i class="fas fa-check"></i> شروع به کدنویسی و مشاهده نتیجه به‌صورت زنده</li>
+            </ul>
+            <a href="ideas.html" class="quick-link"><i class="fas fa-arrow-right"></i> برو به صفحه اصلی</a>
+        </div>
+
+        <!-- ===== بخش ۲: ثبت‌نام و ورود ===== -->
+        <div class="help-section searchable">
+            <h3><i class="fas fa-user-plus"></i> ثبت‌نام و ورود</h3>
+            <p><strong>ثبت‌نام:</strong></p>
+            <ul>
+                <li><i class="fas fa-check"></i> به صفحه <code>register.html</code> بروید.</li>
+                <li><i class="fas fa-check"></i> نام کاربری، شماره موبایل، ایمیل و رمز عبور خود را وارد کنید.</li>
+                <li><i class="fas fa-check"></i> رمز عبور باید حداقل ۸ کاراکتر و شامل حروف بزرگ، کوچک، عدد و کاراکتر خاص باشد.</li>
+                <li><i class="fas fa-check"></i> پس از ثبت‌نام، کد تأیید به شماره یا ایمیل شما ارسال می‌شود.</li>
+                <li><i class="fas fa-check"></i> کد را وارد کنید تا حساب شما فعال شود.</li>
+            </ul>
+            <p><strong>ورود:</strong></p>
+            <ul>
+                <li><i class="fas fa-check"></i> به صفحه <code>login.html</code> بروید.</li>
+                <li><i class="fas fa-check"></i> ایمیل یا شماره موبایل و رمز عبور خود را وارد کنید.</li>
+                <li><i class="fas fa-check"></i> در صورت فراموشی رمز، از گزینه "فراموشی رمز" استفاده کنید.</li>
+            </ul>
+            <a href="login.html" class="quick-link"><i class="fas fa-arrow-right"></i> برو به صفحه ورود</a>
+        </div>
+
+        <!-- ===== بخش ۳: سنجش سطح ===== -->
+        <div class="help-section searchable">
+            <h3><i class="fas fa-brain"></i> سنجش هوشمند سطح</h3>
+            <p>
+                پس از ثبت‌نام، به صفحه <strong>سنجش سطح</strong> هدایت می‌شوید. این آزمون شامل ۶ سوال
+                است که سطح برنامه‌نویسی شما را (مبتدی، متوسط، پیشرفته) تعیین می‌کند.
+            </p>
+            <ul>
+                <li><i class="fas fa-check"></i> سوالات بر اساس پاسخ‌های شما تنظیم می‌شوند.</li>
+                <li><i class="fas fa-check"></i> پس از پایان آزمون، زبان مورد علاقه خود را انتخاب کنید.</li>
+                <li><i class="fas fa-check"></i> نتیجه سنجش در پروفایل شما ذخیره می‌شود.</li>
+                <li><i class="fas fa-check"></i> این سنجش به انتخاب تمرین‌های مناسب به شما کمک می‌کند.</li>
+            </ul>
+            <a href="assessment.html" class="quick-link"><i class="fas fa-arrow-right"></i> برو به سنجش</a>
+        </div>
+
+        <!-- ===== بخش ۴: انتخاب ایده ===== -->
+        <div class="help-section searchable">
+            <h3><i class="fas fa-lightbulb"></i> انتخاب ایده و پروژه</h3>
+            <p>
+                در صفحه <strong>ایده‌ها</strong>، می‌توانید یکی از سه گزینه را انتخاب کنید:
+            </p>
+            <ul>
+                <li><i class="fas fa-check"></i> <strong>نمونه‌کارها:</strong> ۱۰ پروژه آماده (ماشین حساب، لیست کارها، کرنومتر و ...).</li>
+                <li><i class="fas fa-check"></i> <strong>ایده خودم:</strong> ایده خود را بنویسید و هوش مصنوعی کد اولیه را تولید می‌کند.</li>
+                <li><i class="fas fa-check"></i> <strong>تمرین‌ها:</strong> ۱۸ تمرین برنامه‌نویسی با راهنمای گام‌به‌گام.</li>
+            </ul>
+            <p>
+                تمرین‌ها بر اساس سطح شما (مبتدی، متوسط، پیشرفته) دسته‌بندی شده‌اند. برخی تمرین‌ها
+                نیاز به خرید از فروشگاه دارند.
+            </p>
+            <a href="ideas.html" class="quick-link"><i class="fas fa-arrow-right"></i> برو به صفحه ایده‌ها</a>
+        </div>
+
+        <!-- ===== بخش ۵: ویرایشگر کد ===== -->
+        <div class="help-section searchable">
+            <h3><i class="fas fa-code"></i> ویرایشگر کد</h3>
+            <p>
+                پس از انتخاب پروژه، به صفحه <strong>ویرایشگر</strong> هدایت می‌شوید.
+                اینجا می‌توانید کدهای HTML، CSS و JavaScript خود را بنویسید و نتیجه را به‌صورت زنده ببینید.
+            </p>
+            <ul>
+                <li><i class="fas fa-check"></i> سه تب <strong>HTML / CSS / JS</strong> برای نوشتن کد.</li>
+                <li><i class="fas fa-check"></i> دکمه <strong>"اجرا"</strong> برای مشاهده خروجی در پیش‌نمایش.</li>
+                <li><i class="fas fa-check"></i> دکمه <strong>"ذخیره"</strong> برای ذخیره پروژه در داشبورد.</li>
+                <li><i class="fas fa-check"></i> دکمه <strong>"زیبا‌سازی"</strong> برای مرتب کردن کد.</li>
+                <li><i class="fas fa-check"></i> دکمه <strong>"دریافت پروژه"</strong> برای دانلود پروژه به صورت ZIP.</li>
+                <li><i class="fas fa-check"></i> اگر در حال حل تمرین هستید، دکمه <strong>"ثبت تمرین"</strong> ظاهر می‌شود.</li>
+            </ul>
+            <a href="build.html" class="quick-link"><i class="fas fa-arrow-right"></i> برو به ویرایشگر</a>
+        </div>
+
+        <!-- ===== بخش ۶: تمرین‌ها ===== -->
+        <div class="help-section searchable">
+            <h3><i class="fas fa-bullseye"></i> تمرین‌های برنامه‌نویسی</h3>
+            <p>
+                در صفحه <strong>ایده‌ها</strong>، بخش تمرین‌ها شامل ۱۸ تمرین از مبتدی تا پیشرفته است.
+            </p>
+            <ul>
+                <li><i class="fas fa-check"></i> <strong>سطح مبتدی:</strong> متغیرها، توابع، شرط‌ها، حلقه‌ها و ...</li>
+                <li><i class="fas fa-check"></i> <strong>سطح متوسط:</strong> فیبوناچی، رنگ‌های RGB، لیست محصولات و ...</li>
+                <li><i class="fas fa-check"></i> <strong>سطح پیشرفته:</strong> تبریک تولد، وب‌سایت شخصی، مدیریت پارکینگ و ...</li>
+                <li><i class="fas fa-check"></i> <strong>قفل تمرین‌ها:</strong> تمرین‌های متوسط و پیشرفته نیاز به خرید از فروشگاه دارند.</li>
+            </ul>
+            <a href="ideas.html" class="quick-link"><i class="fas fa-arrow-right"></i> برو به تمرین‌ها</a>
+        </div>
+
+        <!-- ===== بخش ۷: فروشگاه و اقتصاد ===== -->
+        <div class="help-section searchable">
+            <h3><i class="fas fa-store"></i> فروشگاه و سکه</h3>
+            <p>
+                در <strong>فروشگاه</strong> می‌توانید با سکه‌هایی که از ساخت پروژه و حل تمرین‌ها به دست آورده‌اید،
+                قابلیت‌های جدیدی باز کنید.
+            </p>
+            <ul>
+                <li><i class="fas fa-check"></i> <strong>نشان‌های افتخار:</strong> برای نمایش در پروفایل.</li>
+                <li><i class="fas fa-check"></i> <strong>تقویت‌کننده‌ها:</strong> دو برابر کردن XP و سکه برای مدت محدود.</li>
+                <li><i class="fas fa-check"></i> <strong>باز کردن تمرین‌ها:</strong> دسترسی به تمرین‌های متوسط و پیشرفته.</li>
+                <li><i class="fas fa-check"></i> <strong>قابلیت‌های هوش مصنوعی:</strong> تحلیل کد، تولید کد کامل و بهینه‌سازی.</li>
+            </ul>
+            <p>
+                اگر سکه کافی ندارید، می‌توانید از صفحه <strong>"خرید سکه"</strong> سکه اضافه خریداری کنید.
+                همچنین با <strong>اشتراک ویژه</strong> به تمام قابلیت‌ها دسترسی خواهید داشت.
+            </p>
+            <a href="store.html" class="quick-link"><i class="fas fa-arrow-right"></i> برو به فروشگاه</a>
+            <a href="subscribe.html" class="quick-link"><i class="fas fa-arrow-right"></i> برو به اشتراک</a>
+        </div>
+
+        <!-- ===== بخش ۸: داشبورد کاربر ===== -->
+        <div class="help-section searchable">
+            <h3><i class="fas fa-chart-pie"></i> داشبورد کاربر</h3>
+            <p>
+                در <strong>داشبورد</strong> می‌توانید تمام اطلاعات و پروژه‌های خود را مدیریت کنید.
+            </p>
+            <ul>
+                <li><i class="fas fa-check"></i> <strong>پروفایل:</strong> نام کاربری، سطح، XP و سکه.</li>
+                <li><i class="fas fa-check"></i> <strong>آواتار:</strong> با کلیک روی آواتار، عکس خود را آپلود کنید.</li>
+                <li><i class="fas fa-check"></i> <strong>پروژه‌ها:</strong> لیست تمام پروژه‌های ذخیره شده.</li>
+                <li><i class="fas fa-check"></i> <strong>باز کردن پروژه:</strong> با کلیک روی دکمه باز، به ویرایشگر هدایت می‌شوید.</li>
+                <li><i class="fas fa-check"></i> <strong>حذف پروژه:</strong> با کلیک روی دکمه حذف، پروژه حذف می‌شود.</li>
+                <li><i class="fas fa-check"></i> <strong>نشان‌ها:</strong> نشان‌های خریداری شده از فروشگاه نمایش داده می‌شوند.</li>
+            </ul>
+            <a href="dashboard.html" class="quick-link"><i class="fas fa-arrow-right"></i> برو به داشبورد</a>
+        </div>
+
+        <!-- ===== بخش ۹: تحویل و دانلود ===== -->
+        <div class="help-section searchable">
+            <h3><i class="fas fa-file-archive"></i> تحویل و دانلود پروژه</h3>
+            <p>
+                پس از اتمام کار روی پروژه، می‌توانید آن را در صفحه <strong>پروژه آماده شد</strong>
+                به صورت ZIP دانلود کنید یا در داشبورد ذخیره کنید.
+            </p>
+            <ul>
+                <li><i class="fas fa-check"></i> <strong>دانلود ZIP:</strong> تمام فایل‌های پروژه (HTML، CSS، JS) به صورت فایل ZIP.</li>
+                <li><i class="fas fa-check"></i> <strong>ذخیره پروژه:</strong> پروژه در داشبورد ذخیره می‌شود.</li>
+                <li><i class="fas fa-check"></i> <strong>بازگشت:</strong> به صفحه ایده‌ها بازگردید.</li>
+            </ul>
+            <a href="done.html" class="quick-link"><i class="fas fa-arrow-right"></i> برو به صفحه تحویل</a>
+        </div>
+
+        <!-- ===== بخش ۱۰: سوالات متداول (FAQ) ===== -->
+        <div class="help-section">
+            <h3><i class="fas fa-question"></i> سوالات متداول</h3>
+
+            <div class="faq-item" onclick="toggleFAQ(this)">
+                <div class="question">
+                    <span>چطور می‌توانم عکس پروفایل خود را تغییر دهم؟</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="answer">
+                    در داشبورد، روی آواتار (عکس پروفایل) کلیک کنید و یک تصویر انتخاب کنید. عکس به‌صورت خودکار ذخیره می‌شود.
+                </div>
+            </div>
+
+            <div class="faq-item" onclick="toggleFAQ(this)">
+                <div class="question">
+                    <span>چطور می‌توانم سکه دریافت کنم؟</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="answer">
+                    با ساخت پروژه (+۱۰ XP و +۵ سکه)، حل تمرین (+۱۵ XP و +۱۰ سکه) و یا خرید از صفحه "خرید سکه" می‌توانید سکه دریافت کنید.
+                </div>
+            </div>
+
+            <div class="faq-item" onclick="toggleFAQ(this)">
+                <div class="question">
+                    <span>چطور می‌توانم تمرین‌های پیشرفته را باز کنم؟</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="answer">
+                    تمرین‌های متوسط و پیشرفته قفل هستند. برای باز کردن آنها، باید از فروشگاه (بخش تمرین‌ها) با سکه خرید کنید.
+                </div>
+            </div>
+
+            <div class="faq-item" onclick="toggleFAQ(this)">
+                <div class="question">
+                    <span>پروژه‌های ذخیره شده من کجا هستند؟</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="answer">
+                    پروژه‌های ذخیره شده در داشبورد شما (بخش پروژه‌های من) قرار دارند. می‌توانید آنها را باز کنید یا حذف کنید.
+                </div>
+            </div>
+
+            <div class="faq-item" onclick="toggleFAQ(this)">
+                <div class="question">
+                    <span>چطور می‌توانم با پشتیبانی تماس بگیرم؟</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="answer">
+                    از طریق صفحه "ارتباط با ما" می‌توانید با پشتیبانی تماس بگیرید. آدرس ایمیل و شماره تماس در آن صفحه موجود است.
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== پشتیبانی ===== -->
+        <div class="support-box">
+            <p><i class="fas fa-headset"></i> سوالی دارید که در راهنما پیدا نکردید؟</p>
+            <button onclick="goToContact()">
+                <i class="fas fa-phone"></i> تماس با پشتیبانی
+            </button>
+        </div>
+
+    </div>
+
+    <!-- ===== اسکریپت‌ها ===== -->
+    <script src="help.js"></script>
+    <script src="app.js"></script>
+
+    <script>
+        // ===== منوی کناری =====
+        function toggleMenu() {
+            const menu = document.getElementById('side-menu');
+            const overlay = document.getElementById('menu-overlay');
+            menu.classList.toggle('open');
+            overlay.classList.toggle('show');
+        }
+
+        // ===== جستجو =====
+        function searchHelp() {
+            const query = document.getElementById('help-search').value.toLowerCase();
+            const sections = document.querySelectorAll('.searchable');
+
+            sections.forEach(section => {
+                const text = section.innerText.toLowerCase();
+                section.style.display = text.includes(query) ? 'block' : 'none';
+            });
+        }
+
+        // ===== FAQ =====
+        function toggleFAQ(el) {
+            el.classList.toggle('open');
+        }
+
+        // ===== رفتن به تماس =====
+        function goToContact() {
+            window.location.href = 'contact.html';
+        }
+
+        // ===== خروج =====
+        function logout() {
+            localStorage.removeItem('username');
+            localStorage.removeItem('userAvatar');
+            localStorage.removeItem('userLevel');
+            localStorage.removeItem('projects');
+            window.location.href = 'index.html';
+        }
+    </script>
+
+</body>
+</html>

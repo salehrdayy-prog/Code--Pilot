@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>داشبورد | نابغه‌کد</title>
+
+    <!-- ===== Font Awesome ===== -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <link rel="stylesheet" href="themes.css">
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* ===== RESET & BASE ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background: #02030a;
+            color: #e8edf5;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ===== NAVBAR ===== */
+        .navbar {
+            background: rgba(13, 17, 23, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 14px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar .nav-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #d4dcec;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .navbar .nav-title i { color: #8b5cf6; }
+
+        .hamburger {
+            background: transparent;
+            border: none;
+            color: #8aa3c9;
+            font-size: 24px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .hamburger:hover { color: #c4b5fd; }
+
+        /* ===== SIDE MENU ===== */
+        .side-menu {
+            position: fixed;
+            top: 0;
+            right: -280px;
+            width: 260px;
+            height: 100vh;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(16px);
+            padding: 24px 18px;
+            z-index: 100;
+            transition: 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+            overflow-y: auto;
+            border-left: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .side-menu.open { right: 0; }
+
+        .menu-header {
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .menu-header span {
+            display: block;
+            margin: 6px 0;
+            font-size: 16px;
+        }
+        .menu-level {
+            font-size: 14px;
+            color: #8aa3c9;
+        }
+
+        .side-menu a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            color: #a0b0d0;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            transition: 0.2s;
+            font-size: 15px;
+        }
+        .side-menu a i { width: 20px; text-align: center; color: #8aa3c9; }
+        .side-menu a:hover {
+            color: #c4b5fd;
+            padding-right: 14px;
+        }
+        .side-menu a:hover i { color: #8b5cf6; }
+
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 90;
+            display: none;
+        }
+        .menu-overlay.show { display: block; }
+
+        /* ===== DASHBOARD CONTAINER ===== */
+        .dashboard-container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 20px 16px 40px;
+            animation: fadeSlideUp 0.6s ease;
+        }
+
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== PROFILE CARD ===== */
+        .profile-card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 24px;
+            padding: 30px 20px 24px;
+            text-align: center;
+            margin-bottom: 28px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            transition: 0.3s;
+        }
+        .profile-card:hover {
+            border-color: rgba(139, 92, 246, 0.2);
+            box-shadow: 0 12px 40px rgba(139, 92, 246, 0.08);
+        }
+
+        .user-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: #1a1a2e;
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: #8aa3c9;
+            border: 3px solid rgba(139, 92, 246, 0.3);
+            transition: 0.3s;
+            background-size: cover;
+            background-position: center;
+            cursor: pointer;
+        }
+        .user-avatar:hover {
+            border-color: #8b5cf6;
+            transform: scale(1.02);
+        }
+
+        .avatar-upload-btn {
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            color: #c4b5fd;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .avatar-upload-btn:hover {
+            background: rgba(139, 92, 246, 0.25);
+            transform: scale(0.96);
+        }
+
+        .profile-info {
+            margin: 16px 0 12px;
+        }
+        .profile-info h3 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #e8edf5;
+        }
+        .profile-level {
+            font-size: 14px;
+            color: #8aa3c9;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 4px 14px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+
+        .profile-stats {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        .stat {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #c4b5fd;
+            display: block;
+        }
+        .stat-label {
+            font-size: 13px;
+            color: #8aa3c9;
+        }
+
+        /* ===== PROJECTS SECTION ===== */
+        .projects-section h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #d4dcec;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .projects-section h3 i { color: #8b5cf6; }
+
+        #projects-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .empty-state {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 40px 20px;
+            text-align: center;
+            color: #8aa3c9;
+        }
+        .empty-state span { font-size: 48px; display: block; margin-bottom: 10px; }
+        .empty-state p { margin-bottom: 16px; font-size: 15px; }
+
+        /* ===== PROJECT CARD ===== */
+        .project-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 16px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+        .project-card:hover {
+            background: rgba(139, 92, 246, 0.06);
+            border-color: rgba(139, 92, 246, 0.2);
+            transform: translateX(-4px);
+        }
+
+        .project-info h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #e8edf5;
+            margin-bottom: 4px;
+        }
+        .project-info p {
+            font-size: 13px;
+            color: #8aa3c9;
+        }
+
+        .project-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .project-actions button {
+            background: rgba(255, 255, 255, 0.06);
+            border: none;
+            color: #8aa3c9;
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .project-actions .open-btn:hover {
+            background: rgba(139, 92, 246, 0.2);
+            color: #c4b5fd;
+        }
+        .project-actions .delete-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 480px) {
+            .dashboard-container { padding: 16px 12px 30px; }
+            .profile-card { padding: 24px 16px 20px; }
+            .user-avatar { width: 80px; height: 80px; font-size: 32px; }
+            .stat-value { font-size: 18px; }
+            .project-card { flex-direction: column; align-items: flex-start; gap: 12px; }
+            .project-actions { align-self: flex-end; }
+            .profile-stats { gap: 16px; }
+        }
+        /* ===== استایل دکمه‌های پروژه ===== */
+.project-actions .open-btn {
+    background: rgba(139, 92, 246, 0.15);
+    color: #B157FD;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    transition: 0.2s;
+}
+
+.project-actions .open-btn:hover {
+    background: rgba(139, 92, 246, 0.3);
+    color: #fff;
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+}
+
+.project-actions .delete-btn {
+    background: rgba(239, 68, 68, 0.1);
+    color: #C80021;
+    border: 1px solid rgba(239, 68, 68, 0.15);
+    transition: 0.2s;
+}
+
+.project-actions .delete-btn:hover {
+    background: rgba(239, 68, 68, 0.25);
+    color: #fff;
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+}
+    </style>
+</head>
+
+<body class="dashboard-page">
+
+    <!-- ===== نوار بالا ===== -->
+    <nav class="navbar">
+        <button class="hamburger" onclick="toggleMenu()">
+            <i class="fas fa-bars"></i>
+        </button>
+        <span class="nav-title">
+            <i class="fas fa-chart-pie"></i> داشبورد
+        </span>
+        <div></div> <!-- برای متعادل کردن فضای نوار -->
+    </nav>
+
+    <!-- ===== اوورلی ===== -->
+    <div class="menu-overlay" id="menu-overlay" onclick="toggleMenu()"></div>
+
+    <!-- ===== منوی کناری ===== -->
+    <div class="side-menu" id="side-menu">
+        <div class="menu-header">
+            <span>👤 <span id="menu-username">کاربر</span></span>
+            <span class="menu-level" id="menu-level">🟢 مبتدی</span>
+        </div>
+        <a href="subscribe.html"><i class="fas fa-crown"></i> اشتراک</a>
+        <a href="store.html"><i class="fas fa-store"></i> فروشگاه</a>
+        <a href="dashboard.html"><i class="fas fa-folder-open"></i> پروژه‌های من</a>
+        <a href="ideas.html"><i class="fas fa-arrow-left"></i> بازگشت به اول</a>
+        <a href="reviews.html"><i class="fas fa-star"></i> نظرات و امتیاز</a>
+        <a href="contact.html"><i class="fas fa-phone"></i> ارتباط با ما</a>
+        <a href="help.html"><i class="fas fa-question-circle"></i> راهنما</a>
+        <a href="index.html" onclick="logout()"><i class="fas fa-sign-out-alt"></i> خروج</a>
+    </div>
+
+    <!-- ===== محتوا ===== -->
+    <div class="dashboard-container">
+
+        <!-- ===== پروفایل ===== -->
+        <div class="profile-card">
+            <div class="user-avatar" id="dashboard-avatar" onclick="document.getElementById('avatar-input').click()">
+                👤
+            </div>
+
+            <input type="file" id="avatar-input" accept="image/*" style="display:none;">
+
+            <button class="avatar-upload-btn" onclick="document.getElementById('avatar-input').click()">
+                <i class="fas fa-camera"></i> انتخاب عکس
+            </button>
+
+            <div class="profile-info">
+                <h3 id="profile-name">کاربر</h3>
+                <span class="profile-level" id="profile-level">🟢 مبتدی</span>
+            </div>
+
+            <div class="profile-stats">
+                <div class="stat">
+                    <span class="stat-value" id="profile-xp">۰</span>
+                    <span class="stat-label">XP</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value" id="profile-coins">۰</span>
+                    <span class="stat-label">سکه</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value" id="profile-projects">۰</span>
+                    <span class="stat-label">پروژه</span>
+                </div>
+            </div>
+        </div>
+<!-- ===== نشان‌های افتخار ===== -->
+<div class="badges-section">
+    <h3><i class="fas fa-medal"></i> نشان‌های من</h3>
+    <div id="badgesDisplay" class="badges-grid"></div>
+</div>
+        <!-- ===== پروژه‌ها ===== -->
+        <div class="projects-section">
+            <h3><i class="fas fa-folder-open"></i> پروژه‌های من</h3>
+
+            <div id="projects-list">
+                <!-- پروژه‌ها توسط جاوااسکریپت در اینجا قرار می‌گیرند -->
+                <div class="empty-state">
+                    <span>📭</span>
+                    <p>هنوز پروژه‌ای نساختی!</p>
+                    <a href="ideas.html" class="btn btn-primary" style="display:inline-block; padding: 10px 24px; border-radius: 12px; text-decoration:none;">
+                        <i class="fas fa-plus"></i> ساخت اولین پروژه
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ===== اسکریپت‌ها ===== -->
+    <script src="storage.js"></script>
+    <script src="utils.js"></script>
+    <script src="app.js"></script>
+    <script src="dashboard.js"></script>
+
+    <script>
+        // ======================== منو ========================
+        function toggleMenu() {
+            const menu = document.getElementById('side-menu');
+            const overlay = document.getElementById('menu-overlay');
+            menu.classList.toggle('open');
+            overlay.classList.toggle('show');
+        }
+
+        // ======================== اطلاعات کاربر ========================
+        function loadUserInfo() {
+            const username = localStorage.getItem('username') || 'کاربر';
+            const level = localStorage.getItem('userLevel') || '🟢 مبتدی';
+
+            document.getElementById('menu-username').textContent = username;
+            document.getElementById('menu-level').textContent = level;
+            document.getElementById('profile-name').textContent = username;
+            document.getElementById('profile-level').textContent = level;
+        }
+        loadUserInfo();
+
+        // ======================== آمار ========================
+        // ======================== آمار ========================
+function loadStats() {
+    const projects = JSON.parse(localStorage.getItem('projects') || '[]');
+    
+    // اگر مقدار XP وجود نداشت یا خالی بود، ۰ رو نشون بده
+    let xp = localStorage.getItem('userXP');
+    if (xp === null || xp === undefined || xp === '') xp = '۰';
+    
+    // اگر مقدار سکه وجود نداشت یا خالی بود، ۰ رو نشون بده
+    let coins = localStorage.getItem('userCoins');
+    if (coins === null || coins === undefined || coins === '') coins = '۰';
+
+    document.getElementById('profile-projects').textContent = projects.length;
+    document.getElementById('profile-xp').textContent = xp;
+    document.getElementById('profile-coins').textContent = coins;
+}
+        // ======================== خروج ========================
+        function logout() {
+            localStorage.removeItem('username');
+            localStorage.removeItem('userAvatar');
+            localStorage.removeItem('userLevel');
+            localStorage.removeItem('projects');
+            window.location.href = 'index.html';
+        }
+
+        // ======================== آواتار ========================
+        (function() {
+            const avatarInput = document.getElementById('avatar-input');
+            const dashboardAvatar = document.getElementById('dashboard-avatar');
+
+            function setAvatarImage(imageData) {
+                if (imageData) {
+                    dashboardAvatar.style.backgroundImage = `url(${imageData})`;
+                    dashboardAvatar.style.backgroundSize = 'cover';
+                    dashboardAvatar.style.backgroundPosition = 'center';
+                    dashboardAvatar.style.backgroundColor = 'transparent';
+                    dashboardAvatar.innerText = '';
+                } else {
+                    dashboardAvatar.style.backgroundImage = '';
+                    dashboardAvatar.style.backgroundColor = '#1a1a2e';
+                    dashboardAvatar.innerText = '👤';
+                }
+            }
+
+            const savedAvatar = localStorage.getItem('userAvatar');
+            if (savedAvatar) {
+                setAvatarImage(savedAvatar);
+            } else {
+                setAvatarImage(null);
+            }
+
+            avatarInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                if (!file.type.startsWith('image/')) {
+                    alert('لطفاً یک فایل تصویری انتخاب کنید.');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const imageData = event.target.result;
+                    localStorage.setItem('userAvatar', imageData);
+                    setAvatarImage(imageData);
+                };
+                reader.onerror = function() {
+                    alert('خطا در خواندن فایل. دوباره تلاش کنید.');
+                };
+                reader.readAsDataURL(file);
+            });
+
+            dashboardAvatar.addEventListener('click', function() {
+                avatarInput.click();
+            });
+        })();
+    </script>
+<script>// ===== نمایش نشان‌های خریداری شده =====
+function renderBadges() {
+    const owned = JSON.parse(localStorage.getItem('owned_items')) || [];
+    const container = document.getElementById('badgesDisplay');
+    if (!container) return;
+
+    const badges = [
+        { id: "badge-novice", icon: "🌱", name: "تازه‌کار" },
+        { id: "badge-pro", icon: "🔥", name: "سازنده حرفه‌ای" },
+        { id: "badge-genius", icon: "🧠", name: "نابغه کد" }
+    ];
+
+    const ownedBadges = badges.filter(b => owned.includes(b.id));
+    
+    if (ownedBadges.length === 0) {
+        container.innerHTML = `<p style="color:#8aa3c9; font-size:14px;">هنوز نشانی ندارید 🏅</p>`;
+        return;
+    }
+
+    container.innerHTML = ownedBadges.map(b => `
+        <div class="badge-item">
+            <span class="icon">${b.icon}</span>
+            <span>${b.name}</span>
+        </div>
+    `).join('');
+}
+
+// صدا زدن در زمان لود
+document.addEventListener('DOMContentLoaded', renderBadges);
+</script> 
+</body>
+</html>

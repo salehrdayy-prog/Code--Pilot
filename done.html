@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>پروژه آماده شد</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="themes.css">
+
+<style>
+/* ===== تمام استایل‌های قبلی ===== */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Vazirmatn',sans-serif;
+}
+
+body{
+  background: radial-gradient(circle at top,#0a0a0a,#000);
+  color:white;
+  overflow-x:hidden;
+}
+
+canvas{
+  position:fixed;
+  top:0;
+  left:0;
+  z-index:0;
+}
+
+/* آواتار */
+.avatar{
+  position:fixed;
+  top:15px;
+  left:15px;
+  width:45px;
+  height:45px;
+  border-radius:50%;
+  background:#222;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  font-size: 24px;
+  color: #fff;
+  z-index: 10;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+/* دکمه همبرگر */
+.menu-btn{
+  position:fixed;
+  top:15px;
+  right:15px;
+  width:45px;
+  height:45px;
+  border-radius:12px;
+  background:#111;
+  border:none;
+  color:white;
+  font-size:24px;
+  z-index:10;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:0.2s;
+}
+.menu-btn:hover{
+  background:#222;
+}
+
+/* منوی کناری */
+.side-menu{
+  position:fixed;
+  top:0;
+  right:-280px;
+  width:260px;
+  height:100%;
+  background:#0a0a0a;
+  padding:20px 15px;
+  z-index:20;
+  transition:0.3s ease;
+  overflow-y:auto;
+  border-left:1px solid #333;
+}
+.side-menu.open{
+  right:0;
+}
+
+.menu-header{
+  margin-bottom:20px;
+  padding-bottom:15px;
+  border-bottom:1px solid #333;
+}
+.menu-header span{
+  display:block;
+  margin:5px 0;
+}
+.menu-level{
+  font-size:14px;
+  color:#aaa;
+}
+
+.side-menu a{
+  display:block;
+  padding:12px 0;
+  color:#ddd;
+  text-decoration:none;
+  border-bottom:1px solid #222;
+  transition:0.2s;
+}
+.side-menu a:hover{
+  color:#a855f7;
+  padding-right:10px;
+}
+
+/* اوورلی */
+.menu-overlay{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.6);
+  z-index:15;
+  display:none;
+}
+.menu-overlay.show{
+  display:block;
+}
+
+/* ===== بقیه استایل‌های صفحه ===== */
+.container{
+  position:relative;
+  z-index:2;
+  text-align:center;
+  padding:80px 15px 30px;
+}
+.emoji{ font-size:60px; margin-bottom:10px; }
+h1{ font-size:32px; }
+.subtitle{ margin-top:10px; color:#ccc; }
+
+.project{
+  margin:25px auto;
+  padding:18px;
+  width:90%;
+  border-radius:20px;
+  background:rgba(128,0,255,0.15);
+  border:1px solid rgba(180,100,255,0.4);
+  backdrop-filter: blur(10px);
+  box-shadow:0 0 20px rgba(140,0,255,0.4);
+}
+
+.section-title{ margin-top:20px; }
+
+.scores{
+  display:flex;
+  gap:10px;
+  margin-top:15px;
+  overflow-x:auto;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+.score{
+  min-width:110px;
+  background:#111;
+  border-radius:15px;
+  padding:15px;
+  flex:1;
+}
+.bar{
+  height:6px;
+  margin-top:10px;
+  border-radius:10px;
+  background:#333;
+}
+.fill{
+  height:100%;
+  border-radius:10px;
+}
+
+.files{
+  margin-top:20px;
+  background:#111;
+  border-radius:15px;
+  padding:10px;
+}
+.file{
+  display:flex;
+  justify-content:space-between;
+  padding:12px;
+  border-bottom:1px solid #222;
+}
+
+.btn{
+  width:95%;
+  padding:15px;
+  margin-top:15px;
+  border-radius:14px;
+  border:none;
+  font-size:16px;
+  cursor:pointer;
+}
+.primary{
+  background:linear-gradient(45deg,#6a00ff,#b100ff);
+  color:white;
+}
+.outline{
+  background:#111;
+  border:1px solid #333;
+  color:white;
+}
+
+#soundBtn{
+  position:fixed;
+  bottom:20px;
+  left:20px;
+  z-index:5;
+  background:#111;
+  color:white;
+  border:none;
+  padding:10px;
+  border-radius:10px;
+  cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<canvas id="confetti"></canvas>
+
+<!-- ===== آواتار ===== -->
+<div class="avatar" id="page-avatar" onclick="goToProfile()">👤</div>
+
+<!-- ===== دکمه منو ===== -->
+<button class="menu-btn" onclick="toggleMenu()">☰</button>
+
+<!-- ===== منوی کناری ===== -->
+<div class="side-menu" id="side-menu">
+  <div class="menu-header">
+    <span id="menu-username">👤 کاربر</span>
+    <span class="menu-level" id="menu-level">🟢 مبتدی</span>
+  </div>
+  <a href="store.html">فروشگاه </a>
+  <a href="dashboard.html">📁 پروژه‌های من</a>
+  <a href="ideas.html">🏠 صفحه اصلی</a>
+  <a href="practice.html">🎯 تمرین‌ها</a>
+  <a href="reviews.html">📝 نظرات</a>
+  <a href="contact.html">📞 ارتباط با ما</a>
+  <a href="help.html">❓ راهنما</a>
+  <a href="index.html" onclick="logout()">🚪 خروج</a>
+</div>
+
+<!-- ===== اوورلی ===== -->
+<div class="menu-overlay" id="menu-overlay" onclick="toggleMenu()"></div>
+
+<!-- ===== دکمه صدا ===== -->
+<button id="soundBtn" onclick="toggleSound()">🔊</button>
+
+<!-- ===== محتوا ===== -->
+<div class="container">
+  <div class="emoji">🎉</div>
+  <h1>تبریک!</h1>
+  <p class="subtitle">پروژه شما با موفقیت ساخته شد 🚀</p>
+
+  <div class="project" id="projectName">سایت فروشگاهی</div>
+
+  <h3 class="section-title">⭐ امتیازها</h3>
+  <div class="scores">
+    <div class="score">🎨<br>92%<div class="bar"><div class="fill" style="width:92%;background:#a855f7"></div></div></div>
+    <div class="score">⚡<br>89%<div class="bar"><div class="fill" style="width:89%;background:#3b82f6"></div></div></div>
+    <div class="score">🎯<br>95%<div class="bar"><div class="fill" style="width:95%;background:#22c55e"></div></div></div>
+    <div class="score">⭐<br>90%<div class="bar"><div class="fill" style="width:90%;background:#f97316"></div></div></div>
+  </div>
+
+  <h3 class="section-title">📁 فایل‌ها</h3>
+  <div class="files">
+    <div class="file">index.html <span>2.4KB</span></div>
+    <div class="file">style.css <span>1.7KB</span></div>
+    <div class="file">script.js <span>3.1KB</span></div>
+  </div>
+
+  <button class="btn primary" onclick="downloadZip()">📥 دانلود ZIP</button>
+  <button class="btn outline" onclick="saveProject()">💾 ذخیره پروژه</button>
+  <button class="btn outline" onclick="goHome()">🏠 بازگشت</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<script>
+// ================= 🎊 CONFETTI =================
+const canvas = document.getElementById("confetti");
+const ctx = canvas.getContext("2d");
+canvas.width = innerWidth;
+canvas.height = innerHeight;
+let p = [];
+for(let i=0;i<120;i++){
+  p.push({
+    x:Math.random()*innerWidth,
+    y:Math.random()*innerHeight,
+    s:Math.random()*6,
+    c:`hsl(${Math.random()*360},100%,50%)`,
+    v:Math.random()*3+1
+  });
+}
+function loop(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  p.forEach(i=>{
+    i.y+=i.v;
+    if(i.y>canvas.height){ i.y=0; i.x=Math.random()*canvas.width; }
+    ctx.fillStyle=i.c;
+    ctx.fillRect(i.x,i.y,i.s,i.s);
+  });
+  requestAnimationFrame(loop);
+}
+loop();
+
+// ================= صدا و لرزش =================
+let isMuted=false;
+const sound = new Audio("https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg");
+function playSound(){
+  if(isMuted) return;
+  sound.currentTime=0;
+  sound.play().catch(()=>{});
+}
+function toggleSound(){
+  isMuted=!isMuted;
+  document.getElementById("soundBtn").innerText = isMuted ? "🔇":"🔊";
+}
+function vibrate(){
+  if(navigator.vibrate) navigator.vibrate([200,100,200]);
+}
+function burst(){
+  for(let i=0;i<40;i++){
+    p.push({
+      x:innerWidth/2,
+      y:innerHeight/3,
+      s:Math.random()*8,
+      c:`hsl(${Math.random()*360},100%,50%)`,
+      v:Math.random()*6+2
+    });
+  }
+}
+let bg = new Audio("https://actions.google.com/sounds/v1/ambiences/barnyard.ogg");
+function startMusic(){
+  if(isMuted) return;
+  bg.loop=true;
+  bg.volume=0.2;
+  bg.play().catch(()=>{});
+}
+// اجرا در اولین کلیک
+document.addEventListener("click", ()=>{
+  playSound();
+  vibrate();
+  burst();
+  startMusic();
+}, {once:true});
+
+// ================= منو =================
+function toggleMenu(){
+  const menu = document.getElementById("side-menu");
+  const overlay = document.getElementById("menu-overlay");
+  menu.classList.toggle("open");
+  overlay.classList.toggle("show");
+}
+
+// ================= خروج =================
+function logout(){
+  localStorage.removeItem("username");
+  localStorage.removeItem("userAvatar");
+  localStorage.removeItem("userLevel");
+  window.location.href = "index.html";
+}
+
+// ================= اطلاعات کاربر =================
+function loadUserInfo(){
+  const username = localStorage.getItem("username") || "کاربر";
+  document.getElementById("menu-username").innerHTML = `👤 ${username}`;
+  const level = localStorage.getItem("userLevel") || "🟢 مبتدی";
+  document.getElementById("menu-level").innerText = level;
+}
+loadUserInfo();
+
+// ================= آواتار =================
+(function(){
+  const avatarEl = document.getElementById('page-avatar');
+  const saved = localStorage.getItem('userAvatar');
+  if(saved){
+    avatarEl.style.backgroundImage = `url(${saved})`;
+    avatarEl.style.backgroundSize = 'cover';
+    avatarEl.style.backgroundPosition = 'center';
+    avatarEl.style.backgroundColor = 'transparent';
+    avatarEl.innerText = '';
+  } else {
+    avatarEl.style.backgroundImage = 'none';
+    avatarEl.style.backgroundColor = '#222';
+    avatarEl.innerText = '👤';
+  }
+})();
+
+function goToProfile(){
+  window.location.href = "dashboard.html";
+}
+
+// ================= نام پروژه =================
+const name = localStorage.getItem("selectedIdea");
+if(name) document.getElementById("projectName").innerText = name;
+
+// ================= دانلود ZIP (نسخه تضمینی و بدون باگ) =================
+function downloadZip(){
+  // دریافت کدها از localStorage
+  const html = localStorage.getItem("html") || "";
+  const css = localStorage.getItem("css") || "";
+  const js = localStorage.getItem("js") || "";
+  const projectName = localStorage.getItem("selectedIdea") || "project";
+
+  // چک کردن اینکه آیا محتوایی وجود دارد یا نه
+  if(!html && !css && !js){
+    alert("⚠️ هیچ فایلی برای دانلود وجود ندارد!");
+    return;
+  }
+
+  try {
+    // ساخت فایل ZIP
+    const zip = new JSZip();
+    zip.file("index.html", html);
+    zip.file("style.css", css);
+    zip.file("script.js", js);
+
+    // تولید فایل ZIP و دانلود مستقیم
+    zip.generateAsync({type:"blob"}).then(function(content){
+      // استفاده از FileSaver یا روش جایگزین
+      const url = window.URL.createObjectURL(content);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = projectName + ".zip";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }).catch(function(err){
+      console.error("خطا در دانلود ZIP:", err);
+      alert("❌ خطا در دانلود فایل!");
+    });
+  } catch (e) {
+    console.error("خطا در ایجاد ZIP:", e);
+    alert("❌ خطا در ایجاد فایل ZIP!");
+  }
+}
+
+// ================= ذخیره پروژه و رفتن به داشبورد =================
+function saveProject(){
+  // ابتدا پروژه را ذخیره کن
+  let projects = JSON.parse(localStorage.getItem("projects") || "[]");
+  projects.push({
+    name: localStorage.getItem("selectedIdea") || "پروژه جدید",
+    html: localStorage.getItem("html") || "",
+    css: localStorage.getItem("css") || "",
+    js: localStorage.getItem("js") || "",
+    date: new Date().toLocaleDateString("fa-IR")
+  });
+  localStorage.setItem("projects", JSON.stringify(projects));
+  
+  // پیام تایید
+  alert("پروژه ذخیره شد 😎🔥");
+  
+  // هدایت به داشبورد
+  window.location.href = "dashboard.html";
+}
+
+// ================= بازگشت =================
+function goHome(){
+  window.location.href = "ideas.html";
+}
+
+// ================= تنظیم اندازه کانوس هنگام تغییر سایز =================
+window.addEventListener("resize", ()=>{
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
+});
+</script>
+</body>
+</html>

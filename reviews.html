@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نظرات کاربران</title>
+
+<!-- 🔥 اتصال CSS -->
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body class="dark">
+
+<h2 class="title">💬 نظرات کاربران</h2>
+
+<div class="review-box">
+
+<input id="review-name" placeholder="نام (اختیاری)">
+
+<textarea id="review-input" placeholder="نظرتو بنویس..."></textarea>
+
+<div class="stars">
+  <span onclick="setRating(1)">⭐</span>
+  <span onclick="setRating(2)">⭐</span>
+  <span onclick="setRating(3)">⭐</span>
+  <span onclick="setRating(4)">⭐</span>
+  <span onclick="setRating(5)">⭐</span>
+</div>
+
+<button onclick="addReview()">ارسال نظر 🚀</button>
+
+</div>
+
+<div id="reviews-list"></div>
+
+<!-- 🔥 اتصال JS (خیلی مهم: آخر body) -->
+<script src="reviews.js"></script>
+<script src="tour.js"></script>
+</body>
+</html>

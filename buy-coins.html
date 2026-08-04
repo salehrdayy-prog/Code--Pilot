@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>خرید سکه | نابغه‌کد</title>
+    <link rel="stylesheet" href="themes.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: #02030a; color: #e8edf5; min-height: 100vh; }
+
+        .navbar {
+            background: rgba(13, 17, 23, 0.8);
+            backdrop-filter: blur(12px);
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .navbar .title { font-size: 20px; font-weight: 700; color: #d4dcec; display: flex; align-items: center; gap: 10px; }
+        .navbar .title i { color: #8b5cf6; }
+        .navbar .coins { background: rgba(139, 92, 246, 0.15); padding: 6px 14px; border-radius: 20px; color: #c4b5fd; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+
+        .buy-container {
+            max-width: 600px;
+            margin: 30px auto;
+            padding: 0 16px;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #d4dcec;
+        }
+
+        .coins-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+        }
+
+        .coin-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 24px 16px;
+            text-align: center;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+        .coin-card:hover {
+            background: rgba(139, 92, 246, 0.06);
+            border-color: rgba(139, 92, 246, 0.2);
+            transform: translateY(-4px);
+        }
+        .coin-card .coin-icon { font-size: 40px; display: block; margin-bottom: 8px; }
+        .coin-card .amount { font-size: 28px; font-weight: 700; color: #facc15; }
+        .coin-card .price { font-size: 16px; color: #8aa3c9; margin-top: 4px; }
+        .coin-card .btn-buy {
+            margin-top: 12px;
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            color: #fff;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 100%;
+        }
+        .coin-card .btn-buy:hover { transform: scale(0.96); }
+        .coin-card .btn-buy:disabled { background: rgba(255,255,255,0.06); color: #6a7a9a; cursor: not-allowed; }
+        .coin-card .btn-buy.pending { background: rgba(250, 204, 21, 0.2); color: #facc15; cursor: wait; }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 30px;
+            color: #8aa3c9;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .back-link:hover { color: #c4b5fd; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <span class="title"><i class="fas fa-coins"></i> خرید سکه</span>
+        <span class="coins" id="headerCoins"><i class="fas fa-coins"></i> ۰</span>
+    </nav>
+
+    <div class="buy-container">
+        <h2 class="section-title">💰 با سکه، قابلیت‌های بیشتری باز کن!</h2>
+
+        <div class="coins-grid">
+            <!-- ===== هدیه رایگان ===== -->
+            <div class="coin-card">
+                <span class="coin-icon">🎁</span>
+                <div class="amount">۵۰</div>
+                <div class="price">رایگان! (یک بار)</div>
+                <button class="btn-buy" id="freeCoinsBtn" onclick="claimFreeGift()">دریافت</button>
+            </div>
+
+            <!-- ===== پک‌های خریدنی (فقط سفارش) ===== -->
+            <div class="coin-card">
+                <span class="coin-icon">🪙</span>
+                <div class="amount">۱۰۰</div>
+                <div class="price">۱۰,۰۰۰ تومان</div>
+                <button class="btn-buy" onclick="orderCoins(100, '۱۰۰ سکه')">سفارش</button>
+            </div>
+
+            <div class="coin-card">
+                <span class="coin-icon">🪙</span>
+                <div class="amount">۳۰۰</div>
+                <div class="price">۲۵,۰۰۰ تومان</div>
+                <button class="btn-buy" onclick="orderCoins(300, '۳۰۰ سکه')">سفارش</button>
+            </div>
+
+            <div class="coin-card">
+                <span class="coin-icon">🪙</span>
+                <div class="amount">۵۰۰</div>
+                <div class="price">۴۰,۰۰۰ تومان</div>
+                <button class="btn-buy" onclick="orderCoins(500, '۵۰۰ سکه')">سفارش</button>
+            </div>
+
+            <div class="coin-card">
+                <span class="coin-icon">🪙</span>
+                <div class="amount">۱۰۰۰</div>
+                <div class="price">۷۰,۰۰۰ تومان</div>
+                <button class="btn-buy" onclick="orderCoins(1000, '۱۰۰۰ سکه')">سفارش</button>
+            </div>
+        </div>
+
+        <a href="store.html" class="back-link"><i class="fas fa-arrow-left"></i> بازگشت به فروشگاه</a>
+    </div>
+
+    <script>
+        // ===== نمایش سکه در هدر =====
+        function updateHeaderCoins() {
+            const coins = parseInt(localStorage.getItem('userCoins')) || 0;
+            const el = document.getElementById('headerCoins');
+            if (el) el.innerHTML = `<i class="fas fa-coins"></i> ${coins}`;
+        }
+        updateHeaderCoins();
+
+        // ===== هدیه رایگان (فقط یک بار) =====
+        function claimFreeGift() {
+            const giftUsed = localStorage.getItem('free_gift_used') === 'true';
+            if (giftUsed) {
+                alert('⛔ شما قبلاً هدیه خود را دریافت کرده‌اید!');
+                return;
+            }
+
+            let currentCoins = parseInt(localStorage.getItem('userCoins')) || 0;
+            currentCoins += 50;
+            localStorage.setItem('userCoins', currentCoins.toString());
+            localStorage.setItem('free_gift_used', 'true');
+            
+            updateHeaderCoins();
+            document.getElementById('freeCoinsBtn').disabled = true;
+            document.getElementById('freeCoinsBtn').textContent = '✅ دریافت شد';
+            alert(`🎁 ۵۰ سکه هدیه دریافت کردید!`);
+        }
+
+        // ===== بررسی وضعیت هدیه در لود صفحه =====
+        function checkFreeGiftStatus() {
+            const giftUsed = localStorage.getItem('free_gift_used') === 'true';
+            const btn = document.getElementById('freeCoinsBtn');
+            if (giftUsed && btn) {
+                btn.disabled = true;
+                btn.textContent = '✅ دریافت شد';
+            }
+        }
+        checkFreeGiftStatus();
+
+        // ===== سفارش سکه (بدون پرداخت خودکار) =====
+        function orderCoins(amount, label) {
+            if (!confirm(`آیا می‌خواهید ${label} را سفارش دهید؟\nپس از تأیید ادمین، سکه‌ها به حساب شما اضافه خواهد شد.`)) return;
+
+            // ذخیره سفارش در localStorage
+            const orders = JSON.parse(localStorage.getItem('coin_orders')) || [];
+            orders.push({
+                id: Date.now(),
+                amount: amount,
+                label: label,
+                status: 'pending',
+                date: new Date().toLocaleDateString('fa-IR')
+            });
+            localStorage.setItem('coin_orders', JSON.stringify(orders));
+
+            alert(`📦 سفارش ${label} ثبت شد!\nمنتظر تأیید ادمین باشید.`);
+        }
+    </script>
+
+</body>
+</html>

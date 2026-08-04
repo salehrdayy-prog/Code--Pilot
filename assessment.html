@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>سنجش سطح | دستیار هوشمند</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="themes.css">
+</head>
+
+<body class="assessment-page">
+
+<div class="assessment-container">
+
+    <div class="progress-bar">
+        <div 
+            class="progress-fill" 
+            id="progress-fill">
+        </div>
+    </div>
+
+
+    <div class="progress-text">
+        سوال 
+        <span id="current-question">۱</span>
+        از
+        <span id="total-questions">۶</span>
+    </div>
+
+
+    <div id="question-container"></div>
+
+
+    <div 
+        class="nav-buttons" 
+        id="nav-buttons" 
+        style="display:none;">
+
+        <button 
+            class="btn btn-outline"
+            id="prev-btn"
+            onclick="prevQuestion()"
+            disabled>
+            ← قبلی
+        </button>
+
+
+        <button 
+            class="btn btn-primary"
+            id="next-btn"
+            onclick="nextQuestion()">
+            بعدی →
+        </button>
+
+    </div>
+
+
+    <div id="start-container">
+
+        <button 
+            class="btn btn-primary btn-lg"
+            onclick="startAssessment()">
+
+            شروع سنجش 💪
+
+        </button>
+
+    </div>
+
+</div>
+
+
+<audio id="tick-sound">
+    <source src="tick.mp3" type="audio/mpeg">
+</audio>
+
+
+<script src="storage.js"></script>
+<script src="assessment.js"></script>
+<script src="utils.js"></script>
+<script src="tour.js"></script>
+
+</body>
+</html>

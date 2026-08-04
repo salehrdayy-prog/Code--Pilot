@@ -1,0 +1,30 @@
+{
+  "name": "نابغه‌کد",
+  "short_name": "نابغه‌کد",
+  "description": "دستیار هوشمند برنامه‌نویسی برای ساخت پروژه و یادگیری کدنویسی",
+  "start_url": "index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#02030a",
+  "theme_color": "#8b5cf6",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshot1.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "label": "صفحه اصلی برنامه"
+    }
+  ]
+}

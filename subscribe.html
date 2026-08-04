@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اشتراک | نابغه‌کد</title>
+    <link rel="stylesheet" href="themes.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: #02030a; color: #e8edf5; min-height: 100vh; }
+
+        .navbar {
+            background: rgba(13, 17, 23, 0.8);
+            backdrop-filter: blur(12px);
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .navbar .title { font-size: 20px; font-weight: 700; color: #d4dcec; display: flex; align-items: center; gap: 10px; }
+        .navbar .title i { color: #8b5cf6; }
+        .navbar .coins { background: rgba(139, 92, 246, 0.15); padding: 6px 14px; border-radius: 20px; color: #c4b5fd; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+
+        .sub-container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 16px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 30px;
+            color: #d4dcec;
+        }
+
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .plan-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 30px 20px;
+            text-align: center;
+            transition: 0.3s;
+            position: relative;
+        }
+        .plan-card:hover {
+            background: rgba(139, 92, 246, 0.06);
+            border-color: rgba(139, 92, 246, 0.3);
+            transform: translateY(-8px);
+        }
+        .plan-card.popular {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 40px rgba(139, 92, 246, 0.15);
+        }
+        .plan-card .badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #fff;
+        }
+        .plan-card .icon { font-size: 48px; display: block; margin-bottom: 10px; }
+        .plan-card h3 { font-size: 22px; color: #e8edf5; margin-bottom: 6px; }
+        .plan-card .price { font-size: 28px; font-weight: 700; color: #facc15; margin: 10px 0; }
+        .plan-card .price span { font-size: 14px; color: #8aa3c9; font-weight: 400; }
+        .plan-card ul { list-style: none; padding: 0; margin: 16px 0; text-align: right; }
+        .plan-card ul li { padding: 6px 0; color: #a0b0d0; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+        .plan-card ul li i { color: #4ade80; font-size: 14px; }
+
+        .btn-sub {
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            color: #fff;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 100%;
+            font-size: 16px;
+        }
+        .btn-sub:hover { transform: scale(0.96); }
+        .btn-sub:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .current-plan {
+            margin-top: 30px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <span class="title"><i class="fas fa-crown"></i> اشتراک</span>
+        <span class="coins" id="headerCoins"><i class="fas fa-coins"></i> ۰</span>
+    </nav>
+
+    <div class="sub-container">
+        <h2 class="section-title">🚀 سطح اشتراک خود را انتخاب کنید</h2>
+
+        <div class="plans-grid">
+
+            <!-- رایگان -->
+            <div class="plan-card">
+                <div class="icon">🆓</div>
+                <h3>رایگان</h3>
+                <div class="price">۰ <span>سکه</span></div>
+                <ul>
+                    <li><i class="fas fa-check"></i> ۵ تمرین مبتدی</li>
+                    <li><i class="fas fa-check"></i> ۳ قالب ساده</li>
+                    <li><i class="fas fa-check"></i> ساخت ۲ پروژه در روز</li>
+                </ul>
+                <button class="btn-sub" onclick="subscribe('free')" id="btn-free" disabled>فعال</button>
+            </div>
+
+            <!-- پرمیوم -->
+            <div class="plan-card popular">
+                <span class="badge">محبوب</span>
+                <div class="icon">💎</div>
+                <h3>پرمیوم</h3>
+                <div class="price">۵۰۰ <span>سکه</span></div>
+                <ul>
+                    <li><i class="fas fa-check"></i> تمام تمرین‌ها</li>
+                    <li><i class="fas fa-check"></i> تمام قالب‌ها</li>
+                    <li><i class="fas fa-check"></i> هوش مصنوعی پیشرفته</li>
+                    <li><i class="fas fa-check"></i> ساخت نامحدود پروژه</li>
+                </ul>
+                <button class="btn-sub" onclick="subscribe('premium')" id="btn-premium">خرید اشتراک</button>
+            </div>
+
+            <!-- VIP -->
+            <div class="plan-card">
+                <div class="icon">👑</div>
+                <h3>VIP</h3>
+                <div class="price">۱۰۰۰ <span>سکه</span></div>
+                <ul>
+                    <li><i class="fas fa-check"></i> همه چیز پرمیوم</li>
+                    <li><i class="fas fa-check"></i> پشتیبانی اولویت‌دار</li>
+                    <li><i class="fas fa-check"></i> نشان VIP در پروفایل</li>
+                    <li><i class="fas fa-check"></i> ۲ برابر XP و سکه</li>
+                </ul>
+                <button class="btn-sub" onclick="subscribe('vip')" id="btn-vip">خرید اشتراک</button>
+            </div>
+
+        </div>
+
+        <div class="current-plan" id="currentPlanDisplay">
+            <p>اشتراک فعلی شما: <strong id="planText">رایگان</strong></p>
+        </div>
+    </div>
+
+    <script src="store.js"></script>
+    <script>
+        // ==================== نمایش سکه در هدر ====================
+        function updateHeaderCoins() {
+            const coins = parseInt(localStorage.getItem('userCoins')) || 0;
+            const el = document.getElementById('headerCoins');
+            if (el) el.innerHTML = `<i class="fas fa-coins"></i> ${coins}`;
+        }
+        updateHeaderCoins();
+
+        // ==================== نمایش اشتراک فعلی ====================
+        function loadCurrentPlan() {
+            const plan = localStorage.getItem('subscription') || 'free';
+            const planTexts = { free: '🆓 رایگان', premium: '💎 پرمیوم', vip: '👑 VIP' };
+            document.getElementById('planText').textContent = planTexts[plan] || 'رایگان';
+
+            // غیرفعال کردن دکمه‌های دیگر
+            document.querySelectorAll('.btn-sub').forEach(btn => btn.disabled = false);
+            document.getElementById('btn-' + plan).disabled = true;
+            document.getElementById('btn-' + plan).textContent = '✅ فعال';
+        }
+        loadCurrentPlan();
+
+        // ==================== خرید اشتراک ====================
+        function subscribe(plan) {
+            const price = { free: 0, premium: 500, vip: 1000 };
+            const coins = parseInt(localStorage.getItem('userCoins')) || 0;
+
+            if (plan === 'free') {
+                alert('شما در حال حاضر در پلن رایگان هستید.');
+                return;
+            }
+
+            if (coins < price[plan]) {
+                alert(`❌ سکه کافی نیست! نیاز به ${price[plan]} سکه دارید.`);
+                return;
+            }
+
+            if (!confirm(`آیا مطمئنید که می‌خواهید اشتراک ${plan} را خریداری کنید؟`)) return;
+
+            // کسر سکه
+            localStorage.setItem('userCoins', (coins - price[plan]).toString());
+
+            // ذخیره اشتراک
+            localStorage.setItem('subscription', plan);
+            localStorage.setItem('subscription_expires', Date.now() + 30 * 24 * 60 * 60 * 1000); // ۳۰ روز
+
+            alert(`✅ اشتراک ${plan} با موفقیت فعال شد!`);
+
+            updateHeaderCoins();
+            loadCurrentPlan();
+        }
+
+        // ==================== بررسی اعتبار اشتراک ====================
+        function checkSubscription() {
+            const plan = localStorage.getItem('subscription') || 'free';
+            const expires = parseInt(localStorage.getItem('subscription_expires')) || 0;
+            if (plan !== 'free' && Date.now() > expires) {
+                localStorage.setItem('subscription', 'free');
+                localStorage.removeItem('subscription_expires');
+                alert('⏳ اشتراک شما منقضی شد! برای تمدید به فروشگاه بروید.');
+                loadCurrentPlan();
+            }
+        }
+        checkSubscription();
+    </script>
+</body>
+</html>

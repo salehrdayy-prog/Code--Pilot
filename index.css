@@ -1,0 +1,184 @@
+/* ============================================================
+   index.css
+   استایل‌های اختصاصی لندینگ پیج (index.html)
+   ============================================================ */
+
+/* ===== رنگ اصلی بنفش ===== */
+:root {
+    --purple: #9300FF;
+    --purple-light: rgba(147, 0, 255, 0.08);
+    --purple-medium: rgba(147, 0, 255, 0.15);
+    --purple-border: rgba(147, 0, 255, 0.2);
+    --purple-glow: rgba(147, 0, 255, 0.25);
+}
+
+/* ===== کارت‌های ویژگی‌ها (Features Grid) ===== */
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+    max-width: 1100px;
+    margin: 40px auto 0;
+}
+
+.feature-card {
+    background: var(--purple-light) !important;
+    border: 1px solid var(--purple-border) !important;
+    border-radius: 20px !important;
+    padding: 30px 20px;
+    text-align: center;
+    transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+/* ===== افکت شیشه‌ای بنفش ===== */
+.feature-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 50% 50%, var(--purple-glow), transparent 70%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+}
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--purple) !important;
+    box-shadow: 0 20px 50px var(--purple-glow) !important;
+    background: var(--purple-medium) !important;
+}
+
+.feature-card:hover::before {
+    opacity: 1;
+}
+
+/* ===== آیکون کارت ===== */
+.feature-card .feature-icon {
+    font-size: 48px;
+    display: block;
+    margin-bottom: 16px;
+    filter: drop-shadow(0 0 20px var(--purple-glow));
+    transition: transform 0.3s ease;
+}
+
+.feature-card:hover .feature-icon {
+    transform: scale(1.1) rotate(5deg);
+}
+
+/* ===== عنوان و توضیحات ===== */
+.feature-card h4 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #e8edf5;
+    margin-bottom: 8px;
+}
+
+.feature-card p {
+    color: #8899bb;
+    font-size: 14px;
+    line-height: 1.6;
+    max-width: 90%;
+    margin: 0 auto;
+}
+
+/* ===== کارت‌های مراحل (Article Steps) ===== */
+.article-content {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.article-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    background: var(--purple-light) !important;
+    padding: 20px 24px;
+    border-radius: 16px;
+    border: 1px solid var(--purple-border) !important;
+    transition: all 0.3s ease;
+    cursor: default;
+}
+
+.article-step:hover {
+    background: var(--purple-medium) !important;
+    border-color: var(--purple) !important;
+    transform: translateX(8px);
+}
+
+/* ===== شمارنده مرحله ===== */
+.article-step .step-number {
+    font-size: 28px;
+    font-weight: 800;
+    color: #fff !important;
+    min-width: 45px;
+    padding-top: 2px;
+    background: var(--purple) !important;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.article-step:hover .step-number {
+    background: #7c3aed !important;
+}
+
+/* ===== محتوای مرحله ===== */
+.article-step .step-content h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #e8edf5;
+    margin-bottom: 4px;
+}
+
+.article-step .step-content p {
+    color: #8899bb;
+    font-size: 15px;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* ===== واکنش‌گرا (موبایل) ===== */
+@media (max-width: 768px) {
+    .features-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+    .feature-card {
+        padding: 20px 16px;
+    }
+    .feature-card .feature-icon {
+        font-size: 36px;
+    }
+    .article-step {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 12px;
+    }
+    .article-step:hover {
+        transform: translateY(-4px);
+    }
+    .article-step .step-number {
+        font-size: 22px;
+        width: 40px;
+        height: 40px;
+    }
+}
+
+@media (max-width: 480px) {
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+}

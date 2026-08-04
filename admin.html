@@ -1,0 +1,52 @@
+<div class="admin-panel">
+
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="themes.css">
+  <div class="top-bar">
+    <h2>پنل مدیریت</h2>
+    <button id="logout">خروج</button>
+  </div>
+
+  <input type="text" id="search" placeholder="جستجو...">
+
+  <p id="userCount"></p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>نام</th>
+        <th>شماره</th>
+        <th>ایمیل</th>
+        <th>عملیات</th>
+      </tr>
+    </thead>
+    <tbody id="userTable"></tbody>
+  </table>
+
+</div>
+
+<div id="editModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+
+    <h2>ویرایش کاربر</h2>
+
+    <input id="editName" placeholder="نام">
+    <input id="editPhone" placeholder="شماره">
+    <input id="editEmail" placeholder="ایمیل">
+
+    <select id="editRole">
+      <option value="user">کاربر</option>
+      <option value="admin">ادمین</option>
+    </select>
+
+    <button id="saveEdit">ذخیره</button>
+    <script src="admin.js"></script>
+  </div>
+</div>
+<!-- ===== بخش سفارشات سکه ===== -->
+<div class="orders-section">
+    <h3>📦 سفارشات سکه</h3>
+    <div id="ordersList"></div>
+</div>
+

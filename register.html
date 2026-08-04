@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ثبت نام</title>
+
+<style>
+body{
+    margin:0;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:#000;
+    font-family:tahoma;
+    color:#fff;
+}
+
+.card{
+    width:90%;
+    max-width:400px;
+    padding:30px 20px;
+    border-radius:20px;
+    background:linear-gradient(145deg,#1a1a1a,#111);
+    box-shadow:0 0 40px rgba(140,90,255,0.15);
+    text-align:center;
+}
+
+.title{
+    font-size:24px;
+    margin-bottom:25px;
+}
+
+/* فرم */
+.form-group{
+    text-align:right;
+    margin-bottom:15px;
+}
+
+.input{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:14px;
+    background:#ddd;
+    color:#000;
+    font-size:14px;
+    outline:none;
+}
+
+/* حالت‌ها */
+.input.valid{
+    border:2px solid #00c853;
+}
+
+.input.invalid{
+    border:2px solid #ff3d00;
+}
+
+/* ارورها */
+small{
+    display:block;
+    font-size:12px;
+    margin-top:5px;
+    color:#ff3d00;
+}
+
+/* پسورد */
+.pass-box{
+    position:relative;
+}
+
+.eye{
+    position:absolute;
+    left:12px;
+    top:50%;
+    transform:translateY(-50%);
+    cursor:pointer;
+    color:#666;
+}
+
+/* قوانین پسورد */
+.password-rules{
+    margin-top:5px;
+    text-align:right;
+}
+
+.password-rules p{
+    font-size:12px;
+    margin:3px 0;
+    color:#ff3d00;
+}
+
+/* دکمه */
+.btn{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:16px;
+    margin-top:15px;
+    font-size:16px;
+    color:#fff;
+    cursor:pointer;
+    background:linear-gradient(90deg,#7a5cff,#6c8cff);
+}
+
+.footer{
+    margin-top:15px;
+    font-size:13px;
+    color:#aaa;
+}
+
+.footer a{
+    color:#9a7cff;
+    text-decoration:none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+<div class="title">ثبت نام</div>
+
+<form id="registerForm">
+
+<!-- نام -->
+<div class="form-group">
+<input class="input" id="name" placeholder="نام کاربری" required>
+<small id="name-error"></small>
+</div>
+
+<!-- شماره -->
+<div class="form-group">
+<input class="input" id="phone" placeholder="شماره موبایل" required>
+<small id="phone-error"></small>
+</div>
+
+<!-- ایمیل -->
+<div class="form-group">
+<input class="input" id="email" placeholder="ایمیل" required>
+<small id="email-error"></small>
+</div>
+
+<!-- پسورد -->
+<div class="form-group pass-box">
+<input class="input" id="password" type="password" placeholder="رمز عبور" required>
+<span class="eye" onclick="togglePassword()">👁️</span>
+
+<div class="password-rules">
+<p id="rule-length">حداقل ۸ کاراکتر</p>
+<p id="rule-lower">حروف کوچک</p>
+<p id="rule-upper">حروف بزرگ</p>
+<p id="rule-number">عدد</p>
+<p id="rule-special">کاراکتر خاص (@,#,...)</p>
+</div>
+
+</div>
+
+<button class="btn" type="submit">ثبت نام</button>
+
+</form>
+
+<div class="footer">
+حساب داری؟ <a href="login.html">وارد شو</a>
+</div>
+
+</div>
+
+<script>
+
+// 👁️ نمایش رمز
+function togglePassword(){
+    const input = document.getElementById("password");
+    input.type = input.type === "password" ? "text" : "password";
+}
+
+</script>
+
+<!-- 🔥 اسکریپت اصلی -->
+<script src="register.js"></script>
+<script src="tour.js"></script>
+</body>
+</html>

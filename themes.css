@@ -1,0 +1,32 @@
+/* ==================== DARK ==================== */
+[data-theme="dark"] {
+  --bg: #000;
+  --card-bg: #111;
+  --text: #E0E0E0;
+  --gray: #A0A0A0;
+  --border: #333;
+}
+
+/* ==================== MINIMAL ==================== */
+[data-theme="minimal"] {
+  --primary: #2D3436;
+  --primary-dark: #000;
+  --primary-light: #636E72;
+  --radius: 0px;
+}
+
+/* ==================== COLORFUL ==================== */
+[data-theme="colorful"] {
+  --primary: #FF6B6B;
+  --primary-dark: #FF4757;
+  --primary-light: #FFA8A8;
+}
+
+/* ==================== KID ==================== */
+[data-theme="kid"] {
+  --primary: #FF9FF3;
+  --primary-dark: #F368E0;
+  --primary-light: #FECA57;
+  --radius: 25px;
+  font-family: 'Comic Sans MS', cursive;
+}

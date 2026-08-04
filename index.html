@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- عنوان اصلی برای گوگل -->
+    <title>نابغه‌کد - دستیار هوشمند برنامه‌نویسی</title>
+    
+    <!-- توضیحات متا -->
+    <meta name="description" content="نابغه‌کد، دستیار هوشمند برنامه‌نویسی برای ساخت پروژه، یادگیری کدنویسی و تمرین برنامه‌نویسی با هوش مصنوعی.">
+    
+    <!-- کلمات کلیدی -->
+    <meta name="keywords" content="نابغه‌کد, برنامه‌نویسی, یادگیری کدنویسی, دستیار هوشمند, تمرین برنامه‌نویسی">
+    
+    <!-- نویسنده -->
+    <meta name="author" content="Saleh">
+    
+    <!-- فایل‌های CSS -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="themes.css">
+    <link rel="stylesheet" href="index.css">
+    
+    <!-- تنظیمات PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="google-site-verification" content="A005vabJTZ-tQsh9xTCpoI6V830WabExDrlAhJBW8Eo" />
+</head>
+<body class="landing-page">
+<button id="installBtn" style="display:none; padding: 10px 24px; background: #8b5cf6; color: white; border: none; border-radius: 30px; font-weight: bold; font-size: 16px; cursor: pointer;">
+    📲 نصب برنامه روی گوشی
+</button>
+    <!-- نویگیشن -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <span class="brand-icon">🧠</span>
+                <span class="brand-text">دستیار هوشمند</span>
+            </div>
+            <div class="nav-links">
+                <a href="#features" class="nav-link">
+                    راهنما</a>
+                <a href="#how-it-works" class="nav-link">ویژگی ها</a>
+                <button class="btn btn-outline" onclick="window.location.href='register.html'">
+                    ورود / ثبت‌نام
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- هیرو -->
+    <div class="hero-icon">
+  <div class="logo-circle">
+    <img src="logo.png" alt="logo" class="logo-img">
+  </div>
+  <span class="status-dot"></span>
+</div>
+    <span class="status-dot"></span>
+</div>
+      <div class="hero">
+
+  <!-- نسخه -->
+  <div class="version-badge">✨ نسخه ۱.۰</div>
+
+  <!-- تیتر -->
+  <h1 class="hero-title">
+    دستیار <span>برنامه‌نویس</span><br>
+    هوشمند
+  </h1>
+
+  <!-- توضیح -->
+  <p class="hero-desc">
+    کد نویسی رو به من بسپار - از ایده تا خروجی قدم به قدم کنارت هستم
+  </p>
+
+  <!-- دکمه‌ها -->
+  <div class="hero-buttons">
+
+    <a href="register.html" class="btn-primary">
+      🚀 همین الان شروع کن
+    </a>
+
+    <a href="#features" class="btn-secondary">
+      👀 بیشتر بدون
+    </a>
+
+  </div>
+
+  <!-- آمار -->
+  <div class="stats">
+    <div>
+      <div class="stat-number">5000+</div>
+      <div>پروژه ساخته شده</div>
+    </div>
+    <div>
+      <div class="stat-number">1000+</div>
+      <div>کاربر فعال</div>
+    </div>
+    <div>
+      <div class="stat-number">54+</div>
+      <div>قابلیت</div>
+    </div>
+  </div>
+
+  <!-- کارت پروژه -->
+  <div class="project-card"></div>
+
+</div>
+</div>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="code-window floating">
+                <div class="window-header">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span class="window-title">پروژه: ماشین حساب</span>
+                </div>
+                <div class="window-body">
+                    <pre><code><span class="code-keyword">function</span> <span class="code-func">calculate</span>(a, b, op) {
+    <span class="code-keyword">switch</span>(op) {
+        <span class="code-keyword">case</span> <span class="code-string">'+'</span>: <span class="code-keyword">return</span> a + b;
+        <span class="code-keyword">case</span> <span class="code-string">'-'</span>: <span class="code-keyword">return</span> a - b;
+        <span class="code-keyword">case</span> <span class="code-string">'*'</span>: <span class="code-keyword">return</span> a * b;
+        <span class="code-keyword">case</span> <span class="code-string">'/'</span>: <span class="code-keyword">return</span> a / b;
+    }
+}</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- مقاله معرفی -->
+    <section class="article-section" id="features">
+        <div class="container">
+            <h2 class="section-title">🧠 این دستیار هوشمند چطور کار می‌کنه؟</h2>
+            
+            <div class="article-content">
+                <div class="article-step">
+                    <div class="step-number">۱</div>
+                    <div class="step-content">
+                      <h3>ثبت نام سریع و آسان</h3>
+                        <p>فقط با یه ایمیل یا شماره موبایل، حساب خودت رو بساز و بلافاصله شروع کن. اطلاعاتت پیش ما محفوظ می‌مونه و پروژه‌هات همیشه در دسترس هستن.</p>
+                    </div>
+                </div>
+                
+                <div class="article-step">
+                    <div class="step-number">۲</div>
+                    <div class="step-content">
+                        <h3>سنجش تطبیقی هوشمند</h3>
+                        <p>با ۵ سوال هدفمند، سطح واقعی برنامه‌نویسی تو رو تشخیص می‌دیم. سوال‌ها بر اساس پاسخ‌هات سخت‌تر یا آسون‌تر می‌شن تا دقیق‌ترین نتیجه رو بگیریم.</p>
+                    </div>
+                </div>
+                
+                <div class="article-step">
+                    <div class="step-number">۳</div>
+                    <div class="step-content">
+                        <h3>انتخاب ایده یا نمونه‌کار</h3>
+                        <p>از بین ده‌ها نمونه‌کار آماده (ماشین حساب، لیست کارها، فروشگاه و...) انتخاب کن یا ایده خودت رو بگو تا برات بسازیمش.</p>
+                    </div>
+                </div>
+                
+                <div class="article-step">
+                    <div class="step-number">۴</div>
+                    <div class="step-content">
+                        <h3>ساخت گام‌به‌گام با هوش مصنوعی</h3>
+                        <p>پروژه‌ات رو قدم‌به‌قدم با کمک هوش مصنوعی می‌سازیم. هر قدم رو تأیید کن، تغییر بده یا سوال بپرس. همه چی تحت کنترل توئه.</p>
+                    </div>
+                </div>
+                
+                <div class="article-step">
+                    <div class="step-number">۵</div>
+                    <div class="step-content">
+                        <h3>پیش‌نمایش زنده و تست خودکار</h3>
+                        <p>همون لحظه خروجی کارت رو ببین. سیستم خودکار کدت رو تست می‌کنه و قبل از تحویل نهایی، خطاها رو پیدا می‌کنه.</p>
+                    </div>
+                </div>
+                
+                <div class="article-step">
+                    <div class="step-number">۶</div>
+                    <div class="step-content">
+                        <h3>تحویل و ذخیره</h3>
+                        <p>پروژه نهایی رو با README و راهنمای اجرا تحویل بگیر. دانلود کن، ذخیره کن یا بعداً برگرد و ادامه بده.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ویژگی‌ها -->
+    <section class="features-section" id="how-it-works">
+        <div class="container">
+            <h2 class="section-title">✨ ویژگی‌های منحصربه‌فرد</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🧠</div>
+                    <h4>سنجش تطبیقی</h4>
+                    <p>سطح واقعی شما رو با سوال‌های هوشمند و بدون نمایش امتیاز تشخیص میده</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h4>تشخیص خودکار هدف</h4>
+                    <p>فقط بگو چی می‌خوای، خودم می‌فهمم و مسیر رو مشخص می‌کنم</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📋</div>
+                    <h4>نسخه ساده و حرفه‌ای</h4>
+                    <p>مبتدی یا پیشرفته، مسیر خودت رو انتخاب کن و با سرعت خودت پیش برو</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👁️</div>
+                    <h4>پیش‌نمایش زنده</h4>
+                    <p>خروجی کارت رو همون لحظه ببین و تغییرات رو سریع اعمال کن</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💾</div>
+                    <h4>ذخیره نسخه‌ها</h4>
+                    <p>هر تغییری رو ذخیره کن و هر وقت خواستی به نسخه قبلی برگرد</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💬</div>
+                    <h4>چت زنده روی پروژه</h4>
+                    <p>هر جا گیر کردی، بپرس و راهنمایی بگیر</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🧪</div>
+                    <h4>تست خودکار</h4>
+                    <p>قبل از تحویل، همه چی رو چک می‌کنم تا مطمئن بشم کار می‌کنه</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📖</div>
+                    <h4>README خودکار</h4>
+                    <p>راهنمای نصب و اجرا رو خودم می‌نویسم</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎓</div>
+                    <h4>مسیر یادگیری شخصی</h4>
+                    <p>بر اساس عملکردت، مسیر یادگیری مخصوص خودت رو دریافت کن</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👥</div>
+                    <h4>همکاری تیمی</h4>
+                    <p>با دوستانت پروژه بساز و تجربه کار تیمی رو یاد بگیر</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎮</div>
+                    <h4>گیمیفیکیشن</h4>
+                    <p>مأموریت، نشان، سکه و رقابت — یادگیری مثل بازی</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🛒</div>
+                    <h4>مارکت‌پلیس</h4>
+                    <p>پروژه‌هات رو بفروش و از مهارتت درآمد کسب کن</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <div class="container">
+            <h2>آماده‌ای که اولین پروژه‌ات رو بسازی؟</h2>
+            <p>همین الان شروع کن — رایگان و بدون نیاز به نصب هیچی</p>
+            <button class="btn btn-primary btn-lg pulse" onclick="window.location.href='register.html'">
+                🚀 شروع کن
+            </button>
+        </div>
+    </section>
+
+    <!-- فوتر -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <span>🧠</span>
+                    <span>دستیار برنامه‌نویس هوشمند</span>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-links">
+    <a href="about.html">درباره ما</a>
+    <a href="contact.html">ارتباط با ما</a>
+    <a href="rules.html">قوانین</a>
+    <a href="blog.html">وبلاگ</a>
+</div>
+                </div>
+                <div class="footer-copy">
+                    © ۱۴۰۴ — تمام حقوق محفوظ است
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+    <script src="tour.js"></script>
+    <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+</script>
+<script>
+    // ==========================================
+//  دکمه نصب خودکار PWA (بدون نیاز به توضیح)
+// ==========================================
+
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // جلوگیری از نمایش خودکار پنجره نصب مرورگر
+    e.preventDefault();
+    // ذخیره رویداد برای استفاده بعدی
+    deferredPrompt = e;
+    
+    // نمایش دکمه نصب
+    const installBtn = document.getElementById('installBtn');
+    installBtn.style.display = 'block';
+});
+
+document.getElementById('installBtn').addEventListener('click', async () => {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const result = await deferredPrompt.userChoice;
+        if (result.outcome === 'accepted') {
+            console.log('✅ کاربر برنامه رو نصب کرد!');
+        } else {
+            console.log('❌ کاربر نصب نکرد.');
+        }
+        deferredPrompt = null;
+        document.getElementById('installBtn').style.display = 'none';
+    }
+});
+</script>
+</body>
+</html>

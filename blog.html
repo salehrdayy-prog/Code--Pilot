@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>وبلاگ</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        body {
+            background: #0f0f1a;
+            color: #fff;
+            font-family: sans-serif;
+        }
+
+        .blog-container {
+            max-width: 1000px;
+            margin: 60px auto;
+            padding: 20px;
+        }
+
+        .blog-title {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .blog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .blog-card {
+            background: #1a1a2e;
+            border-radius: 15px;
+            padding: 20px;
+            transition: 0.3s;
+            box-shadow: 0 0 15px rgba(124,77,255,0.2);
+        }
+
+        .blog-card:hover {
+            transform: translateY(-5px);
+            background: #222;
+        }
+
+        .blog-card h3 {
+            margin-bottom: 10px;
+            color: #7c4dff;
+        }
+
+        .blog-card p {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 15px;
+        }
+
+        .read-more {
+            display: inline-block;
+            padding: 8px 15px;
+            background: linear-gradient(45deg, #7c4dff, #00c6ff);
+            border-radius: 8px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+
+        .read-more:hover {
+            opacity: 0.8;
+        }
+
+        .back-btn {
+            display: block;
+            text-align: center;
+            margin-top: 30px;
+            padding: 12px;
+            border: 2px solid #7c4dff;
+            border-radius: 10px;
+            color: #7c4dff;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .back-btn:hover {
+            background: #7c4dff;
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="blog-container">
+
+    <h1 class="blog-title">📝 وبلاگ آموزشی</h1>
+
+    <div class="blog-grid">
+
+        <!-- پست 1 -->
+        <div class="blog-card">
+            <h3>چطور برنامه‌نویس شویم؟</h3>
+            <p>
+                شروع مسیر برنامه‌نویسی از صفر تا ساخت اولین پروژه واقعی...
+            </p>
+            <a href="post1.html" class="read-more">مطالعه بیشتر</a>
+        </div>
+
+        <!-- پست 2 -->
+        <div class="blog-card">
+            <h3>ساخت پروژه با هوش مصنوعی</h3>
+            <p>
+                یاد بگیر چطور با AI پروژه‌های حرفه‌ای بسازی و سریع پیشرفت کنی...
+            </p>
+            <a href="post2.html" class="read-more">مطالعه بیشتر</a>
+        </div>
+
+        <!-- پست 3 -->
+        <div class="blog-card">
+            <h3>از ایده تا سایت واقعی</h3>
+            <p>
+                مراحل تبدیل یک ایده ساده به یک وب‌سایت واقعی و کاربردی...
+            </p>
+            <a href="post3.html" class="read-more">مطالعه بیشتر</a>
+        </div>
+
+    </div>
+
+    <!-- برگشت -->
+    <a href="index.html" class="back-btn">⬅ بازگشت به صفحه اصلی</a>
+
+</div>
+<script src="tour.js"></script>
+</body>
+</html>

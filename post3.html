@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ساخت وب از ایده تا خروجی</title>
+
+<style>
+body {
+    margin:0;
+    background:#0f0f1a;
+    color:#fff;
+    font-family:sans-serif;
+}
+
+/* هدر */
+.hero {
+    height: 85vh;
+    background:
+    linear-gradient(rgba(0,0,0,0.6), rgba(15,15,26,0.95)),
+    url("post3.jpg.png") center/cover no-repeat;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    position:relative;
+}
+
+.hero h1 {
+    font-size:28px;
+}
+
+/* فلش */
+.scroll-down {
+    position:absolute;
+    bottom:20px;
+    font-size:28px;
+    animation:bounce 1.5s infinite;
+    opacity:0.7;
+}
+
+@keyframes bounce {
+    0%,100% {transform:translateY(0);}
+    50% {transform:translateY(10px);}
+}
+
+/* کارت */
+.post-container {
+    max-width:800px;
+    margin:-80px auto 40px;
+    padding:30px;
+    background:#1a1a2e;
+    border-radius:20px;
+    box-shadow:0 0 25px rgba(124,77,255,0.3);
+    transition:0.3s;
+}
+
+.post-container:hover {
+    box-shadow:0 0 40px rgba(124,77,255,0.7);
+}
+
+/* انیمیشن */
+.fade-in {
+    opacity:0;
+    transform:translateY(30px);
+    transition:0.8s;
+}
+
+.fade-in.show {
+    opacity:1;
+    transform:translateY(0);
+}
+
+/* عکس */
+.post-image {
+    width:100%;
+    border-radius:15px;
+    margin:20px 0;
+    transition:0.4s;
+}
+
+.post-image:hover {
+    transform:scale(1.05);
+}
+
+/* لیست */
+ul {
+    line-height:2;
+}
+
+/* مراحل */
+.steps {
+    background:#111;
+    padding:15px;
+    border-radius:12px;
+    border-right:4px solid #00c6ff;
+    margin:20px 0;
+}
+
+/* دکمه */
+.back {
+    display:inline-block;
+    margin-top:20px;
+    padding:10px 20px;
+    background:#7c4dff;
+    color:#fff;
+    border-radius:10px;
+    text-decoration:none;
+    transition:0.3s;
+}
+
+.back:hover {
+    background:#5e35b1;
+}
+</style>
+</head>
+
+<body>
+
+<!-- هدر -->
+<div class="hero">
+    <div>
+        <h1>🌐 ساخت وب از ایده تا خروجی</h1>
+        <p style="opacity:0.8;">از فکر تا سایت واقعی 🚀</p>
+    </div>
+
+    <div class="scroll-down">👇</div>
+</div>
+
+<!-- محتوا -->
+<div class="post-container fade-in">
+
+<img src="post3.jpg.png" class="post-image">
+
+<p>
+برای ساخت یک وب‌سایت موفق، باید مسیر درست رو طی کنی 👇
+</p>
+
+<ul>
+<li>ایده‌پردازی 💡</li>
+<li>طراحی UI/UX 🎨</li>
+<li>کدنویسی 💻</li>
+<li>انتشار 🚀</li>
+</ul>
+
+<div class="steps">
+🔥 هر پروژه موفق از یک ایده ساده شروع میشه!
+</div>
+
+<p>
+اگر این مراحل رو درست طی کنی، می‌تونی هر سایتی که می‌خوای بسازی.
+</p>
+
+<a href="blog.html" class="back">⬅ بازگشت به وبلاگ</a>
+
+</div>
+
+<!-- اسکرول انیمیشن -->
+<script>
+const els = document.querySelectorAll('.fade-in');
+
+window.addEventListener('scroll', () => {
+    els.forEach(el => {
+        if (el.getBoundingClientRect().top < window.innerHeight - 100) {
+            el.classList.add('show');
+        }
+    });
+});
+</script>
+
+</body>
+</html>
