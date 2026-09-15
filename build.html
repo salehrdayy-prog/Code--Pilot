@@ -5,208 +5,509 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>نابغه‌کد · نسخه موبایل</title>
 
-    <!-- ===== Font Awesome ===== -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-    <!-- ===== html2canvas برای اسکرین‌شات ===== -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
-        /* ===== RESET ===== */
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-        body {
-            margin: 0; height: 100vh; display: flex; justify-content: center; align-items: center;
-            background: #02030a; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; user-select: none;
-        }
+html {
+    height: 100%;
+    height: 100dvh;
+    overflow: hidden;
+}
 
-        .phone {
-            width: 393px; height: 852px; border-radius: 48px; background: #0d1117;
-            box-shadow: 0 0 80px rgba(139, 92, 246, 0.25); overflow: hidden; touch-action: pan-y;
-            position: relative; border: 1px solid rgba(255, 255, 255, 0.04); flex-shrink: 0;
-        }
+body {
+    margin: 0;
+    height: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #02030a;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    overflow: hidden;
+    user-select: none;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
 
-        /* ===== کانتینر اسلاید ===== */
-        .container {
-            display: flex;
-            height: 100%;
-            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-            will-change: transform;
-            padding-top: 0;
-            direction: ltr;
-        }
+.phone {
+    width: 393px;
+    height: 100%;
+    max-height: 852px;
+    min-height: 100%;
+    border-radius: 48px;
+    background: #0d1117;
+    box-shadow: 0 0 80px rgba(139, 92, 246, 0.25);
+    overflow: hidden;
+    touch-action: pan-y;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
 
-        .page {
-            min-width: 100%; padding: 8px 12px 12px; color: #e8edf5;
-            box-sizing: border-box; display: flex; flex-direction: column; height: 100%; overflow: hidden; direction: rtl;
-        }
+.container {
+    display: flex;
+    flex: 1;
+    height: 100%;
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+    direction: ltr;
+}
 
-        .page-header {
-            display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; flex-shrink: 0;
-        }
+.page {
+    min-width: 100%;
+    padding: 8px 12px 12px;
+    color: #e8edf5;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    direction: rtl;
+}
 
-        .page-header h2 { font-size: 30px; font-weight: 800; display: flex; align-items: center; gap: 6px; color: #d4dcec; }
-        .page-header h2 i { color: #8b5cf6; font-size: 16px; }
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+}
 
-        .page-actions { display: flex; gap: 4px; }
-        .page-actions button {
-            background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.06); color: #8aa3c9;
-            width: 28px; height: 28px; border-radius: 10px; font-size: 12px; cursor: pointer; transition: 0.2s;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .page-actions button:hover { background: rgba(139, 92, 246, 0.15); color: #c4b5fd; border-color: rgba(139, 92, 246, 0.2); }
-        .page-actions button:active { transform: scale(0.92); }
+.page-header h2 { 
+    font-size: 30px; 
+    font-weight: 800; 
+    display: flex; 
+    align-items: center; 
+    gap: 6px; 
+    color: #d4dcec; 
+}
+.page-header h2 i { color: #8b5cf6; font-size: 16px; }
 
-        /* ===== TABS ===== */
-        .tabs {
-            display: flex; gap: 4px; margin-bottom: 6px; flex-shrink: 0;
-            background: rgba(255, 255, 255, 0.02); padding: 3px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.04);
-        }
-        .tabs button {
-            flex: 1; background: transparent; color: #6a7a9a; border: none; padding: 5px 0;
-            border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; transition: 0.25s;
-        }
-        .tabs button i { margin-left: 4px; font-size: 11px; }
-        .tabs .active { background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; box-shadow: 0 4px 16px rgba(124, 58, 237, 0.25); }
+.page-actions { display: flex; gap: 4px; }
+.page-actions button {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: #8aa3c9;
+    width: 28px;
+    height: 28px;
+    border-radius: 10px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.page-actions button:hover { 
+    background: rgba(139, 92, 246, 0.15); 
+    color: #c4b5fd; 
+    border-color: rgba(139, 92, 246, 0.2); 
+}
+.page-actions button:active { transform: scale(0.92); }
 
-        /* ===== EDITOR ===== */
-        .editor-wrapper {
-            flex: 1 1 auto; min-height: 0; border-radius: 14px 14px 0 0; overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.05); background: #0a0e14; position: relative; width: 100%;
-        }
+.tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 3px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+.tabs button {
+    flex: 1;
+    background: transparent;
+    color: #6a7a9a;
+    border: none;
+    padding: 5px 0;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.25s;
+}
+.tabs button i { margin-left: 4px; font-size: 11px; }
+.tabs .active { 
+    background: linear-gradient(135deg, #7c3aed, #6d28d9); 
+    color: #fff; 
+    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.25); 
+}
 
-        .prism-container {
-            position: relative; width: 100%; height: 100%; overflow: hidden;
-            display: flex; flex-direction: row; background: #0d1117; direction: ltr !important;
-        }
+.editor-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    border-radius: 14px 14px 0 0;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: #0a0e14;
+    position: relative;
+    width: 100%;
+}
 
-        #lineNumbers {
-            width: 40px; height: 100%; background: #0d1117; border-right: 1px solid #262a33;
-            padding: 10px 5px; color: #858585; text-align: right; font-family: 'Droid Sans Mono', monospace;
-            font-size: 14px; line-height: 1.5; overflow: hidden; user-select: none; pointer-events: none; flex-shrink: 0;
-            overflow-y: auto;
-        }
+.prism-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    background: #0d1117;
+    direction: ltr !important;
+}
 
-        .editor-layers {
-            flex: 1; height: 100%; width: 100%; position: relative; overflow: hidden;
-        }
+#lineNumbers {
+    width: 40px;
+    height: 100%;
+    background: #0d1117;
+    border-right: 1px solid #262a33;
+    padding: 10px 5px;
+    color: #858585;
+    text-align: right;
+    font-family: 'Droid Sans Mono', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow: hidden;
+    user-select: none;
+    pointer-events: none;
+    flex-shrink: 0;
+    overflow-y: auto;
+}
 
-        #codeEditor {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            padding: 10px 12px; margin: 0; border: none; outline: none; resize: none;
-            font-family: 'Droid Sans Mono', monospace; font-size: 14px; line-height: 1.5;
-            background: #0d1117; color: #d4d4d4; caret-color: #ffffff; z-index: 2;
-            overflow: auto; white-space: pre-wrap; word-wrap: break-word;
-            text-align: left !important;
-        }
+.editor-layers {
+    flex: 1;
+    height: 100%;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
 
-        #codeEditor::-webkit-scrollbar, #lineNumbers::-webkit-scrollbar { width: 5px; background: transparent; }
-        #codeEditor::-webkit-scrollbar-thumb, #lineNumbers::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+#codeEditor {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 10px 12px;
+    margin: 0;
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: 'Droid Sans Mono', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    background: #0d1117;
+    color: #d4d4d4;
+    caret-color: #ffffff;
+    z-index: 2;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    text-align: left !important;
+}
 
-        /* ===== PREVIEW ===== */
-        .preview-wrapper {
-            flex: 1 1 auto; min-height: 0; border-radius: 14px; overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.05); background: #0a0e14; position: relative; width: 100%; height: 100%;
-        }
+#codeEditor::-webkit-scrollbar, 
+#lineNumbers::-webkit-scrollbar { 
+    width: 5px; 
+    background: transparent; 
+}
+#codeEditor::-webkit-scrollbar-thumb, 
+#lineNumbers::-webkit-scrollbar-thumb { 
+    background: #333; 
+    border-radius: 4px; 
+}
 
-        /* کلاس‌های تغییر سایز دستگاه */
-        .preview-wrapper.device-mobile iframe { max-width: 375px; margin: 0 auto; display: block; }
-        .preview-wrapper.device-tablet iframe { max-width: 768px; margin: 0 auto; display: block; }
-        .preview-wrapper.device-desktop iframe { max-width: 100%; margin: 0; display: block; }
+.preview-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: #0a0e14;
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
 
-        .preview-wrapper iframe {
-            width: 100%; height: 100%; border: none; background: #ffffff;
-            position: absolute; top: 0; left: 0; transition: all 0.3s ease;
-        }
+.preview-wrapper.device-mobile iframe { max-width: 375px; margin: 0 auto; display: block; }
+.preview-wrapper.device-tablet iframe { max-width: 768px; margin: 0 auto; display: block; }
+.preview-wrapper.device-desktop iframe { max-width: 100%; margin: 0; display: block; }
 
-        /* حالت تمام صفحه */
-        .preview-wrapper iframe.fullscreen-active {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999;
-            background: #ffffff; border-radius: 0;
-        }
+.preview-wrapper iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #ffffff;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transition: all 0.3s ease;
+}
 
-        /* ===== AI CHAT ===== */
-        .chat-container { flex: 1 1 auto; display: flex; flex-direction: column; gap: 6px; min-height: 0; }
-        .chat-messages {
-            flex: 1; background: rgba(255, 255, 255, 0.02); border-radius: 14px; padding: 10px; overflow-y: auto;
-            border: 1px solid rgba(255, 255, 255, 0.04); display: flex; flex-direction: column; gap: 6px; min-height: 80px;
-        }
-        .chat-messages .msg { padding: 8px 12px; border-radius: 14px; max-width: 85%; font-size: 13px; line-height: 1.5; animation: fadeIn 0.3s ease; }
-        .chat-messages .msg.user { background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
-        .chat-messages .msg.bot { background: rgba(255, 255, 255, 0.06); color: #c8d8ec; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.04); }
-        .chat-messages .msg i { margin-left: 6px; }
+.preview-wrapper iframe.fullscreen-active {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100dvh;
+    z-index: 9999;
+    background: #ffffff;
+    border-radius: 0;
+}
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* ===== SUGGESTION BUTTONS ===== */
-        .suggestions {
-            display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; margin-bottom: 6px;
-        }
-        .suggestions button {
-            background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.2);
-            color: #c4b5fd; padding: 4px 12px; border-radius: 12px; font-size: 11px; cursor: pointer;
-            transition: 0.2s; font-weight: 500;
-        }
-        .suggestions button:hover { background: rgba(139, 92, 246, 0.25); transform: scale(0.95); }
+.chat-container { 
+    flex: 1 1 auto; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 6px; 
+    min-height: 0; 
+}
+.chat-messages {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 14px;
+    padding: 10px;
+    overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 80px;
+}
+.chat-messages .msg { 
+    padding: 8px 12px; 
+    border-radius: 14px; 
+    max-width: 85%; 
+    font-size: 13px; 
+    line-height: 1.5; 
+    animation: fadeIn 0.3s ease; 
+}
+.chat-messages .msg.user { 
+    background: linear-gradient(135deg, #7c3aed, #6d28d9); 
+    color: #fff; 
+    align-self: flex-end; 
+    border-bottom-right-radius: 4px; 
+}
+.chat-messages .msg.bot { 
+    background: rgba(255, 255, 255, 0.06); 
+    color: #c8d8ec; 
+    align-self: flex-start; 
+    border-bottom-left-radius: 4px; 
+    border: 1px solid rgba(255, 255, 255, 0.04); 
+}
+.chat-messages .msg i { margin-left: 6px; }
 
-        .chat-input-row { display: flex; gap: 6px; flex-shrink: 0; }
-        .chat-input-row input {
-            flex: 1; padding: 10px 14px; border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.06);
-            background: rgba(255, 255, 255, 0.04); color: #e8edf5; font-size: 13px; outline: none; transition: 0.2s;
-        }
-        .chat-input-row input:focus { border-color: rgba(124, 58, 237, 0.3); background: rgba(255, 255, 255, 0.06); }
-        .chat-input-row input::placeholder { color: #4a5a7a; }
-        .chat-input-row button { padding: 10px 16px; border-radius: 14px; border: none; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px; }
-        .chat-input-row button:hover { transform: scale(0.96); }
+@keyframes fadeIn { 
+    from { opacity: 0; transform: translateY(8px); } 
+    to { opacity: 1; transform: translateY(0); } 
+}
 
-        /* ===== TYPING INDICATOR ===== */
-        .typing-indicator {
-            display: none; align-self: flex-start; padding: 8px 12px; border-radius: 14px;
-            background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.04);
-            gap: 4px; margin-bottom: 4px;
-        }
-        .typing-indicator span {
-            width: 6px; height: 6px; border-radius: 50%; background: #8b5cf6;
-            animation: typing 1.2s infinite ease-in-out;
-        }
-        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes typing {
-            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-            30% { transform: translateY(-8px); opacity: 1; }
-        }
+.suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex-shrink: 0;
+    margin-bottom: 6px;
+}
+.suggestions button {
+    background: rgba(139, 92, 246, 0.15);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    color: #c4b5fd;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: 0.2s;
+    font-weight: 500;
+}
+.suggestions button:hover { 
+    background: rgba(139, 92, 246, 0.25); 
+    transform: scale(0.95); 
+}
 
-        .nav-dots { display: flex; justify-content: center; gap: 8px; padding: 8px 0 4px; flex-shrink: 0; }
-        .nav-dots span { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, 0.08); transition: 0.3s; cursor: pointer; }
-        .nav-dots span.active { background: #8b5cf6; width: 24px; border-radius: 4px; box-shadow: 0 0 16px rgba(139, 92, 246, 0.2); }
+.chat-input-row { 
+    display: flex; 
+    gap: 6px; 
+    flex-shrink: 0; 
+}
+.chat-input-row input {
+    flex: 1;
+    padding: 10px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.04);
+    color: #e8edf5;
+    font-size: 13px;
+    outline: none;
+    transition: 0.2s;
+}
+.chat-input-row input:focus { 
+    border-color: rgba(124, 58, 237, 0.3); 
+    background: rgba(255, 255, 255, 0.06); 
+}
+.chat-input-row input::placeholder { color: #4a5a7a; }
+.chat-input-row button { 
+    padding: 10px 16px; 
+    border-radius: 14px; 
+    border: none; 
+    background: linear-gradient(135deg, #7c3aed, #6d28d9); 
+    color: #fff; 
+    font-weight: 600; 
+    font-size: 13px; 
+    cursor: pointer; 
+    transition: 0.2s; 
+    display: flex; 
+    align-items: center; 
+    gap: 6px; 
+}
+.chat-input-row button:hover { transform: scale(0.96); }
 
-        .chat-messages::-webkit-scrollbar { width: 4px; }
-        .chat-messages::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+.typing-indicator {
+    display: none;
+    align-self: flex-start;
+    padding: 8px 12px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    gap: 4px;
+    margin-bottom: 4px;
+}
+.typing-indicator span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #8b5cf6;
+    animation: typing 1.2s infinite ease-in-out;
+}
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-8px); opacity: 1; }
+}
 
-        .toast-mobile {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(80px);
-            background: #1a1a2e; color: #e8edf5; padding: 12px 24px; border-radius: 16px; font-size: 14px; font-weight: 500;
-            border: 1px solid rgba(255, 255, 255, 0.06); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6); z-index: 9999;
-            transition: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); opacity: 0; backdrop-filter: blur(16px); pointer-events: none;
-        }
-        .toast-mobile.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.nav-dots { 
+    display: flex; 
+    justify-content: center; 
+    gap: 8px; 
+    padding: 8px 0 4px; 
+    flex-shrink: 0; 
+}
+.nav-dots span { 
+    width: 8px; 
+    height: 8px; 
+    border-radius: 50%; 
+    background: rgba(255, 255, 255, 0.08); 
+    transition: 0.3s; 
+    cursor: pointer; 
+}
+.nav-dots span.active { 
+    background: #8b5cf6; 
+    width: 24px; 
+    border-radius: 4px; 
+    box-shadow: 0 0 16px rgba(139, 92, 246, 0.2); 
+}
 
-        /* ===== BOTTOM BAR ===== */
-        .editor-bottom-bar {
-            display: flex; justify-content: space-between; align-items: center;
-            background: #181a20; padding: 6px 10px; border: 1px solid rgba(255, 255, 255, 0.05); border-top: none;
-            flex-shrink: 0; width: 100%; min-height: 40px; border-radius: 0 0 14px 14px;
-        }
-        .editor-bottom-bar button {
-            background: transparent; border: none; color: #8899bb; font-size: 15px; padding: 4px 6px;
-            cursor: pointer; border-radius: 6px; transition: all 0.2s ease; min-width: 28px;
-        }
+.chat-messages::-webkit-scrollbar { width: 4px; }
+.chat-messages::-webkit-scrollbar-thumb { 
+    background: rgba(255, 255, 255, 0.1); 
+    border-radius: 4px; 
+}
 
-        @media (max-width: 420px) {
-            .phone { width: 100vw; height: 100vh; border-radius: 0; box-shadow: none; border: none; }
-            .container { padding-top: 0; }
-            .editor-bottom-bar { padding: 4px 6px; min-height: 32px; border-radius: 0; }
-        }
+.toast-mobile {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #1a1a2e;
+    color: #e8edf5;
+    padding: 12px 24px;
+    border-radius: 16px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    z-index: 9999;
+    transition: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    opacity: 0;
+    backdrop-filter: blur(16px);
+    pointer-events: none;
+}
+.toast-mobile.show { 
+    opacity: 1; 
+    transform: translateX(-50%) translateY(0); 
+}
+
+.editor-bottom-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #181a20;
+    padding: 6px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: none;
+    flex-shrink: 0;
+    width: 100%;
+    min-height: 40px;
+    border-radius: 0 0 14px 14px;
+}
+.editor-bottom-bar button {
+    background: transparent;
+    border: none;
+    color: #8899bb;
+    font-size: 15px;
+    padding: 4px 6px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    min-width: 28px;
+}
+
+/* ===== موبایل و تبلت ===== */
+@media (max-width: 420px) {
+    .phone { 
+        width: 100vw; 
+        height: 100dvh; 
+        max-height: none;
+        border-radius: 0; 
+        box-shadow: none; 
+        border: none; 
+    }
+    .editor-bottom-bar { 
+        padding: 4px 6px; 
+        min-height: 36px; 
+        border-radius: 0; 
+    }
+    .page-header h2 {
+        font-size: 22px;
+    }
+    .page-header h2 i {
+        font-size: 14px;
+    }
+}
+
+/* ===== ارتفاع کم (مثل سامسونگ با نوار پایین) ===== */
+@media (max-height: 700px) {
+    .phone { 
+        height: 100dvh; 
+        max-height: none;
+    }
+}
+
+/* ===== پشتیبانی از safe-area در آیفون ===== */
+@supports (padding: env(safe-area-inset-bottom)) {
+    .editor-bottom-bar {
+        padding-bottom: calc(6px + env(safe-area-inset-bottom));
+    }
+    .nav-dots {
+        padding-bottom: calc(4px + env(safe-area-inset-bottom));
+    }
+}
     </style>
 </head>
 <body>
@@ -276,11 +577,9 @@
                     <button onclick="undoAction()" title="بازگشت"><i class="fas fa-rotate-left"></i></button>
                     <button onclick="redoAction()" title="رفتن به جلو"><i class="fas fa-rotate-right"></i></button>
                     <button onclick="copyContent()" title="کپی"><i class="fas fa-copy"></i></button>
-                    <!-- ===== دکمه جدید: ثبت تمرین ===== -->
-                    <button id="submitExerciseBtn" onclick="submitExercise()" title="ثبت تمرین" style="display:none;">
+                    <button id="submitExerciseBtn" onclick="submitExerciseOnce()" title="ثبت تمرین" style="display:none;">
                         <i class="fas fa-check-circle"></i> ثبت تمرین
                     </button>
-                    <!-- ===== دکمه دریافت پروژه ===== -->
                     <button onclick="goToDone()" title="دریافت پروژه"><i class="fas fa-download"></i></button>
                 </div>
             </div>
@@ -331,13 +630,11 @@
             const totalPages = 3;
             let currentLang = 'html';
             let previewMode = 'mobile';
+            let toastTimer = null;
+            let chatHistory = [];
 
             const tabKeys = ['html', 'css', 'javascript'];
 
-            // ===== حافظه مکالمه =====
-            let chatHistory = [];
-
-            // ===== فایل‌ها =====
             const files = {
                 html: `<!DOCTYPE html>
 <html>
@@ -381,7 +678,7 @@ alert("این یک تست از بخش JS هست!");`
                         if (typeof parsed.javascript === 'string') files.javascript = parsed.javascript;
                     }
                 } catch (e) {
-                    console.warn('خطا در بارگذاری از localStorage، استفاده از مقادیر پیش‌فرض');
+                    console.warn('خطا در بارگذاری از localStorage');
                 }
             }
 
@@ -391,11 +688,10 @@ alert("این یک تست از بخش JS هست!");`
                 toastEl.style.borderColor = isError ? '#991b1b' : 'rgba(255,255,255,0.06)';
                 toastEl.classList.add('show');
                 clearTimeout(toastTimer);
-                setTimeout(() => { toastEl.classList.remove('show'); }, 2400);
+                toastTimer = setTimeout(() => { toastEl.classList.remove('show'); }, 2400);
             }
 
-            let toastTimer = null;
-
+            // ===== ناوبری =====
             function getPhoneWidth() { return phone.clientWidth || 393; }
 
             window.goTo = function(page) {
@@ -447,7 +743,6 @@ alert("این یک تست از بخش JS هست!");`
                 lineNumbers.scrollTop = codeEditor.scrollTop;
             });
 
-            // ===== تغییر زبان =====
             window.setLang = function(lang, btn) {
                 files[currentLang] = codeEditor.value; 
                 currentLang = lang;
@@ -460,7 +755,6 @@ alert("این یک تست از بخش JS هست!");`
                 showToast(`🔀 تغییر به ${lang.toUpperCase()}`);
             };
 
-            // ===== زیبا سازی کد =====
             window.formatCode = function() {
                 let text = codeEditor.value;
                 try {
@@ -484,7 +778,6 @@ alert("این یک تست از بخش JS هست!");`
                 } catch (e) { showToast('⚠️ خطا در زیبا‌سازی', true); }
             };
 
-            // ===== UNDO/REDO =====
             window.undoAction = function() { document.execCommand('undo'); }
             window.redoAction = function() { document.execCommand('redo'); }
             window.findInEditor = function() { showToast('🔍 جستجو در موبایل با Ctrl+F'); }
@@ -543,7 +836,6 @@ alert("این یک تست از بخش JS هست!");`
             window.runCode = autoPreview;
             window.refreshPreview = autoPreview;
 
-            // ===== تغییر سایز دستگاه =====
             let currentDevice = 0;
             const devices = ['mobile', 'tablet', 'desktop'];
             const deviceLabels = ['📱 موبایل', '📟 تبلت', '🖥️ دسکتاپ'];
@@ -570,7 +862,6 @@ alert("این یک تست از بخش JS هست!");`
                 showToast(`📱 ${deviceLabels[currentDevice]}`);
             };
 
-            // ===== تمام صفحه =====
             window.toggleFullscreenPreview = function() {
                 if (frame.classList.contains('fullscreen-active')) {
                     frame.classList.remove('fullscreen-active');
@@ -593,15 +884,14 @@ alert("این یک تست از بخش JS هست!");`
                 }
             };
 
-            // ===== اسکرین‌شات =====
             window.takeScreenshot = function() {
-                const frame = document.getElementById('frame');
-                if (!frame || !frame.contentDocument || !frame.contentDocument.body) {
+                const frameEl = document.getElementById('frame');
+                if (!frameEl || !frameEl.contentDocument || !frameEl.contentDocument.body) {
                     showToast('⚠️ ابتدا پیش‌نمایش را اجرا کنید');
                     return;
                 }
 
-                html2canvas(frame.contentDocument.body).then(canvas => {
+                html2canvas(frameEl.contentDocument.body).then(canvas => {
                     const link = document.createElement('a');
                     link.download = 'preview-screenshot.png';
                     link.href = canvas.toDataURL('image/png');
@@ -613,75 +903,52 @@ alert("این یک تست از بخش JS هست!");`
             };
 
             // ==========================================================
-            // 🧠 AI CHAT (نسخه هوشمند با پاسخ‌های آماده)
+            // 🧠 AI CHAT
             // ==========================================================
 
-            // ===== دیکشنری پاسخ‌های هوشمند =====
             function getAIResponse(message) {
                 const msg = message.toLowerCase().trim();
 
-                // --- سلام و احوالپرسی ---
                 if (msg.includes('سلام') || msg.includes('درود') || msg.includes('hi') || msg.includes('hello')) {
                     return 'سلام! 👋 چطور می‌تونم کمکت کنم؟';
                 }
-                if (msg.includes('چطوری') || msg.includes('حالت') || msg.includes('چطور') && msg.includes('شما')) {
+                if (msg.includes('چطوری') || msg.includes('حالت')) {
                     return 'من خوبم، ممنون! 🤖 چطور می‌تونم بهت کمک کنم؟';
-                }
-                if (msg.includes('خوبی') || msg.includes('حال')) {
-                    return 'عالی! ممنون از لطفت 😊 چیز خاصی برای کمک دارم؟';
                 }
                 if (msg.includes('تشکر') || msg.includes('ممنون') || msg.includes('مرسی')) {
                     return 'قابل شما رو نداره! 😄 هر وقت سوالی داشتی، بپرس.';
                 }
                 if (msg.includes('خدافظ') || msg.includes('می‌روم') || msg.includes('bye')) {
-                    return 'خدافظ! 👋 موفق باشی. هر وقت برگشتی، خوشحال می‌شم کمکت کنم.';
+                    return 'خدافظ! 👋 موفق باشی.';
                 }
-
-                // --- سوالات متداول برنامه‌نویسی ---
                 if (msg.includes('سایت') && msg.includes('ساخت')) {
-                    return '🌐 برای ساخت یک سایت ساده، این مراحل رو دنبال کن:\n\n1. HTML: ساختار صفحه رو بنویس.\n2. CSS: ظاهر رو طراحی کن.\n3. JS: عملکرد و تعاملات رو اضافه کن.\n\n📚 پیشنهاد: با یک صفحه ساده شروع کن و کم‌کم پیش برو!';
+                    return '🌐 برای ساخت یک سایت ساده:\n\n1. HTML: ساختار\n2. CSS: ظاهر\n3. JS: عملکرد\n\n📚 با یک صفحه ساده شروع کن!';
                 }
                 if (msg.includes('خطا') || msg.includes('ارور') || msg.includes('باگ') || msg.includes('مشکل')) {
-                    return '🐞 برای رفع خطا:\n\n1. پیام خطا رو دقیق بخون.\n2. خط مورد نظر رو توی کد پیدا کن.\n3. از console.log برای دیباگ استفاده کن.\n4. اگر حل نشد، کد رو تکه‌تکه تست کن.\n\n❓ کدت رو بفرست تا دقیق‌تر کمک کنم!';
+                    return '🐞 برای رفع خطا:\n\n1. پیام خطا رو بخون\n2. خط مورد نظر رو پیدا کن\n3. از console.log استفاده کن\n\n❓ کدت رو بفرست تا دقیق‌تر کمک کنم!';
                 }
                 if (msg.includes('ماشین حساب') || msg.includes('calculator')) {
-                    return '🧮 برای ساختن ماشین حساب:\n\n1. HTML: یه صفحه با دکمه‌های اعداد و عملگرها.\n2. CSS: ظاهر رو زیبا کن.\n3. JS: توابع جمع، تفریق، ضرب و تقسیم رو بنویس.\n\n💡 مثال: از eval() می‌تونی استفاده کنی، ولی مراقب باش!';
-                }
-                if (msg.includes('چگونه') || msg.includes('چجوری') || msg.includes('چطور')) {
-                    return '🔍 بذار قدم‌به‌قدم توضیح بدم:\n\n1. اول هدف رو مشخص کن.\n2. منابع رو جمع کن.\n3. قدم‌های کوچیک بردار.\n4. هر جا گیر کردی، بپرس!\n\n📌 حالا بگو دقیقاً چی می‌خوای؟';
-                }
-                if (msg.includes('پروژه') || msg.includes('نوشتن')) {
-                    return '📁 برای شروع یه پروژه:\n\n1. ایده‌ت رو مشخص کن.\n2. ابزارها رو انتخاب کن.\n3. ساختار رو طراحی کن.\n4. شروع کن به نوشتن کد.\n\n🚀 اگه پروژه خاصی مد نظرته، بگو تا کمکت کنم.';
+                    return '🧮 برای ساختن ماشین حساب:\n\n1. HTML: دکمه‌های اعداد\n2. CSS: ظاهر\n3. JS: توابع جمع، تفریق...';
                 }
                 if (msg.includes('html')) {
-                    return '📄 HTML زبان ساختاردهی به صفحات وب هست.\n\n✅ تگ‌های اصلی:\n- <html>: شروع سند\n- <head>: اطلاعات صفحه\n- <body>: محتوای اصلی\n\n💡 هر تگ رو با </...> می‌بندیم.';
+                    return '📄 HTML زبان ساختار صفحات وب هست.\n\n✅ تگ‌های اصلی:\n- <html>: شروع سند\n- <head>: اطلاعات\n- <body>: محتوا';
                 }
                 if (msg.includes('css')) {
-                    return '🎨 CSS برای ظاهر صفحه استفاده میشه.\n\n✅ مثال:\nbody {\n  background: #000;\n  color: #fff;\n}\n\n📚 برای یادگیری، با flexbox و grid شروع کن!';
+                    return '🎨 CSS برای ظاهر صفحه.\n\n✅ مثال:\nbody {\n  background: #000;\n  color: #fff;\n}';
                 }
                 if (msg.includes('javascript') || msg.includes('js')) {
-                    return '⚡ جاوااسکریپت زبان برنامه‌نویسی وب هست.\n\n✅ مفاهیم اصلی:\n- متغیرها (let, const)\n- شرط‌ها (if, else)\n- حلقه‌ها (for, while)\n- توابع (function)\n\n📌 شروع کن با console.log("Hello");!';
+                    return '⚡ جاوااسکریپت زبان برنامه‌نویسی وب.\n\n✅ مفاهیم:\n- متغیرها (let, const)\n- شرط‌ها (if)\n- حلقه‌ها (for)\n- توابع';
                 }
                 if (msg.includes('یادگیری') || msg.includes('آموزش') || msg.includes('شروع')) {
-                    return '📚 برای شروع برنامه‌نویسی:\n\n1. زبان مورد نظرت رو انتخاب کن.\n2. مفاهیم پایه رو یاد بگیر.\n3. پروژه‌های کوچیک بساز.\n4. هر روز تمرین کن.\n\n💡 پیشنهاد: با HTML و CSS شروع کن، بعد JS رو یاد بگیر.';
-                }
-                if (msg.includes('تمرین') || msg.includes('تمرین‌ها')) {
-                    return '🎯 برای تمرین برنامه‌نویسی:\n\n1. از سایت‌های تمرینی مثل کدبزن استفاده کن.\n2. پروژه‌های کوچیک برای خودت بساز.\n3. کدهای دیگران رو بخون و تحلیل کن.\n\n💪 هر روز ۳۰ دقیقه تمرین کن، نتیجه رو می‌بینی!';
+                    return '📚 برای شروع برنامه‌نویسی:\n\n1. زبان انتخاب کن\n2. مفاهیم پایه یاد بگیر\n3. پروژه‌های کوچیک بساز\n4. تمرین کن';
                 }
                 if (msg.includes('ربات') || msg.includes('هوش مصنوعی') || msg.includes('ai')) {
-                    return '🤖 هوش مصنوعی می‌تونه توی برنامه‌نویسی کمک کنه:\n\n1. تولید کد\n2. پیدا کردن باگ\n3. توضیح مفاهیم\n4. بهینه‌سازی کد\n\n🚀 من اینجام تا کمکت کنم!';
+                    return '🤖 هوش مصنوعی می‌تونه کمک کنه:\n\n1. تولید کد\n2. پیدا کردن باگ\n3. توضیح مفاهیم\n4. بهینه‌سازی';
                 }
 
-                // --- پاسخ‌های عمومی ---
-                if (msg.includes('؟') || msg.includes('?')) {
-                    return '❓ سوال خوبی پرسیدی! بذار فکر کنم...\n\n📌 می‌تونی سوال رو دقیق‌تر بپرسی تا بهتر بتونم کمک کنم.';
-                }
-
-                // --- پاسخ پیش‌فرض (وقتی چیزی پیدا نشد) ---
-                return '🤔 متوجه سوال تو شدم، ولی برای جواب دقیق‌تر نیاز به اطلاعات بیشتری دارم.\n\n💡 سوال خودت رو دقیق‌تر بپرس تا بتونم کمکت کنم!\n\n📌 راهنمایی: می‌تونی درباره برنامه‌نویسی، ساخت سایت، رفع خطا یا یادگیری سوال کنی.';
+                return '🤔 متوجه سوال تو شدم، ولی برای جواب دقیق‌تر نیاز به اطلاعات بیشتری دارم.\n\n💡 سوال خودت رو دقیق‌تر بپرس!';
             }
 
-            // ===== افزودن پیام کاربر =====
             function addMessage(text, sender) {
                 const msgDiv = document.createElement('div');
                 msgDiv.className = `msg ${sender}`;
@@ -690,47 +957,36 @@ alert("این یک تست از بخش JS هست!");`
                 chatMessages.appendChild(msgDiv);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
 
-                // ذخیره در تاریخچه
                 chatHistory.push({ sender, text });
             }
 
-            // ===== ارسال سریع از دکمه‌های پیشنهادی =====
             window.quickSend = function(text) {
                 aiInput.value = text;
                 sendAI();
             };
 
-            // ===== ارسال پیام اصلی =====
             window.sendAI = function() {
                 const text = aiInput.value.trim();
                 if (!text) return;
 
-                // نمایش پیام کاربر
                 addMessage(text, 'user');
                 aiInput.value = '';
 
-                // نمایش نشانگر تایپ
                 typingIndicator.style.display = 'flex';
                 chatMessages.scrollTop = chatMessages.scrollHeight;
 
-                // شبیه‌سازی تاخیر (حس واقعی)
                 const delay = 500 + Math.random() * 1000;
 
                 setTimeout(() => {
-                    // مخفی کردن نشانگر تایپ
                     typingIndicator.style.display = 'none';
-
-                    // دریافت پاسخ از هوش مصنوعی
                     const response = getAIResponse(text);
 
-                    // نمایش پاسخ با افکت تایپ تدریجی
                     const botMsg = document.createElement('div');
                     botMsg.className = 'msg bot';
                     botMsg.innerHTML = '<i class="fas fa-robot"></i> ';
                     chatMessages.appendChild(botMsg);
                     chatMessages.scrollTop = chatMessages.scrollHeight;
 
-                    // تایپ تدریجی
                     let i = 0;
                     const typeInterval = setInterval(() => {
                         if (i < response.length) {
@@ -739,14 +995,12 @@ alert("این یک تست از بخش JS هست!");`
                             chatMessages.scrollTop = chatMessages.scrollHeight;
                         } else {
                             clearInterval(typeInterval);
-                            // ذخیره در تاریخچه
                             chatHistory.push({ sender: 'bot', text: response });
                         }
                     }, 15);
                 }, delay);
             };
 
-            // ===== پاک کردن چت =====
             window.clearChat = function() {
                 if (!confirm('آیا مطمئنی می‌خوای چت رو پاک کنی؟')) return;
                 chatMessages.innerHTML = `
@@ -756,7 +1010,6 @@ alert("این یک تست از بخش JS هست!");`
                 showToast('🧹 چت پاک شد!');
             };
 
-            // ===== خروجی چت =====
             window.exportChat = function() {
                 if (chatHistory.length === 0) {
                     showToast('⚠️ هنوز پیامی توی چت نیست!');
@@ -769,13 +1022,11 @@ alert("این یک تست از بخش JS هست!");`
                     output += `${prefix}: ${msg.text}\n\n`;
                 });
 
-                // کپی به کلیپ‌بورد
                 if (navigator.clipboard) {
                     navigator.clipboard.writeText(output).then(() => {
                         showToast('📋 چت کپی شد!');
                     });
                 } else {
-                    // دانلود به عنوان فایل
                     const blob = new Blob([output], { type: 'text/plain' });
                     const a = document.createElement('a');
                     a.href = URL.createObjectURL(blob);
@@ -784,8 +1035,6 @@ alert("این یک تست از بخش JS هست!");`
                     showToast('📥 چت دانلود شد!');
                 }
             };
-
-            // ==========================================================
 
             // ===== INIT =====
             loadFromLocal();
@@ -796,20 +1045,26 @@ alert("این یک تست از بخش JS هست!");`
             setTimeout(() => { showToast('🚀 نابغه‌کد راه‌اندازی شد!'); }, 500);
         })();
     </script>
-<script>
-    // =====================================================
-    //  بارگذاری پروژه و مدیریت پیش‌نمایش (نسخه نهایی و مستقل)
-    // =====================================================
-    document.addEventListener('DOMContentLoaded', function() {
 
-        // 1. داده رو از localStorage می‌خونیم
+    <!-- ===================================================== -->
+    <!--  بارگذاری پروژه از localStorage (نسخه اصلاح‌شده)      -->
+    <!-- ===================================================== -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
         const raw = localStorage.getItem('currentProject');
         if (!raw) {
             console.log('⚠️ هیچ پروژه‌ای پیدا نشد');
             return;
         }
 
-        const data = JSON.parse(raw);
+        let data;
+        try {
+            data = JSON.parse(raw);
+        } catch (e) {
+            console.error('❌ خطا در خواندن پروژه:', e);
+            return;
+        }
+
         if (!data || !data.html) {
             console.log('⚠️ داده ناقص است');
             return;
@@ -817,14 +1072,12 @@ alert("این یک تست از بخش JS هست!");`
 
         console.log('✅ پروژه پیدا شد:', data.name);
 
-        // ========== 1. ذخیره داده‌ها در یک متغیر ساده ==========
         const projectData = {
             html: data.html || '',
             css: data.css || '',
             js: data.js || ''
         };
 
-        // ========== 2. ادیتور رو پر کن ==========
         const editor = document.getElementById('codeEditor');
         if (editor) {
             editor.value = projectData.html;
@@ -833,10 +1086,9 @@ alert("این یک تست از بخش JS هست!");`
             }
         }
 
-        // ========== 3. یک تابع برای آپدیت کردن iframe ==========
         function updatePreview() {
-            const frame = document.getElementById('frame');
-            if (!frame) return;
+            const frameEl = document.getElementById('frame');
+            if (!frameEl) return;
 
             const html = projectData.html || '';
             const css = projectData.css || '';
@@ -853,14 +1105,13 @@ alert("این یک تست از بخش JS هست!");`
 <script>${js}<\/script>
 </html>`;
 
-            frame.srcdoc = src;
+            frameEl.srcdoc = src;
         }
 
-        // ========== 4. وقتی تب عوض میشه، ادیتور و iframe رو آپدیت کن ==========
+        // تب‌ها
         const tabs = document.querySelectorAll('.tabs button');
         tabs.forEach(tab => {
             tab.addEventListener('click', function() {
-                // حذف active از همه
                 tabs.forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
 
@@ -873,75 +1124,47 @@ alert("این یک تست از بخش JS هست!");`
                     editor.value = projectData.js;
                 }
 
-                // آپدیت شماره خطوط
                 if (typeof updateLineNumbers === 'function') {
                     updateLineNumbers();
                 }
 
-                // آپدیت پیش‌نمایش
                 updatePreview();
-
-                // نمایش پیام
-                if (typeof showToast === 'function') {
-                    showToast(`🔀 تغییر به ${lang.toUpperCase()}`);
-                }
             });
         });
 
-        // ========== 5. وقتی کاربر توی ادیتور چیزی تغییر داد، پیش‌نمایش آپدیت نشه (فقط وقتی دکمه اجرا رو زد) ==========
-        // اما دکمه‌های اجرا و بروزرسانی رو هم هندل میکنیم
-        const runBtn = document.querySelector('[onclick*="runCode"]');
-        if (runBtn) {
-            runBtn.onclick = function(e) {
-                e.preventDefault();
-                // کدهای فعلی ادیتور رو بگیر و توی پروژه بریز
-                const currentLang = document.querySelector('.tabs button.active')?.getAttribute('data-lang') || 'html';
-                if (currentLang === 'html') projectData.html = editor.value;
-                else if (currentLang === 'css') projectData.css = editor.value;
-                else if (currentLang === 'javascript') projectData.js = editor.value;
-                
-                updatePreview();
-                if (typeof showToast === 'function') {
-                    showToast('🚀 پیش‌نمایش بروز شد!');
-                }
-            };
-        }
-
-        // دکمه رفرش پیش‌نمایش
-        const refreshBtn = document.querySelector('[onclick*="refreshPreview"]');
-        if (refreshBtn) {
-            refreshBtn.onclick = function(e) {
-                e.preventDefault();
-                updatePreview();
-                if (typeof showToast === 'function') {
-                    showToast('🔄 پیش‌نمایش رفرش شد!');
-                }
-            };
-        }
-
-        // ========== 6. اولین بار پیش‌نمایش رو نشون بده ==========
         setTimeout(updatePreview, 200);
-
-        console.log('✅ پروژه بارگذاری شد و پیش‌نمایش اجرا شد!');
-
+        console.log('✅ پروژه بارگذاری شد!');
     });
-    // ===== اگر تمرین بود، راهنما رو توی چت نشون بده =====
-const projectData = JSON.parse(localStorage.getItem('currentProject'));
-if (projectData && projectData.isExercise) {
-    setTimeout(() => {
-        const chatMessages = document.getElementById('chatMessages');
-        const guideMsg = document.createElement('div');
-        guideMsg.className = 'msg bot';
-        guideMsg.innerHTML = `<i class="fas fa-robot"></i> 🎯 تمرین: ${projectData.name}\n\n📝 ${projectData.description}\n\n📖 راهنما:\n${projectData.guide}`;
-        chatMessages.appendChild(guideMsg);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    }, 500);
-}
-</script>
-<!-- ===== تابع goToDone برای رفتن به صفحه دانلود ===== -->
-<script>
-    function goToDone() {
-        // نام پروژه را از localStorage بگیر
+    </script>
+
+    <!-- ===================================================== -->
+    <!--  نمایش راهنما (اگر تمرین بود)                         -->
+    <!-- ===================================================== -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        try {
+            const projectData = JSON.parse(localStorage.getItem('currentProject'));
+            if (projectData && projectData.isExercise) {
+                setTimeout(() => {
+                    const cm = document.getElementById('chatMessages');
+                    if (!cm) return;
+                    const guideMsg = document.createElement('div');
+                    guideMsg.className = 'msg bot';
+                    guideMsg.innerHTML = `<i class="fas fa-robot"></i> 🎯 تمرین: ${projectData.name}\n\n📝 ${projectData.description}\n\n📖 راهنما:\n${projectData.guide}`;
+                    cm.appendChild(guideMsg);
+                    cm.scrollTop = cm.scrollHeight;
+                }, 500);
+            }
+        } catch (e) {}
+    });
+    </script>
+
+    <!-- ===================================================== -->
+    <!--  دکمه دریافت پروژه + ثبت تمرین (نسخه نهایی)          -->
+    <!-- ===================================================== -->
+    <script>
+    // ===== دکمه دریافت پروژه =====
+    window.goToDone = function() {
         const data = JSON.parse(localStorage.getItem('currentProject'));
         let projectName = 'پروژه من';
         
@@ -950,7 +1173,6 @@ if (projectData && projectData.isExercise) {
         }
         localStorage.setItem('selectedIdea', projectName);
 
-        // ذخیره کدها در کلیدهای جداگانه
         if (data) {
             localStorage.setItem('html', data.html || '');
             localStorage.setItem('css', data.css || '');
@@ -958,7 +1180,7 @@ if (projectData && projectData.isExercise) {
         }
 
         window.location.href = 'done.html';
-    }
+    };
 
     // ===== نمایش دکمه ثبت تمرین (فقط در حالت تمرین) =====
     document.addEventListener('DOMContentLoaded', function() {
@@ -972,120 +1194,61 @@ if (projectData && projectData.isExercise) {
         }
     });
 
-    // ===== تابع ثبت تمرین =====
-    function submitExercise() {
+    // ===== تابع ثبت تمرین (فقط یک بار اجرا می‌شود) =====
+    // ⚠️ نکته مهم: این تابع فقط از طریق onclick دکمه صدا زده می‌شود
+    // و هیچ addEventListener دیگری وجود ندارد
+    function submitExerciseOnce() {
         const project = JSON.parse(localStorage.getItem('currentProject'));
+
         if (!project || !project.isExercise) {
-            showToast('⚠️ این فقط برای تمرین‌هاست!');
+            if (typeof showToast === 'function') {
+                showToast('⚠️ این فقط برای تمرین‌هاست!');
+            } else {
+                alert('⚠️ این فقط برای تمرین‌هاست!');
+            }
             return;
         }
 
         const userCode = document.getElementById('codeEditor').value.trim();
 
         if (!userCode) {
-            showToast('⚠️ لطفاً کد تمرین را بنویسید!');
+            if (typeof showToast === 'function') {
+                showToast('⚠️ لطفاً کد تمرین را بنویسید!');
+            } else {
+                alert('⚠️ لطفاً کد تمرین را بنویسید!');
+            }
             return;
         }
 
-        // بررسی ساده: حداقل ۱۰ کاراکتر
         if (userCode.length < 10) {
-            showToast('⚠️ کد شما خیلی کوتاه است! لطفاً بیشتر بنویسید.');
+            if (typeof showToast === 'function') {
+                showToast('⚠️ کد شما خیلی کوتاه است!');
+            } else {
+                alert('⚠️ کد شما خیلی کوتاه است!');
+            }
             return;
         }
 
-        showToast('✅ تمرین با موفقیت ثبت شد!');
+        // ===== افزایش XP و سکه (فقط یک بار) =====
+        let currentXP = parseInt(localStorage.getItem('userXP')) || 0;
+        let currentCoins = parseInt(localStorage.getItem('userCoins')) || 0;
 
-        // هدایت به done.html
+        currentXP += 15;
+        currentCoins += 10;
+
+        localStorage.setItem('userXP', currentXP.toString());
+        localStorage.setItem('userCoins', currentCoins.toString());
+
+        if (typeof showToast === 'function') {
+            showToast('✅ تمرین ثبت شد! +۱۵ XP +۱۰ سکه');
+        } else {
+            alert('✅ تمرین ثبت شد! +۱۵ XP +۱۰ سکه');
+        }
+
         setTimeout(() => {
             window.location.href = 'done.html';
         }, 500);
     }
-</script>
-<script>
-    // ============================================================
-    //  مدیریت دکمه ثبت تمرین (نسخه نهایی با افزایش XP و سکه)
-    // ============================================================
-
-    // ۱. دکمه رو پیدا کن
-    const submitBtn = document.getElementById('submitExerciseBtn');
-
-    if (submitBtn) {
-        // ۲. وقتی صفحه لود شد، بررسی کن که آیا تمرین هست یا نه
-        document.addEventListener('DOMContentLoaded', function() {
-            const project = JSON.parse(localStorage.getItem('currentProject'));
-
-            // اگر تمرین است، دکمه رو نشون بده، وگرنه مخفی کن
-            if (project && project.isExercise) {
-                submitBtn.style.display = 'flex';
-            } else {
-                submitBtn.style.display = 'none';
-            }
-        });
-
-        // ۳. رویداد کلیک رو به دکمه وصل کن (این بار تضمینی!)
-        submitBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-
-            // دریافت پروژه فعلی
-            const project = JSON.parse(localStorage.getItem('currentProject'));
-
-            // اگه تمرین نیست، خطا بده
-            if (!project || !project.isExercise) {
-                if (typeof showToast === 'function') {
-                    showToast('⚠️ این فقط برای تمرین‌هاست!');
-                } else {
-                    alert('⚠️ این فقط برای تمرین‌هاست!');
-                }
-                return;
-            }
-
-            // دریافت کد کاربر از ادیتور
-            const userCode = document.getElementById('codeEditor').value.trim();
-
-            // اگه کد خالی بود
-            if (!userCode) {
-                if (typeof showToast === 'function') {
-                    showToast('⚠️ لطفاً کد تمرین را بنویسید!');
-                } else {
-                    alert('⚠️ لطفاً کد تمرین را بنویسید!');
-                }
-                return;
-            }
-
-            // بررسی ساده: حداقل ۱۰ کاراکتر
-            if (userCode.length < 10) {
-                if (typeof showToast === 'function') {
-                    showToast('⚠️ کد شما خیلی کوتاه است! لطفاً بیشتر بنویسید.');
-                } else {
-                    alert('⚠️ کد شما خیلی کوتاه است! لطفاً بیشتر بنویسید.');
-                }
-                return;
-            }
-
-            // ========== افزایش XP و سکه ==========
-            let currentXP = parseInt(localStorage.getItem('userXP')) || 0;
-            let currentCoins = parseInt(localStorage.getItem('userCoins')) || 0;
-
-            currentXP += 15; // ۱۵ XP برای حل تمرین
-            currentCoins += 10; // ۱۰ سکه برای حل تمرین
-
-            localStorage.setItem('userXP', currentXP.toString());
-            localStorage.setItem('userCoins', currentCoins.toString());
-            // ========================================
-
-            // ===== همه چیز درست بود =====
-            if (typeof showToast === 'function') {
-                showToast('✅ تمرین با موفقیت ثبت شد! +۱۵ XP +۱۰ سکه');
-            } else {
-                alert('✅ تمرین با موفقیت ثبت شد! +۱۵ XP +۱۰ سکه');
-            }
-
-            // هدایت به done.html
-            setTimeout(() => {
-                window.location.href = 'done.html';
-            }, 500);
-        });
-    }
-</script>
+    </script>
 </body>
 </html>
