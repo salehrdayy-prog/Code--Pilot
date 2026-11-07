@@ -10,7 +10,6 @@
 <link rel="stylesheet" href="themes.css">
 
 <style>
-/* ===== تمام استایل‌های قبلی ===== */
 *{
   margin:0;
   padding:0;
@@ -413,30 +412,25 @@ function goToProfile(){
 const name = localStorage.getItem("selectedIdea");
 if(name) document.getElementById("projectName").innerText = name;
 
-// ================= دانلود ZIP (نسخه تضمینی و بدون باگ) =================
+// ================= دانلود ZIP =================
 function downloadZip(){
-  // دریافت کدها از localStorage
   const html = localStorage.getItem("html") || "";
   const css = localStorage.getItem("css") || "";
   const js = localStorage.getItem("js") || "";
   const projectName = localStorage.getItem("selectedIdea") || "project";
 
-  // چک کردن اینکه آیا محتوایی وجود دارد یا نه
   if(!html && !css && !js){
     alert("⚠️ هیچ فایلی برای دانلود وجود ندارد!");
     return;
   }
 
   try {
-    // ساخت فایل ZIP
     const zip = new JSZip();
     zip.file("index.html", html);
     zip.file("style.css", css);
     zip.file("script.js", js);
 
-    // تولید فایل ZIP و دانلود مستقیم
     zip.generateAsync({type:"blob"}).then(function(content){
-      // استفاده از FileSaver یا روش جایگزین
       const url = window.URL.createObjectURL(content);
       const a = document.createElement("a");
       a.href = url;
@@ -455,23 +449,50 @@ function downloadZip(){
   }
 }
 
-// ================= ذخیره پروژه و رفتن به داشبورد =================
-function saveProject(){
-  // ابتدا پروژه را ذخیره کن
+// ================= ذخیره پروژه (بدون تکرار) =================
+function saveProject() {
+  // گرفتن اطلاعات پروژه فعلی
+  const currentProject = JSON.parse(localStorage.getItem("currentProject") || "{}");
+
+  // گرفتن کدها از لوکال استوریج
+  const html = localStorage.getItem("html") || "";
+  const css = localStorage.getItem("css") || "";
+  const js = localStorage.getItem("js") || "";
+
+  // گرفتن لیست پروژه‌های موجود
   let projects = JSON.parse(localStorage.getItem("projects") || "[]");
-  projects.push({
-    name: localStorage.getItem("selectedIdea") || "پروژه جدید",
-    html: localStorage.getItem("html") || "",
-    css: localStorage.getItem("css") || "",
-    js: localStorage.getItem("js") || "",
-    date: new Date().toLocaleDateString("fa-IR")
-  });
+
+  // چک کردن اینکه آیا این پروژه از قبل توی لیست هست یا نه
+  let idx = -1;
+  if (currentProject.id) {
+    idx = projects.findIndex((p) => p.id === currentProject.id);
+  }
+
+  if (idx >= 0) {
+    // اگر بود، فقط کدهای جدید رو جایگزین می‌کنیم (آپدیت)
+    projects[idx] = {
+      ...projects[idx],
+      html: html || projects[idx].html || "",
+      css: css || projects[idx].css || "",
+      js: js || projects[idx].js || "",
+    };
+  } else {
+    // اگر نبود، به عنوان یک پروژه جدید اضافه می‌کنیم
+    projects.push({
+      id: currentProject.id || Date.now(),
+      name: currentProject.name || localStorage.getItem("selectedIdea") || "پروژه جدید",
+      html,
+      css,
+      js,
+      date: new Date().toLocaleDateString("fa-IR"),
+    });
+  }
+
+  // ذخیره در لوکال استوریج
   localStorage.setItem("projects", JSON.stringify(projects));
-  
-  // پیام تایید
-  alert("پروژه ذخیره شد 😎🔥");
-  
-  // هدایت به داشبورد
+
+  // پیام و انتقال
+  alert("پروژه با موفقیت ذخیره شد 😎🔥");
   window.location.href = "dashboard.html";
 }
 
@@ -480,7 +501,7 @@ function goHome(){
   window.location.href = "ideas.html";
 }
 
-// ================= تنظیم اندازه کانوس هنگام تغییر سایز =================
+// ================= تنظیم اندازه کانوس =================
 window.addEventListener("resize", ()=>{
   canvas.width = innerWidth;
   canvas.height = innerHeight;
