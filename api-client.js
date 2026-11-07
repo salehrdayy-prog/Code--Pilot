@@ -1,12 +1,8 @@
 // ============================================================
 //  api-client.js — ارتباط مرورگر با سرور AI
-//  کلید هرگز اینجا نیست؛ فقط به سرور خودت وصل می‌شود.
 // ============================================================
 
-const AI_ENDPOINT =
-  location.hostname === "localhost" || location.hostname === "127.0.0.1"
-    ? "http://localhost:3000/api/chat"
-    : "https://YOUR-SERVER.onrender.com/api/chat";
+const AI_ENDPOINT = "https://code-pilot-1-34qk.onrender.com/api/chat";
 
 /**
  * ارسال پیام به سرور AI
