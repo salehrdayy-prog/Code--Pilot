@@ -11,7 +11,6 @@ if (!API_KEY) {
   process.exit(1);
 }
 
-// تنظیمات CORS برای اجازه دادن به GitHub Pages
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'OPTIONS'],
@@ -40,7 +39,6 @@ app.post("/api/chat", async (req, res) => {
   ];
 
   try {
-    // اتصال به سرور رایگان Groq
     const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -48,8 +46,8 @@ app.post("/api/chat", async (req, res) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        // 👈 مدل جدید و پایدار Groq
-        model: "llama-3.3-70b-versatile", 
+        // 👈 مدل پایدار و فعال Groq
+        model: "openai/gpt-oss-120b", 
         messages,
         temperature: 0.7,
       }),
