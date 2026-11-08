@@ -1,15 +1,5 @@
-// ============================================================
-//  api-client.js — ارتباط مرورگر با سرور AI
-// ============================================================
-
 const AI_ENDPOINT = "https://code-pilot-1-34qk.onrender.com/api/chat";
 
-/**
- * ارسال پیام به سرور AI
- * @param {string} message
- * @param {Array<{role: 'user'|'assistant', content: string}>} history
- * @returns {Promise<{ok: boolean, reply?: string, error?: string}>}
- */
 async function askAI(message, history = []) {
   try {
     const res = await fetch(AI_ENDPOINT, {
@@ -21,14 +11,11 @@ async function askAI(message, history = []) {
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
-      return { ok: false, error: data.error || `خطای HTTP ${res.status}` };
-    }
-    if (!data.reply) {
-      return { ok: false, error: "پاسخ خالی از سرور" };
+      return { ok: false, error: data.error || `HTTP ${res.status}` };
     }
     return { ok: true, reply: data.reply };
   } catch (err) {
-    // 👇 این خط، خطای دقیق مرورگر رو نشون میده
-    return { ok: false, error: `خطای شبکه/CORS: ${err.message}` };
+    // این خط، دلیل دقیق بلاک شدن رو بهت میگه
+    return { ok: false, error: "خطای شبکه (CORS یا قطعی): " + err.message };
   }
 }
