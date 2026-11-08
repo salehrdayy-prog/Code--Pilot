@@ -52,7 +52,7 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
 .chat-messages .msg.bot { background: rgba(255, 255, 255, 0.06); color: #c8d8ec; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.04); }
 .chat-messages .msg i { margin-left: 6px; }
 
-/* 👈 استایل‌های جدید برای نمایش امن کدها */
+/* استایل‌های نمایش امن کدها */
 .chat-messages .msg.bot pre {
     background: #0a0e14;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -144,9 +144,7 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                         <button onclick="quickSend('HTML چیه؟')">📄 HTML</button>
                         <button onclick="quickSend('یادگیری از کجا شروع کنم؟')">📚 یادگیری</button>
                     </div>
-                    <div class="chat-messages" id="chatMessages">
-                        <div class="msg bot"><i class="fas fa-robot"></i> سلام! من نابغه‌کد هستم. 🤖<br><br>هر سوالی درباره برنامه‌نویسی داری بپرس!<br><br>💡 <b>موضوعات پیشنهادی:</b><br>• HTML / CSS / JavaScript<br>• ساخت سایت<br>• رفع خطا<br>• پروژه‌های پیشنهادی<br>• یادگیری از کجا</div>
-                    </div>
+                    <div class="chat-messages" id="chatMessages"></div>
                     <div class="typing-indicator" id="typingIndicator">
                         <span></span><span></span><span></span>
                     </div>
@@ -268,6 +266,38 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
             let files = {};
             let currentFileName = null;
 
+            // ===== ذخیره و بارگذاری حافظه چت =====
+            function saveChatMemory() {
+                try {
+                    localStorage.setItem('noboghe_chat_memory', JSON.stringify(chatHistory));
+                } catch(e) {}
+            }
+
+            function loadChatMemory() {
+                try {
+                    const saved = localStorage.getItem('noboghe_chat_memory');
+                    if (saved) {
+                        chatHistory = JSON.parse(saved);
+                        chatMessages.innerHTML = ''; 
+                        chatHistory.forEach(msg => {
+                            const msgDiv = document.createElement('div');
+                            msgDiv.className = `msg ${msg.sender}`;
+                            const icon = msg.sender === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+                            if(msg.sender === 'user') {
+                                msgDiv.innerHTML = `${icon} ${escapeHTML(msg.text)}`;
+                            } else {
+                                msgDiv.innerHTML = `${icon} ${formatMessage(msg.text)}`;
+                            }
+                            chatMessages.appendChild(msgDiv);
+                        });
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    } else {
+                        // پیام خوش‌آمدگویی اولیه
+                        addMessage("سلام! من نابغه‌کد هستم. 🤖\n\nهر سوالی درباره برنامه‌نویسی داری بپرس! من کل این گفتگو رو به خاطر می‌سپارم.", "bot");
+                    }
+                } catch(e) {}
+            }
+
             function saveFilesToLocal() {
                 try {
                     localStorage.setItem(FILES_STORAGE_KEY, JSON.stringify(files));
@@ -282,9 +312,9 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
 
                 if (!files || Object.keys(files).length === 0) {
                     files = {
-                        'index.html': `<!DOCTYPE html>\n<html>\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>نمونه HTML</title>\n</head>\n<body>\n    <h1 style="color: #8b5cf6; text-align: center; margin-top: 30px;">🚀 سلام نابغه‌کد!</h1>\n    <p style="text-align: center; color: #fff; font-family: sans-serif;">این یک صفحه HTML هست که توی مرورگر اجرا میشه.</p>\n    <button onclick="alert('سلام دوست من!')" style="display:block; margin: 20px auto; padding: 10px 20px; background: #8b5cf6; color: white; border: none; border-radius: 8px;">کلیک کن</button>\n</body>\n</html>`,
+                        'index.html': `<!DOCTYPE html>\n<html>\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>نمونه HTML</title>\n</head>\n<body>\n    <h1 style="color: #8b5cf6; text-align: center; margin-top: 30px;">🚀 سلام نابغه‌کد!</h1>\n    <p style="text-align: center; color: #fff; font-family: sans-serif;">این یک صفحه HTML هست که توی مرورگر اجرا میشه.</p>\n</body>\n</html>`,
                         'style.css': `body {\n    background: #1a1a2e;\n    color: white;\n    font-family: sans-serif;\n    display: flex;\n    flex-direction: column;\n    align-items: center;\n    justify-content: center;\n    height: 100vh;\n    margin: 0;\n}`,
-                        'script.js': `console.log("نابغه‌کد آماده است!");\nalert("این یک تست از بخش JS هست!");`
+                        'script.js': `console.log("نابغه‌کد آماده است!");`
                     };
                     saveFilesToLocal();
                 }
@@ -292,43 +322,30 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
 
             function renderTabs() {
                 tabsContainer.innerHTML = '';
-
                 Object.keys(files).forEach(function(fileName) {
                     const tab = document.createElement('button');
                     tab.className = 'file-tab' + (fileName === currentFileName ? ' active' : '');
-
-                    tab.innerHTML = 
-                        '<span class="file-name">' + fileName + '</span>' +
-                        '<span class="close-file" title="حذف">✕</span>';
-
+                    tab.innerHTML = '<span class="file-name">' + fileName + '</span><span class="close-file" title="حذف">✕</span>';
                     tab.addEventListener('click', function(e) {
                         if (e.target.classList.contains('close-file')) return;
                         switchFile(fileName);
                     });
-
                     tab.querySelector('.close-file').addEventListener('click', function(e) {
                         e.stopPropagation();
                         deleteFile(fileName);
                     });
-
                     tabsContainer.appendChild(tab);
                 });
-
                 const addBtn = document.createElement('button');
                 addBtn.className = 'add-file-btn';
                 addBtn.innerHTML = '<i class="fas fa-plus"></i>';
-                addBtn.title = 'فایل جدید';
                 addBtn.onclick = openNewFileModal;
                 tabsContainer.appendChild(addBtn);
             }
 
             function switchFile(fileName) {
                 if (!files[fileName]) return;
-
-                if (currentFileName && files[currentFileName] !== undefined) {
-                    files[currentFileName] = codeEditor.value;
-                }
-
+                if (currentFileName && files[currentFileName] !== undefined) files[currentFileName] = codeEditor.value;
                 currentFileName = fileName;
                 codeEditor.value = files[fileName];
                 updateLineNumbers();
@@ -337,79 +354,41 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
             }
 
             function deleteFile(fileName) {
-                if (Object.keys(files).length === 1) {
-                    showToast('⚠️ حداقل یک فایل باید بماند!', true);
-                    return;
-                }
-
+                if (Object.keys(files).length === 1) { showToast('⚠️ حداقل یک فایل باید بماند!', true); return; }
                 if (!confirm('فایل "' + fileName + '" حذف شود؟')) return;
-
                 delete files[fileName];
-
                 if (currentFileName === fileName) {
                     currentFileName = Object.keys(files)[0];
                     codeEditor.value = files[currentFileName];
                     updateLineNumbers();
                 }
-
                 renderTabs();
                 saveFilesToLocal();
                 showToast('🗑️ "' + fileName + '" حذف شد');
             }
 
-            window.openNewFileModal = function() {
-                newFileModal.classList.add('show');
-                document.getElementById('newFileName').value = '';
-                document.getElementById('newFileName').focus();
-            };
-
-            window.closeNewFileModal = function() {
-                newFileModal.classList.remove('show');
-            };
+            window.openNewFileModal = function() { newFileModal.classList.add('show'); document.getElementById('newFileName').value = ''; document.getElementById('newFileName').focus(); };
+            window.closeNewFileModal = function() { newFileModal.classList.remove('show'); };
 
             window.createNewFile = function() {
                 const name = document.getElementById('newFileName').value.trim();
                 const type = document.getElementById('newFileType').value;
-
-                if (!name) {
-                    showToast('⚠️ نام فایل را وارد کن!', true);
-                    return;
-                }
-
-                if (!/^[a-zA-Z0-9_-]+$/.test(name)) {
-                    showToast('⚠️ فقط حروف انگلیسی، عدد و خط تیره!', true);
-                    return;
-                }
-
+                if (!name) { showToast('⚠️ نام فایل را وارد کن!', true); return; }
+                if (!/^[a-zA-Z0-9_-]+$/.test(name)) { showToast('⚠️ فقط حروف انگلیسی، عدد و خط تیره!', true); return; }
                 const fullName = name + '.' + type;
-
-                if (files[fullName] !== undefined) {
-                    showToast('⚠️ این فایل قبلاً وجود دارد!', true);
-                    return;
-                }
-
+                if (files[fullName] !== undefined) { showToast('⚠️ این فایل قبلاً وجود دارد!', true); return; }
                 let content = '';
-                if (type === 'html') {
-                    content = '<!DOCTYPE html>\n<html>\n<head>\n    <meta charset="UTF-8">\n    <title>' + name + '</title>\n</head>\n<body>\n    <h1>' + name + '</h1>\n</body>\n</html>';
-                } else if (type === 'css') {
-                    content = '/* ' + name + '.css */\nbody {\n    margin: 0;\n    font-family: sans-serif;\n}';
-                } else if (type === 'js') {
-                    content = '// ' + name + '.js\nconsole.log("' + name + ' loaded");';
-                } else if (type === 'json') {
-                    content = '{\n    "name": "' + name + '"\n}';
-                }
-
-                if (currentFileName && files[currentFileName] !== undefined) {
-                    files[currentFileName] = codeEditor.value;
-                }
-
+                if (type === 'html') content = '<!DOCTYPE html>\n<html>\n<head>\n    <meta charset="UTF-8">\n    <title>' + name + '</title>\n</head>\n<body>\n    <h1>' + name + '</h1>\n</body>\n</html>';
+                else if (type === 'css') content = '/* ' + name + '.css */\nbody {\n    margin: 0;\n}';
+                else if (type === 'js') content = '// ' + name + '.js\nconsole.log("loaded");';
+                
+                if (currentFileName && files[currentFileName] !== undefined) files[currentFileName] = codeEditor.value;
                 files[fullName] = content;
                 currentFileName = fullName;
                 codeEditor.value = content;
                 updateLineNumbers();
                 renderTabs();
                 saveFilesToLocal();
-
                 window.closeNewFileModal();
                 showToast('✅ "' + fullName + '" ساخته شد');
             };
@@ -417,7 +396,6 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
             function showToast(msg, isError = false) {
                 toastEl.textContent = msg;
                 toastEl.style.background = isError ? '#7f1d1d' : '#1a1a2e';
-                toastEl.style.borderColor = isError ? '#991b1b' : 'rgba(255,255,255,0.06)';
                 toastEl.classList.add('show');
                 clearTimeout(toastTimer);
                 toastTimer = setTimeout(() => { toastEl.classList.remove('show'); }, 2400);
@@ -428,8 +406,7 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
             window.goTo = function(page) {
                 if (page < 0 || page >= totalPages) return;
                 currentPage = page;
-                const w = getPhoneWidth();
-                container.style.transform = `translateX(-${page * w}px)`;
+                container.style.transform = `translateX(-${page * getPhoneWidth()}px)`;
                 dots.forEach((dot, i) => { dot.classList.toggle('active', i === page); });
             };
 
@@ -439,10 +416,8 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                 if (!isDragging) return;
                 currentX = e.touches[0].clientX;
                 const diff = currentX - startX;
-                const w = getPhoneWidth();
-                const baseOffset = -currentPage * w;
                 container.style.transition = 'none';
-                container.style.transform = `translateX(${baseOffset + diff}px)`;
+                container.style.transform = `translateX(${-currentPage * getPhoneWidth() + diff}px)`;
             }, { passive: true });
             phone.addEventListener('touchend', function() {
                 if (!isDragging) return;
@@ -463,38 +438,25 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
             }
 
             codeEditor.addEventListener('input', () => {
-                if (currentFileName && files[currentFileName] !== undefined) {
-                    files[currentFileName] = codeEditor.value;
-                    saveFilesToLocal();
-                }
+                if (currentFileName && files[currentFileName] !== undefined) { files[currentFileName] = codeEditor.value; saveFilesToLocal(); }
                 updateLineNumbers();
             });
 
-            codeEditor.addEventListener('scroll', () => {
-                lineNumbers.scrollTop = codeEditor.scrollTop;
-            });
+            codeEditor.addEventListener('scroll', () => { lineNumbers.scrollTop = codeEditor.scrollTop; });
 
             window.formatCode = function() {
                 let text = codeEditor.value;
                 try {
-                    const lines = text.split('\n');
-                    let indent = 0;
-                    const formatted = [];
+                    const lines = text.split('\n'); let indent = 0; const formatted = [];
                     for (let line of lines) {
-                        let trimmed = line.trim();
-                        if (trimmed === '') { formatted.push(''); continue; }
+                        let trimmed = line.trim(); if (trimmed === '') { formatted.push(''); continue; }
                         if (trimmed.startsWith('}') || trimmed.startsWith(']') || trimmed.startsWith(')')) indent = Math.max(0, indent - 1);
                         formatted.push('    '.repeat(indent) + trimmed);
                         if (trimmed.endsWith('{') || trimmed.endsWith('[') || trimmed.endsWith('(') || trimmed.endsWith('=>')) indent++;
                     }
-                    const newText = formatted.join('\n');
-                    if (newText !== text) {
-                        codeEditor.value = newText;
-                        if (currentFileName) files[currentFileName] = newText;
-                        updateLineNumbers();
-                        saveFilesToLocal();
-                        showToast('✨ کد زیبا شد!');
-                    } else showToast('ℹ️ کد در حال حاضر زیبا است');
+                    codeEditor.value = formatted.join('\n');
+                    if (currentFileName) files[currentFileName] = codeEditor.value;
+                    updateLineNumbers(); saveFilesToLocal(); showToast('✨ کد زیبا شد!');
                 } catch (e) { showToast('⚠️ خطا در زیبا‌سازی', true); }
             };
 
@@ -503,43 +465,24 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
             window.findInEditor = function() { showToast('🔍 جستجو در موبایل با Ctrl+F'); }
 
             window.copyContent = function() {
-                const text = codeEditor.value;
-                if (navigator.clipboard) {
-                    navigator.clipboard.writeText(text).then(() => showToast('📄 کد کپی شد!'));
-                } else showToast('⚠️ کپی در این مرورگر پشتیبانی نمی‌شود', true);
+                if (navigator.clipboard) navigator.clipboard.writeText(codeEditor.value).then(() => showToast('📄 کد کپی شد!'));
+                else showToast('⚠️ کپی در این مرورگر پشتیبانی نمی‌شود', true);
             };
 
             window.closeEditor = function() {
                 if (confirm('آیا مطمئن هستید که می‌خواهید محتوای فعلی را پاک کنید؟')) {
-                    codeEditor.value = '';
-                    if (currentFileName) files[currentFileName] = '';
-                    updateLineNumbers();
-                    saveFilesToLocal();
-                    showToast('🗑️ محتوا پاک شد');
+                    codeEditor.value = ''; if (currentFileName) files[currentFileName] = '';
+                    updateLineNumbers(); saveFilesToLocal(); showToast('🗑️ محتوا پاک شد');
                 }
             };
 
             window.saveFile = function() { 
-                if (currentFileName) {
-                    files[currentFileName] = codeEditor.value;
-                    saveFilesToLocal();
-                }
+                if (currentFileName) { files[currentFileName] = codeEditor.value; saveFilesToLocal(); }
                 showToast('💾 فایل ذخیره شد!'); 
             };
 
-            window.nextTab = function() {
-                const keys = Object.keys(files);
-                const currentIndex = keys.indexOf(currentFileName);
-                const nextIndex = (currentIndex + 1) % keys.length;
-                switchFile(keys[nextIndex]);
-            };
-
-            window.prevTab = function() {
-                const keys = Object.keys(files);
-                const currentIndex = keys.indexOf(currentFileName);
-                const prevIndex = (currentIndex - 1 + keys.length) % keys.length;
-                switchFile(keys[prevIndex]);
-            };
+            window.nextTab = function() { const keys = Object.keys(files); switchFile(keys[(keys.indexOf(currentFileName) + 1) % keys.length]); };
+            window.prevTab = function() { const keys = Object.keys(files); switchFile(keys[(keys.indexOf(currentFileName) - 1 + keys.length) % keys.length]); };
 
             function buildPreviewHTML() {
                 let htmlFile = 'index.html';
@@ -547,139 +490,76 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                     const firstHtml = Object.keys(files).find(f => f.endsWith('.html'));
                     if (firstHtml) htmlFile = firstHtml;
                 }
-
                 let html = files[htmlFile] || '<h1>فایلی پیدا نشد</h1>';
-
-                let cssContent = '';
-                let jsContent = '';
+                let cssContent = '', jsContent = '';
                 Object.keys(files).forEach(f => {
                     if (f.endsWith('.css')) cssContent += '\n' + files[f];
                     if (f.endsWith('.js')) jsContent += '\n' + files[f];
                 });
-
                 html = html.replace(/<link[^>]*href=["'][^"']+\.css["'][^>]*>/gi, '');
                 html = html.replace(/<script[^>]*src=["'][^"']+\.js["'][^>]*><\/script>/gi, '');
-
-                if (html.indexOf('</head>') !== -1) {
-                    html = html.replace('</head>', '<style>' + cssContent + '</style></head>');
-                } else {
-                    html = '<style>' + cssContent + '</style>' + html;
-                }
-
-                if (html.indexOf('</body>') !== -1) {
-                    html = html.replace('</body>', '<script>' + jsContent + '<\/script></body>');
-                } else {
-                    html = html + '<script>' + jsContent + '<\/script>';
-                }
-
+                if (html.indexOf('</head>') !== -1) html = html.replace('</head>', '<style>' + cssContent + '</style></head>');
+                else html = '<style>' + cssContent + '</style>' + html;
+                if (html.indexOf('</body>') !== -1) html = html.replace('</body>', '<script>' + jsContent + '<\/script></body>');
+                else html = html + '<script>' + jsContent + '<\/script>';
                 return html;
             }
 
-            function autoPreview() {
-                frame.srcdoc = buildPreviewHTML();
-            }
-
-            window.runCode = function() {
-                autoPreview();
-                goTo(2);
-            }
+            function autoPreview() { frame.srcdoc = buildPreviewHTML(); }
+            window.runCode = function() { autoPreview(); goTo(2); }
             window.refreshPreview = autoPreview;
 
             let currentDevice = 0;
-            const devices = ['mobile', 'tablet', 'desktop'];
-            const deviceLabels = ['📱 موبایل', '📟 تبلت', '🖥️ دسکتاپ'];
+            const devices = ['mobile', 'tablet', 'desktop'], deviceLabels = ['📱 موبایل', '📟 تبلت', '🖥️ دسکتاپ'];
 
             window.toggleDeviceSize = function() {
                 const wrapper = document.getElementById('previewWrapper');
                 wrapper.classList.remove('device-mobile', 'device-tablet', 'device-desktop');
                 frame.style.maxWidth = '';
-
                 currentDevice = (currentDevice + 1) % devices.length;
                 const device = devices[currentDevice];
-
-                if (device === 'mobile') {
-                    wrapper.classList.add('device-mobile');
-                    frame.style.maxWidth = '375px';
-                } else if (device === 'tablet') {
-                    wrapper.classList.add('device-tablet');
-                    frame.style.maxWidth = '768px';
-                } else {
-                    wrapper.classList.add('device-desktop');
-                    frame.style.maxWidth = '100%';
-                }
-
+                if (device === 'mobile') { wrapper.classList.add('device-mobile'); frame.style.maxWidth = '375px'; }
+                else if (device === 'tablet') { wrapper.classList.add('device-tablet'); frame.style.maxWidth = '768px'; }
+                else { wrapper.classList.add('device-desktop'); frame.style.maxWidth = '100%'; }
                 showToast(`📱 ${deviceLabels[currentDevice]}`);
             };
 
             window.toggleFullscreenPreview = function() {
                 if (frame.classList.contains('fullscreen-active')) {
                     frame.classList.remove('fullscreen-active');
-                    frame.style.position = 'absolute';
-                    frame.style.width = '100%';
-                    frame.style.height = '100%';
-                    frame.style.top = '0';
-                    frame.style.left = '0';
-                    frame.style.zIndex = '';
+                    frame.style.position = 'absolute'; frame.style.width = '100%'; frame.style.height = '100%'; frame.style.top = '0'; frame.style.left = '0'; frame.style.zIndex = '';
                     showToast('🔽 خروج از تمام صفحه');
                 } else {
                     frame.classList.add('fullscreen-active');
-                    frame.style.position = 'fixed';
-                    frame.style.top = '0';
-                    frame.style.left = '0';
-                    frame.style.width = '100vw';
-                    frame.style.height = '100vh';
-                    frame.style.zIndex = '9999';
+                    frame.style.position = 'fixed'; frame.style.top = '0'; frame.style.left = '0'; frame.style.width = '100vw'; frame.style.height = '100vh'; frame.style.zIndex = '9999';
                     showToast('🔍 تمام صفحه');
                 }
             };
 
             window.takeScreenshot = function() {
                 const frameEl = document.getElementById('frame');
-                if (!frameEl || !frameEl.contentDocument || !frameEl.contentDocument.body) {
-                    showToast('⚠️ ابتدا پیش‌نمایش را اجرا کنید');
-                    return;
-                }
-
+                if (!frameEl || !frameEl.contentDocument || !frameEl.contentDocument.body) { showToast('⚠️ ابتدا پیش‌نمایش را اجرا کنید'); return; }
                 html2canvas(frameEl.contentDocument.body).then(canvas => {
-                    const link = document.createElement('a');
-                    link.download = 'preview-screenshot.png';
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
+                    const link = document.createElement('a'); link.download = 'preview-screenshot.png'; link.href = canvas.toDataURL('image/png'); link.click();
                     showToast('📸 اسکرین‌شات گرفته شد!');
-                }).catch(() => {
-                    showToast('⚠️ خطا در گرفتن اسکرین‌شات');
-                });
+                }).catch(() => { showToast('⚠️ خطا در گرفتن اسکرین‌شات'); });
             };
 
             // ==========================================
-            // 🧠 AI CHAT — نمایش امن کدها
+            // 🧠 AI CHAT — حافظه بلندمدت
             // ==========================================
 
-            // 👈 تابع جلوگیری از اجرای تگ‌های HTML
             function escapeHTML(str) {
-                return str.replace(/[&<>'"]/g, 
-                    tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag])
-                );
+                return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag]));
             }
 
-            // 👈 تابع فرمت‌دهی متن و کدها
             function formatMessage(text) {
                 let safeText = escapeHTML(text);
-                
-                // تبدیل بلاک‌های کد مارک‌داون
-                safeText = safeText.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
-                    return `<pre><code>${code.trim()}</code></pre>`;
-                });
-                
-                // تبدیل کدهای درون‌خطی
+                safeText = safeText.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => `<pre><code>${code.trim()}</code></pre>`);
                 safeText = safeText.replace(/`([^`]+)`/g, '<code>$1</code>');
-                
-                // تبدیل خطوط جدید به br (به جز داخل بلاک‌های کد)
                 let parts = safeText.split(/(<pre>[\s\S]*?<\/pre>)/);
                 for (let i = 0; i < parts.length; i++) {
-                    if (!parts[i].startsWith('<pre>')) {
-                        parts[i] = parts[i].replace(/\n/g, '<br>');
-                    }
+                    if (!parts[i].startsWith('<pre>')) parts[i] = parts[i].replace(/\n/g, '<br>');
                 }
                 return parts.join('');
             }
@@ -688,22 +568,16 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                 const msgDiv = document.createElement('div');
                 msgDiv.className = `msg ${sender}`;
                 const icon = sender === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
-                
-                if (sender === 'user') {
-                    msgDiv.innerHTML = `${icon} ${escapeHTML(text)}`;
-                } else {
-                    msgDiv.innerHTML = `${icon} ${formatMessage(text)}`;
-                }
+                if (sender === 'user') msgDiv.innerHTML = `${icon} ${escapeHTML(text)}`;
+                else msgDiv.innerHTML = `${icon} ${formatMessage(text)}`;
                 
                 chatMessages.appendChild(msgDiv);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
                 chatHistory.push({ sender, text });
+                saveChatMemory(); // 👈 ذخیره در حافظه بعد از هر پیام
             }
 
-            window.quickSend = function(text) {
-                aiInput.value = text;
-                sendAI();
-            };
+            window.quickSend = function(text) { aiInput.value = text; sendAI(); };
 
             window.sendAI = async function() {
                 const text = aiInput.value.trim();
@@ -715,73 +589,55 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                 typingIndicator.style.display = 'flex';
                 chatMessages.scrollTop = chatMessages.scrollHeight;
 
-                const historyForAPI = chatHistory
-                    .filter((m) => m && m.text)
-                    .map((m) => ({
-                        role: m.sender === "user" ? "user" : "assistant",
-                        content: m.text,
-                    }));
+                // 👈 ارسال کل تاریخچه چت (تا ۱۰۰ پیام آخر برای جلوگیری از خطای سرور)
+                const historyForAPI = chatHistory.map(m => ({
+                    role: m.sender === "user" ? "user" : "assistant",
+                    content: m.text
+                }));
 
                 let result = { ok: false, error: "تابع askAI پیدا نشد" };
-                if (typeof askAI === "function") {
-                    result = await askAI(text, historyForAPI);
-                }
+                if (typeof askAI === "function") result = await askAI(text, historyForAPI);
 
                 typingIndicator.style.display = 'none';
 
-                const botMsg = document.createElement('div');
-                botMsg.className = 'msg bot';
-                botMsg.innerHTML = '<i class="fas fa-robot"></i> ';
-
                 if (result.ok) {
-                    botMsg.innerHTML += formatMessage(result.reply);
-                    chatHistory.push({ sender: "bot", text: result.reply });
+                    addMessage(result.reply, "bot");
                 } else {
-                    botMsg.innerHTML += `<span style="color: #ff6b6b; direction: rtl; display: inline-block; text-align: right;">❌ خطا در اتصال به سرور:<br>${result.error}</span>`;
-                    chatHistory.push({ sender: "bot", text: "Error: " + result.error });
+                    const botMsg = document.createElement('div');
+                    botMsg.className = 'msg bot';
+                    botMsg.innerHTML = `<i class="fas fa-robot"></i> <span style="color: #ff6b6b;">❌ خطا در اتصال به سرور:<br>${result.error}</span>`;
+                    chatMessages.appendChild(botMsg);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
                 }
-
-                chatMessages.appendChild(botMsg);
-                chatMessages.scrollTop = chatMessages.scrollHeight;
             };
 
             window.clearChat = function() {
-                if (!confirm('آیا مطمئنی می‌خوای چت رو پاک کنی؟')) return;
-                chatMessages.innerHTML = `
-                    <div class="msg bot"><i class="fas fa-robot"></i> سلام! من نابغه‌کد هستم. 🤖<br><br>هر سوالی درباره برنامه‌نویسی داری بپرس!</div>
-                `;
+                if (!confirm('آیا مطمئنی می‌خوای کل حافظه و چت رو پاک کنی؟')) return;
+                chatMessages.innerHTML = '';
                 chatHistory = [];
-                showToast('🧹 چت پاک شد!');
+                localStorage.removeItem('noboghe_chat_memory'); // 👈 پاک کردن حافظه
+                addMessage("سلام! من نابغه‌کد هستم. 🤖\n\nهر سوالی داری بپرس. من حافظه‌ام رو ریست کردم!", "bot");
+                showToast('🧹 حافظه و چت پاک شد!');
             };
 
             window.exportChat = function() {
-                if (chatHistory.length === 0) {
-                    showToast('⚠️ هنوز پیامی توی چت نیست!');
-                    return;
-                }
-
+                if (chatHistory.length === 0) { showToast('⚠️ هنوز پیامی توی چت نیست!'); return; }
                 let output = '--- تاریخچه چت ---\n\n';
                 chatHistory.forEach(msg => {
                     const prefix = msg.sender === 'user' ? '👤 کاربر' : '🤖 نابغه‌کد';
                     output += `${prefix}: ${msg.text}\n\n`;
                 });
-
-                if (navigator.clipboard) {
-                    navigator.clipboard.writeText(output).then(() => {
-                        showToast('📋 چت کپی شد!');
-                    });
-                } else {
+                if (navigator.clipboard) navigator.clipboard.writeText(output).then(() => showToast('📋 چت کپی شد!'));
+                else {
                     const blob = new Blob([output], { type: 'text/plain' });
-                    const a = document.createElement('a');
-                    a.href = URL.createObjectURL(blob);
-                    a.download = 'chat_history.txt';
-                    a.click();
+                    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'chat_history.txt'; a.click();
                     showToast('📥 چت دانلود شد!');
                 }
             };
 
             // ===== INIT =====
             loadFilesFromLocal();
+            loadChatMemory(); // 👈 بارگذاری حافظه در شروع
             currentFileName = Object.keys(files)[0];
             codeEditor.value = files[currentFileName];
             updateLineNumbers();
@@ -789,12 +645,7 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
             codeEditor.scrollTop = 0;
             autoPreview();
 
-            newFileModal.addEventListener('click', function(e) {
-                if (e.target === newFileModal) {
-                    window.closeNewFileModal();
-                }
-            });
-
+            newFileModal.addEventListener('click', function(e) { if (e.target === newFileModal) window.closeNewFileModal(); });
             setTimeout(() => { showToast('🚀 نابغه‌کد راه‌اندازی شد!'); }, 500);
         })();
     </script>
@@ -803,14 +654,8 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
     document.addEventListener('DOMContentLoaded', function() {
         const raw = localStorage.getItem('currentProject');
         if (!raw) return;
-
-        let data;
-        try {
-            data = JSON.parse(raw);
-        } catch (e) { return; }
-
+        let data; try { data = JSON.parse(raw); } catch (e) { return; }
         if (!data || !data.html) return;
-
         try {
             const existingFiles = JSON.parse(localStorage.getItem('noboghe-mobile-files-v2') || '{}');
             existingFiles['index.html'] = data.html || '';
@@ -825,12 +670,8 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
     window.goToDone = function() {
         const data = JSON.parse(localStorage.getItem('currentProject'));
         let projectName = 'پروژه من';
-
-        if (data && data.name) {
-            projectName = data.name;
-        }
+        if (data && data.name) projectName = data.name;
         localStorage.setItem('selectedIdea', projectName);
-
         try {
             const files = JSON.parse(localStorage.getItem('noboghe-mobile-files-v2') || '{}');
             localStorage.setItem('html', files['index.html'] || '');
@@ -843,55 +684,29 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                 localStorage.setItem('js', data.js || '');
             }
         }
-
         window.location.href = 'done.html';
     };
 
     document.addEventListener('DOMContentLoaded', function() {
         const project = JSON.parse(localStorage.getItem('currentProject'));
         const btn = document.getElementById('submitExerciseBtn');
-
-        if (btn && project && project.isExercise) {
-            btn.style.display = 'flex';
-        } else if (btn) {
-            btn.style.display = 'none';
-        }
+        if (btn && project && project.isExercise) btn.style.display = 'flex';
+        else if (btn) btn.style.display = 'none';
     });
 
     function submitExerciseOnce() {
         const project = JSON.parse(localStorage.getItem('currentProject'));
-
-        if (!project || !project.isExercise) {
-            alert('⚠️ این فقط برای تمرین‌هاست!');
-            return;
-        }
-
+        if (!project || !project.isExercise) { alert('⚠️ این فقط برای تمرین‌هاست!'); return; }
         const userCode = document.getElementById('codeEditor').value.trim();
-
-        if (!userCode) {
-            alert('⚠️ لطفاً کد تمرین را بنویسید!');
-            return;
-        }
-
-        if (userCode.length < 10) {
-            alert('⚠️ کد شما خیلی کوتاه است!');
-            return;
-        }
-
+        if (!userCode) { alert('⚠️ لطفاً کد تمرین را بنویسید!'); return; }
+        if (userCode.length < 10) { alert('⚠️ کد شما خیلی کوتاه است!'); return; }
         let currentXP = parseInt(localStorage.getItem('userXP')) || 0;
         let currentCoins = parseInt(localStorage.getItem('userCoins')) || 0;
-
-        currentXP += 15;
-        currentCoins += 10;
-
+        currentXP += 15; currentCoins += 10;
         localStorage.setItem('userXP', currentXP.toString());
         localStorage.setItem('userCoins', currentCoins.toString());
-
         alert('✅ تمرین ثبت شد! +۱۵ XP +۱۰ سکه');
-
-        setTimeout(() => {
-            window.location.href = 'done.html';
-        }, 500);
+        setTimeout(() => { window.location.href = 'done.html'; }, 500);
     }
     </script>
     
