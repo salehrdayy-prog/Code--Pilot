@@ -676,9 +676,19 @@ body {
                     <div class="typing-indicator" id="typingIndicator">
                         <span></span><span></span><span></span>
                     </div>
+                    
+                    <!-- پنل دیباگ (فعلاً مخفی است) -->
+                    <div id="debug-panel" style="display:none; background: #050505; border: 1px solid #333; color: #0f0; padding: 8px; font-size: 11px; border-radius: 8px; margin-top: 5px; font-family: monospace; direction: ltr; text-align: left; max-height: 100px; overflow-y: auto;">
+                        <div id="debug-log" style="white-space: pre-wrap;">[Debug Ready]</div>
+                    </div>
+                    
                     <div class="chat-input-row">
                         <input type="text" id="aiInput" placeholder="سوال خود را بپرسید..." onkeydown="if(event.key==='Enter') sendAI()">
                         <button onclick="sendAI()"><i class="fas fa-paper-plane"></i> ارسال</button>
+                    </div>
+                    <!-- دکمه نمایش/مخفی کردن دیباگ -->
+                    <div style="text-align: left; margin-top: 2px;">
+                        <button onclick="toggleDebug()" style="background: rgba(255,255,255,0.05); color: #888; font-size: 10px; padding: 4px 10px; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer;">🛠️ نمایش دیباگ</button>
                     </div>
                 </div>
             </div>
@@ -1146,7 +1156,7 @@ alert("این یک تست از بخش JS هست!");`
 
             window.runCode = function() {
                 autoPreview();
-                goTo(2); // بعد از اجرا، برو به تب پیش‌نمایش
+                goTo(2);
             }
             window.refreshPreview = autoPreview;
 
@@ -1217,403 +1227,22 @@ alert("این یک تست از بخش JS هست!");`
             };
 
             // ==========================================================
-            // 🧠 AI CHAT — نسخه پیشرفته (آنلاین + آفلاین)
+            // 🧠 AI CHAT — نسخه متصل به سرور (بدون پاسخ دستی)
             // ==========================================================
 
-            function getAIResponse(message) {
-                const msg = message.toLowerCase().trim();
+            // توابع دیباگ
+            window.toggleDebug = function() {
+                const panel = document.getElementById('debug-panel');
+                panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            }
 
-                // ==================== سلام ====================
-                if (/^(سلام|درود|hi|hello|hey|هی)/.test(msg) || msg.includes('سلام')) {
-                    const greetings = [
-                        'سلام! 👋 چطور می‌تونم کمکت کنم؟',
-                        'سلام دوست من! 😄 سوالی داری؟',
-                        'درود! 🤖 آماده‌ی کمکم.',
-                        'سلام! چیز خاصی هست که می‌خوای بسازی؟'
-                    ];
-                    return greetings[Math.floor(Math.random() * greetings.length)];
+            function logDebug(msg, isError = false) {
+                const log = document.getElementById('debug-log');
+                if (log) {
+                    const color = isError ? '#ff6b6b' : '#0f0';
+                    log.innerHTML += `<br><span style="color:${color}">> ${msg}</span>`;
+                    log.scrollTop = log.scrollHeight;
                 }
-
-                if (msg.includes('چطوری') || msg.includes('حالت') || msg.includes('خوبی')) {
-                    return 'من خوبم، ممنون! 🤖 تو چطوری؟ چطور می‌تونم بهت کمک کنم؟';
-                }
-
-                if (msg.includes('اسمت') || msg.includes('کی هستی') || msg.includes('تو کی')) {
-                    return 'من نابغه‌کد هستم! 🤖 یه دستیار برنامه‌نویسی که بهت کمک می‌کنم کد بزنی، باگ پیدا کنی، و پروژه بسازی.';
-                }
-
-                if (msg.includes('چند سال') || msg.includes('سن')) {
-                    return 'من یه برنامه‌ی هوشمندم، سن ندارم! 😄 ولی خیلی چیزها درباره برنامه‌نویسی می‌دونم.';
-                }
-
-                if (msg.includes('تشکر') || msg.includes('ممنون') || msg.includes('مرسی') || msg.includes('دستت درد نکنه')) {
-                    const thanks = [
-                        'قابل شما رو نداره! 😄 هر وقت سوالی داشتی، بپرس.',
-                        'خواهش می‌کنم! 🌟 موفق باشی.',
-                        'کاری نکردم! 😊 اگه چیز دیگه‌ای هست، بگو.'
-                    ];
-                    return thanks[Math.floor(Math.random() * thanks.length)];
-                }
-
-                if (msg.includes('خدافظ') || msg.includes('خداحافظ') || msg.includes('می‌روم') || msg.includes('bye')) {
-                    return 'خدافظ! 👋 موفق باشی. هر وقت برگشتی، من اینجام.';
-                }
-
-                // ==================== ساخت سایت ====================
-                if (msg.includes('سایت') && (msg.includes('ساخت') || msg.includes('بساز') || msg.includes('چطور'))) {
-                    return `🌐 <b>برای ساخت یک سایت ساده:</b>
-
-<b>مرحله ۱ — HTML (ساختار):</b>
-<code>&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-&lt;head&gt;
-    &lt;title&gt;سایت من&lt;/title&gt;
-&lt;/head&gt;
-&lt;body&gt;
-    &lt;h1&gt;سلام دنیا!&lt;/h1&gt;
-&lt;/body&gt;
-&lt;/html&gt;</code>
-
-<b>مرحله ۲ — CSS (ظاهر):</b>
-<code>body {
-    background: #1a1a2e;
-    color: white;
-}</code>
-
-<b>مرحله ۳ — JavaScript (تعامل):</b>
-<code>document.querySelector('h1').onclick = () =&gt; {
-    alert('کلیک شد!');
-};</code>
-
-💡 <b>نکته:</b> با یک صفحه ساده شروع کن، بعد کم‌کم پیچیده‌ترش کن.`;
-                }
-
-                // ==================== رفع خطا ====================
-                if (msg.includes('خطا') || msg.includes('ارور') || msg.includes('باگ') || msg.includes('کار نمی‌کنه') || msg.includes('error') || msg.includes('مشکل')) {
-                    return `🐞 <b>برای رفع خطا این مراحل رو دنبال کن:</b>
-
-<b>۱. پیام خطا رو دقیق بخون:</b>
-   - کدوم خط؟ کدوم فایل؟
-   - چه نوع خطایی؟ (ReferenceError, SyntaxError, ...)
-
-<b>۲. Console رو باز کن:</b>
-   - در Chrome: F12 → Console
-   - خطای قرمز رو بخون
-
-<b>۳. چک‌های رایج:</b>
-   ✅ همه‌ی تگ‌ها بسته شدن؟
-   ✅ اسم متغیرها درست نوشته شدن؟
-   ✅ <code>;</code> انتهای خطوط هست؟
-   ✅ تابع قبل از استفاده تعریف شده؟
-
-<b>۴. از <code>console.log()</code> استفاده کن:</b>
-<code>console.log('تا اینجا رسید');</code>
-
-❓ <b>اگه حل نشد، کدت رو با خطا بفرست تا دقیق‌تر بررسی کنم!</b>`;
-                }
-
-                // ==================== ماشین حساب ====================
-                if (msg.includes('ماشین حساب') || msg.includes('calculator')) {
-                    return `🧮 <b>ماشین حساب ساده:</b>
-
-<code>&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-&lt;head&gt;
-    &lt;title&gt;ماشین حساب&lt;/title&gt;
-    &lt;style&gt;
-        body { font-family: sans-serif; text-align: center; padding: 50px; }
-        input { padding: 10px; font-size: 18px; width: 100px; margin: 5px; }
-        button { padding: 10px 20px; font-size: 18px; margin: 5px; }
-        #result { font-size: 24px; margin-top: 20px; color: green; }
-    &lt;/style&gt;
-&lt;/head&gt;
-&lt;body&gt;
-    &lt;h2&gt;🧮 ماشین حساب&lt;/h2&gt;
-    &lt;input type="number" id="num1" placeholder="عدد اول"&gt;
-    &lt;input type="number" id="num2" placeholder="عدد دوم"&gt;
-    &lt;br&gt;
-    &lt;button onclick="calc('+')"&gt;+&lt;/button&gt;
-    &lt;button onclick="calc('-')"&gt;−&lt;/button&gt;
-    &lt;button onclick="calc('*')"&gt;×&lt;/button&gt;
-    &lt;button onclick="calc('/')"&gt;÷&lt;/button&gt;
-    &lt;div id="result"&gt;&lt;/div&gt;
-    &lt;script&gt;
-    function calc(op) {
-        const a = parseFloat(document.getElementById('num1').value) || 0;
-        const b = parseFloat(document.getElementById('num2').value) || 0;
-        let result = 0;
-        if (op === '+') result = a + b;
-        if (op === '-') result = a - b;
-        if (op === '*') result = a * b;
-        if (op === '/') result = b !== 0 ? a / b : 'تقسیم بر صفر!';
-        document.getElementById('result').innerText = 'نتیجه: ' + result;
-    }
-    &lt;/script&gt;
-&lt;/body&gt;
-&lt;/html&gt;</code>
-
-💡 <b>نکته:</b> می‌تونی دکمه‌های بیشتری اضافه کنی.`;
-                }
-
-                // ==================== HTML ====================
-                if (msg.includes('html')) {
-                    return `📄 <b>HTML — زبان ساختار صفحات وب</b>
-
-<b>تگ‌های اصلی:</b>
-<code>&lt;!DOCTYPE html&gt;       نوع سند
-&lt;html lang="fa"&gt;      شروع سند
-&lt;head&gt;                اطلاعات صفحه
-&lt;body&gt;                محتوای اصلی
-&lt;h1&gt;                  عنوان بزرگ
-&lt;p&gt;                   پاراگراف
-&lt;a href="#"&gt;          لینک
-&lt;img src=""&gt;          تصویر
-&lt;ul&gt;&lt;li&gt;              لیست
-&lt;div&gt;                 بخش‌بندی</code>
-
-✅ <b>قانون طلایی:</b> هر تگ باز، باید بسته بشه.`;
-                }
-
-                // ==================== CSS ====================
-                if (msg.includes('css')) {
-                    return `🎨 <b>CSS — زبان طراحی ظاهر</b>
-
-<b>ساختار:</b>
-<code>selector {
-    property: value;
-}</code>
-
-<b>مثال‌های کاربردی:</b>
-<code>/* رنگ و فونت */
-body {
-    background: #1a1a2e;
-    color: #fff;
-}
-
-/* دکمه زیبا */
-button {
-    background: #8b5cf6;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 8px;
-}
-
-/* چیدمان Flexbox */
-.container {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-}</code>
-
-📚 <b>مفاهیم مهم:</b> Flexbox، Grid، Media Query`;
-                }
-
-                // ==================== JavaScript ====================
-                if (msg.includes('javascript') || msg.includes('js') || msg.includes('جاوااسکریپت')) {
-                    return `⚡ <b>JavaScript — زبان برنامه‌نویسی وب</b>
-
-<b>مفاهیم پایه:</b>
-<code>// متغیرها
-let name = 'علی';
-const age = 25;
-
-// شرط‌ها
-if (age &gt; 18) {
-    console.log('بزرگسال');
-}
-
-// حلقه
-for (let i = 0; i &lt; 5; i++) {
-    console.log(i);
-}
-
-// توابع
-function greet(name) {
-    return 'سلام ' + name;
-}
-
-// آرایه
-const fruits = ['سیب', 'موز'];
-
-// رویداد
-document.querySelector('button').onclick = () =&gt; {
-    alert('کلیک شد!');
-};</code>
-
-📚 <b>پیشرفته:</b> Async/Await، Promise، DOM`;
-                }
-
-                // ==================== یادگیری ====================
-                if (msg.includes('یادگیری') || msg.includes('آموزش') || msg.includes('شروع کنم') || msg.includes('از کجا')) {
-                    return `📚 <b>مسیر یادگیری برنامه‌نویسی:</b>
-
-<b>۱. انتخاب زبان:</b>
-   • وب: HTML → CSS → JavaScript
-   • اپ موبایل: Dart (Flutter)
-   • هوش مصنوعی: Python
-
-<b>۲. مفاهیم پایه:</b>
-   • متغیرها
-   • شرط‌ها و حلقه‌ها
-   • توابع
-   • آرایه‌ها
-
-<b>۳. پروژه‌های کوچک:</b>
-   • ماشین حساب
-   • لیست کارها
-   • ساعت دیجیتال
-
-<b>۴. تمرین روزانه:</b>
-   • هر روز ۳۰ دقیقه
-   • پروژه‌محور یاد بگیر
-
-💡 <b>نکته طلایی:</b> فقط تماشا نکن، خودت کد بزن!`;
-                }
-
-                // ==================== پروژه ====================
-                if (msg.includes('پروژه') && (msg.includes('چی') || msg.includes('بسازم') || msg.includes('پیشنهاد') || msg.includes('ایده'))) {
-                    return `💡 <b>ایده‌های پروژه:</b>
-
-<b>🟢 ساده:</b>
-- ماشین حساب
-- ساعت دیجیتال
-- لیست کارها
-- بازی حدس عدد
-
-<b>🟡 متوسط:</b>
-- گالری عکس
-- پخش‌کننده موسیقی
-- فروشگاه ساده
-- سیستم ورود
-
-<b>🔴 پیشرفته:</b>
-- شبکه اجتماعی
-- چت آنلاین
-- بازی چندنفره
-- داشبورد مدیریت
-
-🎯 <b>توصیه:</b> با ساده شروع کن!`;
-                }
-
-                // ==================== هوش مصنوعی ====================
-                if (msg.includes('هوش مصنوعی') || msg.includes(' ai') || msg.includes('ربات')) {
-                    return `🤖 <b>هوش مصنوعی در برنامه‌نویسی:</b>
-
-<b>کاربردها:</b>
-✅ تولید کد اولیه
-✅ پیدا کردن باگ
-✅ توضیح مفاهیم
-✅ بهینه‌سازی
-✅ تبدیل کد
-
-<b>ابزارها:</b>
-- ChatGPT
-- GitHub Copilot
-- Claude
-- Gemini
-
-⚠️ <b>هشدار:</b> AI جایگزین یادگیری نیست!`;
-                }
-
-                // ==================== دکمه ====================
-                if (msg.includes('دکمه') && (msg.includes('چطور') || msg.includes('بسازم'))) {
-                    return `🔘 <b>ساخت دکمه با HTML و CSS:</b>
-
-<code>&lt;button class="my-btn" onclick="alert('کلیک!')"&gt;
-    کلیک کن
-&lt;/button&gt;
-
-&lt;style&gt;
-.my-btn {
-    background: #8b5cf6;
-    color: white;
-    padding: 12px 24px;
-    border: none;
-    border-radius: 10px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: 0.3s;
-}
-.my-btn:hover {
-    background: #7c3aed;
-    transform: scale(1.05);
-}
-&lt;/style&gt;</code>
-
-💡 با <code>onclick</code> می‌تونی کد JS اجرا کنی.`;
-                }
-
-                // ==================== فرم ====================
-                if (msg.includes('فرم') && (msg.includes('چطور') || msg.includes('بسازم'))) {
-                    return `📝 <b>ساخت فرم در HTML:</b>
-
-<code>&lt;form onsubmit="submitForm(event)"&gt;
-    &lt;label&gt;نام:&lt;/label&gt;
-    &lt;input type="text" id="name" required&gt;
-    
-    &lt;label&gt;ایمیل:&lt;/label&gt;
-    &lt;input type="email" id="email" required&gt;
-    
-    &lt;button type="submit"&gt;ارسال&lt;/button&gt;
-&lt;/form&gt;
-
-&lt;script&gt;
-function submitForm(e) {
-    e.preventDefault();
-    const name = document.getElementById('name').value;
-    alert('سلام ' + name);
-}
-&lt;/script&gt;</code>
-
-💡 با <code>required</code>، فیلد اجباری می‌شه.`;
-                }
-
-                // ==================== "چطور" ====================
-                if (msg.includes('چطور') || msg.includes('چگونه') || msg.includes('چجوری')) {
-                    return `🎯 <b>برای جواب دقیق، اینطوری بپرس:</b>
-
-❌ <b>مبهم:</b> «چطور یه سایت بسازم؟»
-✅ <b>دقیق:</b> «چطور یه دکمه با CSS بسازم؟»
-
-❌ <b>مبهم:</b> «کدم خطا داره»
-✅ <b>دقیق:</b> «این کد [کد] خطا می‌ده، چرا؟»
-
-📌 <b>هرچی سوال دقیق‌تر، جواب دقیق‌تر!</b>`;
-                }
-
-                // ==================== "چیست" ====================
-                if (msg.includes('چیه') || msg.includes('چیست') || msg.includes('یعنی چی')) {
-                    return `🔍 <b>برای توضیح هر مفهوم، بگو:</b>
-
-مثلاً:
-- «HTML چیه؟»
-- «flexbox یعنی چی؟»
-- «localStorage چیه؟»
-
-من در مورد HTML، CSS، JavaScript، و مفاهیم برنامه‌نویسی توضیح می‌دم. 😊`;
-                }
-
-                // ==================== پاسخ پیش‌فرض ====================
-                return `🤔 <b>سوالت رو دقیق‌تر بپرس تا بتونم بهتر کمک کنم!</b>
-
-<b>موضوعاتی که می‌تونم کمکت کنم:</b>
-
-📄 <b>HTML</b> — ساختار صفحات
-🎨 <b>CSS</b> — طراحی ظاهر
-⚡ <b>JavaScript</b> — تعامل و منطق
-🌐 <b>ساخت سایت</b> — از صفر
-🐞 <b>رفع خطا</b> — پیدا کردن باگ
-🧮 <b>ماشین حساب</b> — پروژه ساده
-📚 <b>یادگیری</b> — مسیر شروع
-💡 <b>پروژه</b> — ایده‌های پیشنهادی
-🔘 <b>دکمه</b> — ساخت دکمه
-📝 <b>فرم</b> — ساخت فرم
-
-<b>مثال‌های خوب:</b>
-- «HTML چیه؟»
-- «چطور یه سایت بسازم؟»
-- «ماشین حساب بنویس»
-- «دکمه چطور بسازم؟»`;
             }
 
             function addMessage(text, sender) {
@@ -1632,7 +1261,7 @@ function submitForm(e) {
                 sendAI();
             };
 
-            // ✅ تابع ارسال پیام (متصل به سرور + فالبک محلی)
+            // ✅ تابع ارسال پیام (فقط به سرور وصل میشه، پاسخ دستی حذف شد)
             window.sendAI = async function() {
                 const text = aiInput.value.trim();
                 if (!text) return;
@@ -1643,7 +1272,9 @@ function submitForm(e) {
                 typingIndicator.style.display = 'flex';
                 chatMessages.scrollTop = chatMessages.scrollHeight;
 
-                // آماده‌سازی تاریخچه برای سرور
+                logDebug(`Sending message to API...`);
+                
+                // آماده‌سازی تاریخچه
                 const historyForAPI = chatHistory
                     .filter((m) => m && m.text)
                     .map((m) => ({
@@ -1651,9 +1282,8 @@ function submitForm(e) {
                         content: m.text,
                     }));
 
-                let result = { ok: false, error: "سرور تنظیم نشده" };
-
-                // اگر تابع askAI وجود داشت (از api-client.js)، ازش استفاده کن
+                // فراخوانی تابع از api-client.js
+                let result = { ok: false, error: "تابع askAI پیدا نشد (فایل api-client.js لود نشده)" };
                 if (typeof askAI === "function") {
                     result = await askAI(text, historyForAPI);
                 }
@@ -1665,15 +1295,14 @@ function submitForm(e) {
                 botMsg.innerHTML = '<i class="fas fa-robot"></i> ';
 
                 if (result.ok) {
-                    // پاسخ از سرور (هوش مصنوعی واقعی)
+                    logDebug("Success: AI replied.");
                     botMsg.innerHTML += result.reply;
                     chatHistory.push({ sender: "bot", text: result.reply });
                 } else {
-                    // پاسخ آفلاین (اگر سرور خاموش بود)
-                    console.warn("AI Server error, using fallback:", result.error);
-                    const localReply = getAIResponse(text);
-                    botMsg.innerHTML += localReply;
-                    chatHistory.push({ sender: "bot", text: localReply });
+                    // ⛔ پاسخ دستی حذف شد. فقط خطا رو نشون میده.
+                    logDebug(`Error: ${result.error}`, true);
+                    botMsg.innerHTML += `<span style="color: #ff6b6b; direction: rtl; display: inline-block; text-align: right;">❌ خطا در اتصال به سرور:<br>${result.error}</span><br><br><span style="font-size: 12px; color: #aaa;">(لطفاً پنل دیباگ را باز کنید و اینترنت/سرور را بررسی کنید)</span>`;
+                    chatHistory.push({ sender: "bot", text: "Error: " + result.error });
                 }
 
                 chatMessages.appendChild(botMsg);
@@ -1686,6 +1315,7 @@ function submitForm(e) {
                     <div class="msg bot"><i class="fas fa-robot"></i> سلام! من نابغه‌کد هستم. 🤖<br><br>هر سوالی درباره برنامه‌نویسی داری بپرس!<br><br>💡 <b>موضوعات پیشنهادی:</b><br>• HTML / CSS / JavaScript<br>• ساخت سایت<br>• رفع خطا<br>• پروژه‌های پیشنهادی<br>• یادگیری از کجا</div>
                 `;
                 chatHistory = [];
+                document.getElementById('debug-log').innerHTML = '[Debug Cleared]';
                 showToast('🧹 چت پاک شد!');
             };
 
@@ -1830,7 +1460,7 @@ function submitForm(e) {
     }
     </script>
     
-    <!-- اسکریپت ارتباط با سرور (باید آخر باشد) -->
+    <!-- اسکریپت ارتباط با سرور -->
     <script src="api-client.js"></script>
 </body>
 </html>
