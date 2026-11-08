@@ -18,7 +18,6 @@ app.use(cors({
 }));
 app.options('*', cors());
 
-// حجم مجاز درخواست رو برای عکس‌ها کمی افزایش می‌دیم
 app.use(express.json({ limit: "10mb" }));
 
 app.get("/health", (_req, res) => {
@@ -38,32 +37,19 @@ const SYSTEM_PROMPT = `
 `;
 
 app.post("/api/chat", async (req, res) => {
-  const { message, history, image } = req.body || {};
+  const { message, history } = req.body || {};
 
-  if (!message && !image) {
-    return res.status(400).json({ error: "پیام یا عکس نامعتبر است" });
+  if (!message || typeof message !== "string") {
+    return res.status(400).json({ error: "پیام نامعتبر است" });
   }
 
-  // تاریخچه متنی (بدون عکس برای صرفه‌جویی در توکن)
-  const safeHistory = Array.isArray(history) ? history.slice(-10) : [];
+  // 👈 کاهش تاریخچه به ۶ پیام آخر تا فضای کافی برای جواب‌های طولانی بمونه
+  const safeHistory = Array.isArray(history) ? history.slice(-6) : [];
   
-  // ساخت ساختار پیام کاربر
-  let userContent;
-  if (image) {
-    // اگر عکس داشت، فرمت آرایه‌ای برای Vision API
-    userContent = [
-      { type: "text", text: message || "این عکس را بررسی کن" },
-      { type: "image_url", image_url: { url: image } }
-    ];
-  } else {
-    // اگر فقط متن بود
-    userContent = message;
-  }
-
   const messages = [
     { role: "system", content: SYSTEM_PROMPT },
     ...safeHistory,
-    { role: "user", content: userContent },
+    { role: "user", content: message },
   ];
 
   try {
@@ -74,11 +60,12 @@ app.post("/api/chat", async (req, res) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        // 👈 تغییر مدل به مدل بینایی
-        model: "qwen/qwen3.8-27b",
+        // 👈 برگشت به مدل متنی با سقف بالا
+        model: "openai/gpt-oss-120b", 
         messages,
         temperature: 0.7,
-        max_tokens: 800,
+        // 👈 افزایش سقف خروجی به 3000 توکن (کدهای طولانی)
+        max_tokens: 3000, 
       }),
     });
 
