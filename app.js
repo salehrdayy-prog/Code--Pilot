@@ -71,15 +71,17 @@ function toggleMenu(){
 
 
 // ==================== LOGOUT ====================
-function logout(){
-  localStorage.clear();
-  showToast("خارج شدی 👋");
-
-  setTimeout(()=>{
+function logout() {
+  if (confirm('آیا مطمئنی می‌خواهی خارج شوی؟')) {
+    // 👈 فقط اطلاعات ورود رو پاک کن، نه کل دیتابیس!
+    localStorage.removeItem('session');
+    localStorage.removeItem('loggedIn');
+    localStorage.removeItem('loggedInUser');
+    localStorage.removeItem('ai_coder_user');
+    
     window.location.href = "index.html";
-  },800);
+  }
 }
-
 
 // ==================== STORAGE ====================
 function getProjects(){

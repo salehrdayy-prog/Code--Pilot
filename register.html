@@ -182,5 +182,18 @@ function togglePassword(){
 <!-- 🔥 اسکریپت اصلی -->
 <script src="register.js"></script>
 <script src="tour.js"></script>
+    <script>
+        // اگر کاربر لاگین است، نذار صفحه ثبت‌نام رو ببینه
+        (function() {
+            try {
+                const session = localStorage.getItem('session');
+                const loggedIn = localStorage.getItem('loggedIn');
+                if (session || loggedIn === 'true') {
+                    window.location.replace('ideas.html');
+                }
+            } catch (e) {}
+        })();
+    </script>
+</head>
 </body>
 </html>

@@ -3,34 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- عنوان اصلی برای گوگل -->
     <title>نابغه‌کد - دستیار هوشمند برنامه‌نویسی</title>
-    
-    <!-- توضیحات متا -->
     <meta name="description" content="نابغه‌کد، دستیار هوشمند برنامه‌نویسی برای ساخت پروژه، یادگیری کدنویسی و تمرین برنامه‌نویسی با هوش مصنوعی.">
-    
-    <!-- کلمات کلیدی -->
     <meta name="keywords" content="نابغه‌کد, برنامه‌نویسی, یادگیری کدنویسی, دستیار هوشمند, تمرین برنامه‌نویسی">
-    
-    <!-- نویسنده -->
     <meta name="author" content="Saleh">
-    
-    <!-- فایل‌های CSS -->
+    <meta name="google-site-verification" content="A005vabJTZ-tQsh9xTCpoI6V830WabExDrlAhJBW8Eo">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="themes.css">
     <link rel="stylesheet" href="index.css">
-    
-    <!-- تنظیمات PWA -->
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="google-site-verification" content="A005vabJTZ-tQsh9xTCpoI6V830WabExDrlAhJBW8Eo" />
+    <style>
+        .install-bar {
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            padding: 8px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            box-shadow: 0 2px 10px rgba(124, 58, 237, 0.3);
+        }
+
+        #installBtn {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 8px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: 0.3s;
+            white-space: nowrap;
+        }
+
+        #installBtn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
+        }
+
+        #installBtn:active {
+            transform: scale(0.97);
+        }
+    </style>
 </head>
 <body class="landing-page">
-<button id="installBtn" style="display:none; padding: 10px 24px; background: #8b5cf6; color: white; border: none; border-radius: 30px; font-weight: bold; font-size: 16px; cursor: pointer;">
-    📲 نصب برنامه روی گوشی
-</button>
-    <!-- نویگیشن -->
+
+    <script>
+    (function() {
+        try {
+            var session = localStorage.getItem('session');
+            var loggedIn = localStorage.getItem('loggedIn');
+            var user = localStorage.getItem('ai_coder_user');
+            if (session || loggedIn === 'true' || user) {
+                window.location.replace('ideas.html');
+            }
+        } catch (e) {
+            console.error('خطا در چک لاگین:', e);
+        }
+    })();
+    </script>
+
+    <div class="install-bar" id="installBar" style="display:none;">
+        <button id="installBtn">📲 نصب برنامه روی گوشی</button>
+    </div>
+
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <div class="nav-brand">
@@ -38,9 +78,8 @@
                 <span class="brand-text">دستیار هوشمند</span>
             </div>
             <div class="nav-links">
-                <a href="#features" class="nav-link">
-                    راهنما</a>
-                <a href="#how-it-works" class="nav-link">ویژگی ها</a>
+                <a href="#features" class="nav-link">راهنما</a>
+                <a href="#how-it-works" class="nav-link">ویژگی‌ها</a>
                 <button class="btn btn-outline" onclick="window.location.href='register.html'">
                     ورود / ثبت‌نام
                 </button>
@@ -48,89 +87,51 @@
         </div>
     </nav>
 
-    <!-- هیرو -->
     <div class="hero-icon">
-  <div class="logo-circle">
-    <img src="logo.png" alt="logo" class="logo-img">
-  </div>
-  <span class="status-dot"></span>
-</div>
-    <span class="status-dot"></span>
-</div>
-      <div class="hero">
-
-  <!-- نسخه -->
-  <div class="version-badge">✨ نسخه ۱.۰</div>
-
-  <!-- تیتر -->
-  <h1 class="hero-title">
-    دستیار <span>برنامه‌نویس</span><br>
-    هوشمند
-  </h1>
-
-  <!-- توضیح -->
-  <p class="hero-desc">
-    کد نویسی رو به من بسپار - از ایده تا خروجی قدم به قدم کنارت هستم
-  </p>
-
-  <!-- دکمه‌ها -->
-  <div class="hero-buttons">
-
-    <a href="register.html" class="btn-primary">
-      🚀 همین الان شروع کن
-    </a>
-
-    <a href="#features" class="btn-secondary">
-      👀 بیشتر بدون
-    </a>
-
-  </div>
-
-  <!-- آمار -->
-  <div class="stats">
-    <div>
-      <div class="stat-number">5000+</div>
-      <div>پروژه ساخته شده</div>
+        <div class="logo-circle">
+            <img src="logo.png" alt="logo" class="logo-img">
+        </div>
     </div>
-    <div>
-      <div class="stat-number">1000+</div>
-      <div>کاربر فعال</div>
-    </div>
-    <div>
-      <div class="stat-number">54+</div>
-      <div>قابلیت</div>
-    </div>
-  </div>
 
-  <!-- کارت پروژه -->
-  <div class="project-card"></div>
+    <div class="hero">
+        <div class="version-badge">✨ نسخه ۱.۰</div>
 
-</div>
-</div>
+        <h1 class="hero-title">
+            دستیار <span>برنامه‌نویس</span><br>
+            هوشمند
+        </h1>
+
+        <p class="hero-desc">
+            کد نویسی رو به من بسپار - از ایده تا خروجی قدم به قدم کنارت هستم
+        </p>
+
+        <div class="hero-buttons">
+            <a href="register.html" class="btn-primary">
+                🚀 همین الان شروع کن
+            </a>
+            <a href="#features" class="btn-secondary">
+                👀 بیشتر بدون
+            </a>
+        </div>
+
+        <div class="stats">
+            <div>
+                <div class="stat-number">5000+</div>
+                <div>پروژه ساخته شده</div>
+            </div>
+            <div>
+                <div class="stat-number">1000+</div>
+                <div>کاربر فعال</div>
+            </div>
+            <div>
+                <div class="stat-number">54+</div>
+                <div>قابلیت</div>
             </div>
         </div>
-        <div class="hero-visual">
-            <div class="code-window floating">
-                <div class="window-header">
-                    <span class="dot red"></span>
-                    <span class="dot yellow"></span>
-                    <span class="dot green"></span>
-                    <span class="window-title">پروژه: ماشین حساب</span>
-                </div>
-                <div class="window-body">
-                    <pre><code><span class="code-keyword">function</span> <span class="code-func">calculate</span>(a, b, op) {
-    <span class="code-keyword">switch</span>(op) {
-        <span class="code-keyword">case</span> <span class="code-string">'+'</span>: <span class="code-keyword">return</span> a + b;
-        <span class="code-keyword">case</span> <span class="code-string">'-'</span>: <span class="code-keyword">return</span> a - b;
-        <span class="code-keyword">case</span> <span class="code-string">'*'</span>: <span class="code-keyword">return</span> a * b;
-        <span class="code-keyword">case</span> <span class="code-string">'/'</span>: <span class="code-keyword">return</span> a / b;
-    }
-}</code></pre>
-                </div>
-            </div>
-        </div>
-    </section>
-    <!-- مقاله معرفی -->
+
+        <div class="project-card"></div>
+    </div>
+
     <section class="article-section" id="features">
         <div class="container">
             <h2 class="section-title">🧠 این دستیار هوشمند چطور کار می‌کنه؟</h2>
@@ -139,11 +140,10 @@
                 <div class="article-step">
                     <div class="step-number">۱</div>
                     <div class="step-content">
-                      <h3>ثبت نام سریع و آسان</h3>
+                        <h3>ثبت نام سریع و آسان</h3>
                         <p>فقط با یه ایمیل یا شماره موبایل، حساب خودت رو بساز و بلافاصله شروع کن. اطلاعاتت پیش ما محفوظ می‌مونه و پروژه‌هات همیشه در دسترس هستن.</p>
                     </div>
                 </div>
-                
                 <div class="article-step">
                     <div class="step-number">۲</div>
                     <div class="step-content">
@@ -151,7 +151,6 @@
                         <p>با ۵ سوال هدفمند، سطح واقعی برنامه‌نویسی تو رو تشخیص می‌دیم. سوال‌ها بر اساس پاسخ‌هات سخت‌تر یا آسون‌تر می‌شن تا دقیق‌ترین نتیجه رو بگیریم.</p>
                     </div>
                 </div>
-                
                 <div class="article-step">
                     <div class="step-number">۳</div>
                     <div class="step-content">
@@ -159,7 +158,6 @@
                         <p>از بین ده‌ها نمونه‌کار آماده (ماشین حساب، لیست کارها، فروشگاه و...) انتخاب کن یا ایده خودت رو بگو تا برات بسازیمش.</p>
                     </div>
                 </div>
-                
                 <div class="article-step">
                     <div class="step-number">۴</div>
                     <div class="step-content">
@@ -167,7 +165,6 @@
                         <p>پروژه‌ات رو قدم‌به‌قدم با کمک هوش مصنوعی می‌سازیم. هر قدم رو تأیید کن، تغییر بده یا سوال بپرس. همه چی تحت کنترل توئه.</p>
                     </div>
                 </div>
-                
                 <div class="article-step">
                     <div class="step-number">۵</div>
                     <div class="step-content">
@@ -175,7 +172,6 @@
                         <p>همون لحظه خروجی کارت رو ببین. سیستم خودکار کدت رو تست می‌کنه و قبل از تحویل نهایی، خطاها رو پیدا می‌کنه.</p>
                     </div>
                 </div>
-                
                 <div class="article-step">
                     <div class="step-number">۶</div>
                     <div class="step-content">
@@ -187,7 +183,6 @@
         </div>
     </section>
 
-    <!-- ویژگی‌ها -->
     <section class="features-section" id="how-it-works">
         <div class="container">
             <h2 class="section-title">✨ ویژگی‌های منحصربه‌فرد</h2>
@@ -256,7 +251,6 @@
         </div>
     </section>
 
-    <!-- CTA -->
     <section class="cta-section">
         <div class="container">
             <h2>آماده‌ای که اولین پروژه‌ات رو بسازی؟</h2>
@@ -267,7 +261,6 @@
         </div>
     </section>
 
-    <!-- فوتر -->
     <footer class="footer">
         <div class="container">
             <div class="footer-content">
@@ -276,12 +269,10 @@
                     <span>دستیار برنامه‌نویس هوشمند</span>
                 </div>
                 <div class="footer-links">
-                    <div class="footer-links">
-    <a href="about.html">درباره ما</a>
-    <a href="contact.html">ارتباط با ما</a>
-    <a href="rules.html">قوانین</a>
-    <a href="blog.html">وبلاگ</a>
-</div>
+                    <a href="about.html">درباره ما</a>
+                    <a href="contact.html">ارتباط با ما</a>
+                    <a href="rules.html">قوانین</a>
+                    <a href="blog.html">وبلاگ</a>
                 </div>
                 <div class="footer-copy">
                     © ۱۴۰۴ — تمام حقوق محفوظ است
@@ -291,43 +282,91 @@
     </footer>
 
     <script src="app.js"></script>
-    <script src="tour.js"></script>
+
     <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
-  }
-</script>
-<script>
-    // ==========================================
-//  دکمه نصب خودکار PWA (بدون نیاز به توضیح)
-// ==========================================
-
-let deferredPrompt = null;
-
-window.addEventListener('beforeinstallprompt', (e) => {
-    // جلوگیری از نمایش خودکار پنجره نصب مرورگر
-    e.preventDefault();
-    // ذخیره رویداد برای استفاده بعدی
-    deferredPrompt = e;
-    
-    // نمایش دکمه نصب
-    const installBtn = document.getElementById('installBtn');
-    installBtn.style.display = 'block';
-});
-
-document.getElementById('installBtn').addEventListener('click', async () => {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const result = await deferredPrompt.userChoice;
-        if (result.outcome === 'accepted') {
-            console.log('✅ کاربر برنامه رو نصب کرد!');
-        } else {
-            console.log('❌ کاربر نصب نکرد.');
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(function(err) {
+                console.log('SW registration failed:', err);
+            });
         }
-        deferredPrompt = null;
-        document.getElementById('installBtn').style.display = 'none';
-    }
-});
-</script>
+    </script>
+
+    <script>
+        var deferredPrompt = null;
+
+        window.addEventListener('beforeinstallprompt', function(e) {
+            e.preventDefault();
+            deferredPrompt = e;
+            var installBar = document.getElementById('installBar');
+            if (installBar) {
+                installBar.style.display = 'block';
+            }
+        });
+
+        var installBtn = document.getElementById('installBtn');
+        if (installBtn) {
+            installBtn.addEventListener('click', function() {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then(function(result) {
+                        if (result.outcome === 'accepted') {
+                            console.log('کاربر برنامه رو نصب کرد!');
+                        }
+                        deferredPrompt = null;
+                        var installBar = document.getElementById('installBar');
+                        if (installBar) installBar.style.display = 'none';
+                    });
+                }
+            });
+        }
+
+        // اگر مرورگر نصب را پشتیبانی نکند، نوار را مخفی کن
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                var installBar = document.getElementById('installBar');
+                if (installBar && !deferredPrompt) {
+                    // بعد از ۳ ثانیه، اگر deferredPrompt نیامد، نوار را مخفی کن
+                    // (ولی ممکن است بعداً بیاید، پس مخفی نمی‌کنیم)
+                }
+            }, 3000);
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                var session = localStorage.getItem('session');
+                var loggedIn = localStorage.getItem('loggedIn');
+                var user = localStorage.getItem('ai_coder_user');
+                
+                if (session || loggedIn === 'true' || user) {
+                    var buttons = document.querySelectorAll('a[href="register.html"], button[onclick*="register.html"]');
+                    for (var i = 0; i < buttons.length; i++) {
+                        var el = buttons[i];
+                        if (el.tagName === 'A') {
+                            el.href = 'ideas.html';
+                        } else {
+                            el.onclick = function() { window.location.href = 'ideas.html'; };
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('خطا:', e);
+            }
+        });
+    </script>
+    <script>
+        // چک کردن لاگین بودن کاربر قبل از نمایش صفحه اصلی
+        (function() {
+            try {
+                const session = localStorage.getItem('session');
+                const loggedIn = localStorage.getItem('loggedIn');
+                if (session || loggedIn === 'true') {
+                    window.location.replace('ideas.html');
+                }
+            } catch (e) {}
+        })();
+    </script>
+</head>
 </body>
 </html>
