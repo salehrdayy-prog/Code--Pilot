@@ -1,4 +1,4 @@
-const AI_ENDPOINT = "https://code-pilot-1-34qk.onrender.com/api/chat";
+const AI_ENDPOINT = "https://code-pilot-5.onrender.com/api/chat";
 
 async function askAI(message, history = []) {
   try {
@@ -15,7 +15,6 @@ async function askAI(message, history = []) {
     }
     return { ok: true, reply: data.reply };
   } catch (err) {
-    // این خط، دلیل دقیق بلاک شدن رو بهت میگه
-    return { ok: false, error: "خطای شبکه (CORS یا قطعی): " + err.message };
+    return { ok: false, error: "خطای شبکه: " + err.message };
   }
 }
