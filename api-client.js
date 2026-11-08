@@ -21,13 +21,14 @@ async function askAI(message, history = []) {
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
-      return { ok: false, error: data.error || `خطای ${res.status}` };
+      return { ok: false, error: data.error || `خطای HTTP ${res.status}` };
     }
     if (!data.reply) {
-      return { ok: false, error: "پاسخ خالی" };
+      return { ok: false, error: "پاسخ خالی از سرور" };
     }
     return { ok: true, reply: data.reply };
   } catch (err) {
-    return { ok: false, error: "اتصال به سرور برقرار نشد" };
+    // 👇 این خط، خطای دقیق مرورگر رو نشون میده
+    return { ok: false, error: `خطای شبکه/CORS: ${err.message}` };
   }
 }
