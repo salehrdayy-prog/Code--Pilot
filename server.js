@@ -32,8 +32,10 @@ app.post("/api/chat", async (req, res) => {
   }
 
   const safeHistory = Array.isArray(history) ? history.slice(-10) : [];
+  
+  // 👈 پرامپت سیستم آپدیت شد: کدها را داخل بلوک مارک‌داون می‌گذارد
   const messages = [
-    { role: "system", content: "تو «نابغه‌کد» هستی، یک دستیار برنامه‌نویسی فارسی‌زبان. کوتاه و دقیق جواب بده." },
+    { role: "system", content: "تو «نابغه‌کد» هستی، یک دستیار برنامه‌نویسی فارسی‌زبان. کوتاه و دقیق جواب بده. هر کدی که می‌نویسی (HTML, CSS, JS, Python, ...) را حتماً و حتماً داخل بلوک کد مارک‌داون (```) قرار بده تا مرورگر آن را اجرا نکند." },
     ...safeHistory,
     { role: "user", content: message },
   ];
@@ -46,7 +48,6 @@ app.post("/api/chat", async (req, res) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        // 👈 مدل پایدار و فعال Groq
         model: "openai/gpt-oss-120b", 
         messages,
         temperature: 0.7,
