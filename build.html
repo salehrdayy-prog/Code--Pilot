@@ -52,16 +52,52 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
 .chat-messages .msg.bot { background: rgba(255, 255, 255, 0.06); color: #c8d8ec; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.04); }
 .chat-messages .msg i { margin-left: 6px; }
 
-/* استایل‌های نمایش امن کدها */
-.chat-messages .msg.bot pre {
+/* استایل‌های مربوط به بلاک کد و دکمه کپی */
+.code-block-container {
     background: #0a0e14;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 10px;
     border-radius: 8px;
+    margin: 10px 0;
+    overflow: hidden;
+    direction: ltr;
+    text-align: left;
+}
+.code-block-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #161b22;
+    padding: 5px 10px;
+    font-size: 11px;
+    color: #8aa3c9;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+.copy-code-btn {
+    background: rgba(139, 92, 246, 0.2);
+    border: none;
+    color: #c4b5fd;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11px;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.copy-code-btn:hover {
+    background: rgba(139, 92, 246, 0.4);
+}
+.chat-messages .msg.bot pre {
+    margin: 0;
+    padding: 10px;
+    border: none;
+    background: transparent;
     overflow-x: auto;
     direction: ltr;
     text-align: left;
-    margin: 8px 0;
     font-family: 'Droid Sans Mono', monospace;
     font-size: 12px;
 }
@@ -266,7 +302,7 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
             let files = {};
             let currentFileName = null;
 
-            // ===== ذخیره و بارگذاری حافظه چت =====
+            // ===== حافظه چت =====
             function saveChatMemory() {
                 try {
                     localStorage.setItem('noboghe_chat_memory', JSON.stringify(chatHistory));
@@ -292,7 +328,6 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                         });
                         chatMessages.scrollTop = chatMessages.scrollHeight;
                     } else {
-                        // پیام خوش‌آمدگویی اولیه
                         addMessage("سلام! من نابغه‌کد هستم. 🤖\n\nهر سوالی درباره برنامه‌نویسی داری بپرس! من کل این گفتگو رو به خاطر می‌سپارم.", "bot");
                     }
                 } catch(e) {}
@@ -546,7 +581,7 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
             };
 
             // ==========================================
-            // 🧠 AI CHAT — حافظه بلندمدت
+            // 🧠 AI CHAT & FORMATTING
             // ==========================================
 
             function escapeHTML(str) {
@@ -555,26 +590,70 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
 
             function formatMessage(text) {
                 let safeText = escapeHTML(text);
-                safeText = safeText.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => `<pre><code>${code.trim()}</code></pre>`);
+                
+                // تبدیل بلاک‌های کد
+                safeText = safeText.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
+                    return `<div class="code-block-container">
+                                <div class="code-block-header">
+                                    <span>${lang || 'code'}</span>
+                                    <button class="copy-code-btn" onclick="copyCodeBlock(this)"><i class="fas fa-copy"></i> کپی</button>
+                                </div>
+                                <pre><code>${code.trim()}</code></pre>
+                            </div>`;
+                });
+                
                 safeText = safeText.replace(/`([^`]+)`/g, '<code>$1</code>');
-                let parts = safeText.split(/(<pre>[\s\S]*?<\/pre>)/);
+                
+                let parts = safeText.split(/(<div class="code-block-container">[\s\S]*?<\/div>)/);
                 for (let i = 0; i < parts.length; i++) {
-                    if (!parts[i].startsWith('<pre>')) parts[i] = parts[i].replace(/\n/g, '<br>');
+                    if (!parts[i].startsWith('<div class="code-block-container">')) {
+                        parts[i] = parts[i].replace(/\n/g, '<br>');
+                    }
                 }
                 return parts.join('');
             }
+
+            // 👈 تابع کپی کردن کد
+            window.copyCodeBlock = function(btn) {
+                const container = btn.closest('.code-block-container');
+                if(!container) return;
+                const codeText = container.querySelector('code').innerText;
+                
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(codeText).then(() => {
+                        const originalHTML = btn.innerHTML;
+                        btn.innerHTML = '<i class="fas fa-check"></i> کپی شد!';
+                        btn.style.background = 'rgba(34, 197, 94, 0.4)';
+                        btn.style.color = '#4ade80';
+                        
+                        setTimeout(() => {
+                            btn.innerHTML = originalHTML;
+                            btn.style.background = 'rgba(139, 92, 246, 0.2)';
+                            btn.style.color = '#c4b5fd';
+                        }, 2000);
+                    }).catch(() => {
+                        alert('خطا در کپی کردن!');
+                    });
+                } else {
+                    alert('مرورگر شما از کپی خودکار پشتیبانی نمی‌کند.');
+                }
+            };
 
             function addMessage(text, sender) {
                 const msgDiv = document.createElement('div');
                 msgDiv.className = `msg ${sender}`;
                 const icon = sender === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
-                if (sender === 'user') msgDiv.innerHTML = `${icon} ${escapeHTML(text)}`;
-                else msgDiv.innerHTML = `${icon} ${formatMessage(text)}`;
+                
+                if (sender === 'user') {
+                    msgDiv.innerHTML = `${icon} ${escapeHTML(text)}`;
+                } else {
+                    msgDiv.innerHTML = `${icon} ${formatMessage(text)}`;
+                }
                 
                 chatMessages.appendChild(msgDiv);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
                 chatHistory.push({ sender, text });
-                saveChatMemory(); // 👈 ذخیره در حافظه بعد از هر پیام
+                saveChatMemory(); // ذخیره در حافظه
             }
 
             window.quickSend = function(text) { aiInput.value = text; sendAI(); };
@@ -589,7 +668,6 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                 typingIndicator.style.display = 'flex';
                 chatMessages.scrollTop = chatMessages.scrollHeight;
 
-                // 👈 ارسال کل تاریخچه چت (تا ۱۰۰ پیام آخر برای جلوگیری از خطای سرور)
                 const historyForAPI = chatHistory.map(m => ({
                     role: m.sender === "user" ? "user" : "assistant",
                     content: m.text
@@ -615,7 +693,7 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                 if (!confirm('آیا مطمئنی می‌خوای کل حافظه و چت رو پاک کنی؟')) return;
                 chatMessages.innerHTML = '';
                 chatHistory = [];
-                localStorage.removeItem('noboghe_chat_memory'); // 👈 پاک کردن حافظه
+                localStorage.removeItem('noboghe_chat_memory');
                 addMessage("سلام! من نابغه‌کد هستم. 🤖\n\nهر سوالی داری بپرس. من حافظه‌ام رو ریست کردم!", "bot");
                 showToast('🧹 حافظه و چت پاک شد!');
             };
@@ -637,7 +715,7 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
 
             // ===== INIT =====
             loadFilesFromLocal();
-            loadChatMemory(); // 👈 بارگذاری حافظه در شروع
+            loadChatMemory();
             currentFileName = Object.keys(files)[0];
             codeEditor.value = files[currentFileName];
             updateLineNumbers();
