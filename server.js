@@ -75,7 +75,7 @@ app.post("/api/chat", async (req, res) => {
       },
       body: JSON.stringify({
         // 👈 تغییر مدل به مدل بینایی
-        model: "meta-llama/llama-4-scout-17b-16e-instruct",
+        model: "qwen/qwen3.8-27b",
         messages,
         temperature: 0.7,
         max_tokens: 1024,
