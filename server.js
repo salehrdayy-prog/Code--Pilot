@@ -39,28 +39,33 @@ app.post("/api/chat", async (req, res) => {
     { role: "user", content: message },
   ];
 
-  try {
-    const r = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages,
-        temperature: 0.7,
-      }),
-    });
+try {
+  const r = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      messages,
+      temperature: 0.7,
+    }),
+  });
 
-    const data = await r.json();
-    if (!r.ok) throw new Error(data.error?.message || "OpenAI Error");
-
-    res.json({ reply: data.choices[0].message.content.trim() });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "خطای سرور هوش مصنوعی" });
+  const data = await r.json();
+  
+  // اگر OpenAI ارور داد، دقیقاً همون پیام رو برگردون
+  if (!r.ok) {
+    console.error("OpenAI Error Details:", data);
+    return res.status(r.status).json({ error: data.error?.message || "OpenAI Error" });
   }
+
+  res.json({ reply: data.choices[0].message.content.trim() });
+} catch (e) {
+  console.error("Server Error:", e);
+  res.status(500).json({ error: "خطای داخلی سرور: " + e.message });
+}
 });
 
 app.listen(PORT, () => console.log(`✅ Server on port ${PORT}`));
