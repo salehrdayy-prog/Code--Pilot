@@ -131,15 +131,15 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
 .btn-create { background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; }
 .btn-create:hover { transform: scale(0.98); }
 
-/* ====== تور راهنما (نسخه فیکس شده) ====== */
+/* ====== تور راهنما (نسخه نهایی و فیکس شده) ====== */
 #tourOverlay {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh;
     z-index: 99999; display: none; align-items: center; justify-content: center;
-    pointer-events: none; /* اجازه میده کاربر کلیک کنه */
+    pointer-events: none; 
 }
 .tour-highlight {
     position: absolute;
-    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.85); /* پرده تاریک */
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.85); 
     border-radius: 12px;
     transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
     z-index: 100000;
@@ -147,13 +147,12 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
     border: 2px solid #8b5cf6;
     background: transparent;
 }
-/* کلاس موقت برای روشن کردن دکمه‌ای که داره توضیح داده میشه */
+/* دکمه‌ای که داره توضیح داده میشه، باید از زیر تاریکی بیرون بیاد */
 .tour-active-element {
     position: relative !important;
     z-index: 100002 !important;
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.8) !important;
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.9) !important;
     border-radius: 8px;
-    background-color: #1a1a2e !important; /* پس‌زمینه موقت که زیرش معلوم نشه */
 }
 .tour-tooltip {
     position: absolute;
@@ -161,15 +160,15 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
     border: 2px solid #8b5cf6;
     border-radius: 16px;
     padding: 15px;
-    width: 280px; /* عرض ثابت برای جلوگیری از خروج از صفحه */
+    width: 280px; 
     max-width: 90vw;
     color: #e8edf5;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.9);
     z-index: 100003;
     transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
     font-size: 13px;
     line-height: 1.6;
-    pointer-events: auto; /* دکمه‌های تولتیپ کلیک‌پذیر بشن */
+    pointer-events: auto;
 }
 .tour-tooltip h4 { color: #c4b5fd; margin-bottom: 8px; font-size: 15px; }
 .tour-tooltip p { margin-bottom: 12px; }
@@ -208,7 +207,7 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                 <div class="page-header">
                     <h2><i class="fas fa-robot"></i> دستیار هوشمند</h2>
                     <div class="page-actions">
-                        <button onclick="startTour()" title="تور راهنما">
+                        <button onclick="startTour()" title="تور راهنما" class="tour-btn">
                             <i class="fas fa-question"></i> <span style="font-size: 11px; font-weight: bold;">تور راهنما</span>
                         </button>
                         <button id="musicBtn" onclick="toggleMusic()" title="رادیو Lofi"><i class="fas fa-music"></i></button>
@@ -906,21 +905,32 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
             };
 
             // ==========================================
-            // 🎓 تور راهنما (نسخه فیکس شده)
+            // 🎓 تور راهنما (نسخه تکمیل شده)
             // ==========================================
             const tourSteps = [
-                // تب اول: چت
+                // ====== تب اول: چت ======
                 { page: 0, element: '#chatMessages', title: '🤖 چت هوشمند', text: 'اینجا محل گفتگو با هوش مصنوعی است. سوال بپرس، ایده بگیر یا کد بخواه.' },
+                { page: 0, element: '#aiInput', title: '⌨️ کادر پیام', text: 'اینجا سوالت یا درخواستت رو تایپ کن و دکمه ارسال رو بزن.' },
+                { page: 0, element: '.send-btn', title: '🚀 ارسال پیام', text: 'با این دکمه پیامت برای هوش مصنوعی فرستاده میشه.' },
                 { page: 0, element: '#contextBtn', title: '🧠 کدبینی', text: 'وقتی این دکمه روشن باشه (بنفش بشه)، هوش مصنوعی تمام کدهای تو و خطاهای کنسول رو می‌بینه تا دقیق‌تر کمکت کنه.' },
                 { page: 0, element: '#musicBtn', title: '🎵 رادیو Lofi', text: 'موسیقی ملایم مخصوص برنامه‌نویسی. برای تمرکز بیشتر روشنش کن.' },
+                { page: 0, element: '.page-actions button[onclick="clearChat()"]', title: '🗑️ پاک کردن چت', text: 'اگر می‌خوای چت رو از اول شروع کنی، از این دکمه استفاده کن.' },
                 
-                // تب دوم: ادیتور
-                { page: 1, element: '#tabs', title: '📁 تب‌های کد', text: 'فایل‌های پروژه شما. با کلیک روی هر تب HTML، CSS یا JS رو ویرایش کن. دکمه + هم فایل جدید می‌سازه.' },
-                { page: 1, element: '#runCodeBtnTop', title: '▶️ اجرای کد', text: 'وقتی کدت رو نوشتی، اینجا رو بزن تا به تب پیش‌نمایش بری و نتیجه رو زنده ببینی.' },
-                
-                // تب سوم: پیش‌نمایش
-                { page: 2, element: '#consoleToggleBtn', title: '🐞 کنسول باگ‌یاب', text: 'اگر کدت خطای جاوااسکریپت داشته باشه، اینجا خطاها رو نشونت میده و خودکار هم باز میشه.' },
-                { page: 2, element: '#previewWrapper', title: '📺 پیش‌نمایش زنده', text: 'اینجا خروجی کدهای شماست. می‌تونی سایز دستگاه رو عوض کنی یا تمام‌صفحه ببینی.' }
+                // ====== تب دوم: ادیتور ======
+                { page: 1, element: '#tabs', title: '📁 تب‌های کد', text: 'اینجا فایل‌های HTML، CSS و JS پروژه شماست. با کلیک روی هر تب می‌تونی ویرایشش کنی.' },
+                { page: 1, element: '.add-file-btn', title: '➕ فایل جدید', text: 'با این دکمه می‌تونی فایل جدید به پروژه اضافه کنی.' },
+                { page: 1, element: '#runCodeBtnTop', title: '▶️ اجرای کد', text: 'با زدن این دکمه، کدت اجرا میشه و به تب پیش‌نمایش میری.' },
+                { page: 1, element: '.page-actions button[onclick="formatCode()"]', title: '🪄 زیباسازی', text: 'اگر کدت به هم ریخته بود، این دکمه اون رو مرتب و خوانا می‌کنه.' },
+                { page: 1, element: '.editor-bottom-bar button[onclick="saveFile()"]', title: '💾 ذخیره فایل', text: 'تغییرات فایل فعلی رو ذخیره می‌کنه.' },
+                { page: 1, element: '.editor-bottom-bar button[onclick="copyContent()"]', title: '📄 کپی کردن کد', text: 'تمام کدهای داخل ادیتور رو یکجا کپی می‌کنه.' },
+                { page: 1, element: '.editor-bottom-bar button[onclick="goToDone()"]', title: '📥 دریافت پروژه', text: 'پروژه رو به صورت یک فایل ZIP دانلود می‌کنی تا روی سیستم خودت داشته باشی.' },
+
+                // ====== تب سوم: پیش‌نمایش ======
+                { page: 2, element: '.page-actions button[onclick="refreshPreview()"]', title: '🔄 بروزرسانی', text: 'اگر تغییراتی دادی، اینجا بزن تا پیش‌نمایش آپدیت بشه.' },
+                { page: 2, element: '#consoleToggleBtn', title: '🐞 کنسول باگ‌یاب', text: 'خطاهای جاوااسکریپت کدت رو اینجا می‌بینی.' },
+                { page: 2, element: '.page-actions button[onclick="toggleDeviceSize()"]', title: '📱 تغییر سایز', text: 'برای تست در سایز موبایل، تبلت و دسکتاپ.' },
+                { page: 2, element: '.page-actions button[onclick="toggleFullscreenPreview()"]', title: '⛶ تمام صفحه', text: 'پیش‌نمایش رو در کل صفحه نمایش میده.' },
+                { page: 2, element: '#previewWrapper', title: '📺 پیش‌نمایش زنده', text: 'اینجا خروجی نهایی کدهای شماست.' }
             ];
 
             let currentTourStep = 0;
@@ -942,11 +952,10 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
 
                 const step = tourSteps[currentTourStep];
                 
-                // ۱. بررسی تغییر تب
+                // جابه‌جایی بین صفحات در صورت نیاز
                 if (currentPage !== step.page) {
                     goTo(step.page);
-                    // صبر برای اتمام انیمیشن سوایپ
-                    setTimeout(() => highlightElement(step), 500);
+                    setTimeout(() => highlightElement(step), 400); // صبر برای انیمیشن
                 } else {
                     highlightElement(step);
                 }
@@ -956,56 +965,59 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                 const el = document.querySelector(step.element);
                 if (!el) { nextTourStep(); return; }
 
-                // ۲. پاک کردن هایلایت قبلی
+                // پاک کردن هایلایت قبلی
                 document.querySelectorAll('.tour-active-element').forEach(e => e.classList.remove('tour-active-element'));
                 
-                // ۳. روشن کردن المان فعلی (بالا بردن z-index)
+                // روشن کردن المان فعلی
                 el.classList.add('tour-active-element');
-
-                // اسکرول به المان (در صورت نیاز داخل کانتینر)
                 el.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
                 setTimeout(() => {
                     const rect = el.getBoundingClientRect();
-                    const padding = 8; // فاصله حاشیه از دکمه
+                    const padding = 6;
 
-                    // ۴. تنظیم دقیق پرده هایلایت
+                    // تنظیم دقیق پرده هایلایت
                     tourHighlight.style.width = `${rect.width + padding*2}px`;
                     tourHighlight.style.height = `${rect.height + padding*2}px`;
                     tourHighlight.style.left = `${rect.left - padding}px`;
                     tourHighlight.style.top = `${rect.top - padding}px`;
 
-                    // ۵. تنظیم متن تولتیپ
+                    // تنظیم متن تولتیپ
                     document.getElementById('tourTitle').innerText = step.title;
                     document.getElementById('tourText').innerText = step.text;
                     
-                    // ۶. محاسبه هوشمند موقعیت تولتیپ (جلوگیری از خروج از صفحه)
+                    // محاسبه هوشمند موقعیت تولتیپ
                     const tooltipWidth = 280;
-                    const tooltipHeight = 130; // تخمینی
+                    const tooltipHeight = 140; // تخمین ارتفاع
                     
-                    let tooltipTop = rect.bottom + 20;
                     let tooltipLeft = rect.left + (rect.width / 2) - (tooltipWidth / 2);
-
-                    // اگر پایین صفحه جا نمی‌شد، ببرش بالا
-                    if (tooltipTop + tooltipHeight > window.innerHeight) {
-                        tooltipTop = rect.top - tooltipHeight - 20;
-                    }
                     
                     // جلوگیری از خروج از لبه چپ و راست
                     if (tooltipLeft < 10) tooltipLeft = 10;
                     if (tooltipLeft + tooltipWidth > window.innerWidth) tooltipLeft = window.innerWidth - tooltipWidth - 10;
                     
-                    // جلوگیری از خروج از لبه بالا
-                    if (tooltipTop < 10) tooltipTop = 10;
+                    // تصمیم‌گیری برای بالا یا پایین بودن تولتیپ
+                    let tooltipTop;
+                    const spaceBelow = window.innerHeight - rect.bottom;
+                    const spaceAbove = rect.top;
+
+                    // اگر دکمه پایین صفحه است، تولتیپ برود بالا
+                    if (spaceBelow > tooltipHeight + 20) {
+                        tooltipTop = rect.bottom + 15;
+                    } else if (spaceAbove > tooltipHeight + 20) {
+                        tooltipTop = rect.top - tooltipHeight - 15;
+                    } else {
+                        // اگر هر دو طرف تنگ بود، وسط صفحه بگذار
+                        tooltipTop = window.innerHeight / 2 - tooltipHeight / 2;
+                    }
 
                     tourTooltip.style.top = `${tooltipTop}px`;
                     tourTooltip.style.left = `${tooltipLeft}px`;
 
-                    // تنظیم متن دکمه آخر
                     const nextBtn = document.getElementById('tourNextBtn');
                     if (currentTourStep === tourSteps.length - 1) nextBtn.innerText = 'پایان 🎉';
                     else nextBtn.innerText = 'بعدی';
-                }, 100); // تاخیر کوچک برای اعمال z-index
+                }, 50);
             }
 
             window.nextTourStep = function() {
