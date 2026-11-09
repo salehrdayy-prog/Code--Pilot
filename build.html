@@ -14,12 +14,12 @@ html { height: 100%; height: 100dvh; overflow: hidden; }
 body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: flex; justify-content: center; align-items: center; background: #02030a; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; user-select: none; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
 .phone { width: 393px; height: 100%; max-height: 852px; min-height: 100%; border-radius: 48px; background: #0d1117; box-shadow: 0 0 80px rgba(139, 92, 246, 0.25); overflow: hidden; touch-action: pan-y; position: relative; border: 1px solid rgba(255, 255, 255, 0.04); flex-shrink: 0; display: flex; flex-direction: column; }
 .container { display: flex; flex: 1; height: 100%; transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1); will-change: transform; direction: ltr; }
-.page { min-width: 100%; padding: 8px 12px 12px; color: #e8edf5; box-sizing: border-box; display: flex; flex-direction: column; height: 100%; overflow: hidden; direction: rtl; }
+.page { min-width: 100%; padding: 8px 12px 12px; color: #e8edf5; box-sizing: border-box; display: flex; flex-direction: column; height: 100%; overflow: hidden; direction: rtl; position: relative; }
 .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; flex-shrink: 0; }
 .page-header h2 { font-size: 30px; font-weight: 800; display: flex; align-items: center; gap: 6px; color: #d4dcec; }
 .page-header h2 i { color: #8b5cf6; font-size: 16px; }
 .page-actions { display: flex; gap: 4px; }
-.page-actions button { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.06); color: #8aa3c9; width: 28px; height: 28px; border-radius: 10px; font-size: 12px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+.page-actions button { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.06); color: #8aa3c9; height: 28px; border-radius: 10px; font-size: 12px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; padding: 0 8px; gap: 4px; }
 .page-actions button:hover { background: rgba(139, 92, 246, 0.15); color: #c4b5fd; border-color: rgba(139, 92, 246, 0.2); }
 .page-actions button.active { background: #8b5cf6; color: #fff; }
 .tabs { display: flex; gap: 4px; margin-bottom: 6px; flex-shrink: 0; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
@@ -60,50 +60,16 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
 .chat-container { flex: 1 1 auto; display: flex; flex-direction: column; gap: 6px; min-height: 0; position: relative; }
 .chat-messages { flex: 1; background: rgba(255, 255, 255, 0.02); border-radius: 14px; padding: 10px; overflow-y: auto; border: 1px solid rgba(255, 255, 255, 0.04); display: flex; flex-direction: column; gap: 6px; min-height: 80px; scroll-behavior: smooth; }
 .chat-messages .msg { padding: 8px 12px; border-radius: 14px; max-width: 85%; font-size: 13px; line-height: 1.6; animation: fadeIn 0.3s ease; white-space: pre-wrap; word-wrap: break-word; }
-
-/* 👈 فونت پیام‌های هوش مصنوعی ضخیم‌تر و روشن‌تر شد */
 .chat-messages .msg.user { background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
 .chat-messages .msg.bot { background: rgba(255, 255, 255, 0.08); color: #ffffff; font-weight: 500; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.06); }
 .chat-messages .msg i { margin-left: 6px; color: #c4b5fd; }
 
-/* 👈 دکمه‌های زیر پیام هوش مصنوعی */
-.msg-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 10px;
-    padding-top: 8px;
-    border-top: 1px solid rgba(255,255,255,0.1);
-}
-.msg-actions button {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: #c4b5fd;
-    padding: 4px 10px;
-    border-radius: 8px;
-    font-size: 11px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    transition: 0.2s;
-    font-family: inherit;
-}
-.msg-actions button:hover {
-    background: rgba(139, 92, 246, 0.2);
-    color: #fff;
-}
-.msg-actions button.active-up {
-    background: rgba(34, 197, 94, 0.2);
-    color: #4ade80;
-    border-color: rgba(34, 197, 94, 0.4);
-}
-.msg-actions button.active-down {
-    background: rgba(239, 68, 68, 0.2);
-    color: #f87171;
-    border-color: rgba(239, 68, 68, 0.4);
-}
+.msg-actions { display: flex; gap: 8px; margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); }
+.msg-actions button { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #c4b5fd; padding: 4px 10px; border-radius: 8px; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: 0.2s; font-family: inherit; }
+.msg-actions button:hover { background: rgba(139, 92, 246, 0.2); color: #fff; }
+.msg-actions button.active-up { background: rgba(34, 197, 94, 0.2); color: #4ade80; border-color: rgba(34, 197, 94, 0.4); }
+.msg-actions button.active-down { background: rgba(239, 68, 68, 0.2); color: #f87171; border-color: rgba(239, 68, 68, 0.4); }
 
-/* استایل‌های بلاک کد و دکمه‌های کپی و اعمال */
 .code-block-container { background: #0a0e14; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; margin: 10px 0; overflow: hidden; direction: ltr; text-align: left; }
 .code-block-header { display: flex; justify-content: space-between; align-items: center; background: #161b22; padding: 5px 10px; font-size: 11px; color: #8aa3c9; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-family: 'Segoe UI', system-ui, sans-serif; }
 .code-block-actions { display: flex; gap: 6px; }
@@ -115,21 +81,17 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
 .chat-messages .msg.bot pre code { background: transparent; padding: 0; color: #d4d4d4; white-space: pre-wrap; }
 .chat-messages .msg.bot code { background: rgba(0, 0, 0, 0.4); padding: 2px 5px; border-radius: 4px; font-family: 'Droid Sans Mono', monospace; font-size: 11px; color: #79c0ff; }
 
-/* دکمه رفتن به پایین */
 #scrollBottomBtn { position: absolute; bottom: 70px; right: 20px; background: #8b5cf6; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; display: none; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 10; transition: transform 0.2s, opacity 0.2s; }
 #scrollBottomBtn.show { display: flex; }
 #scrollBottomBtn:hover { transform: scale(1.1); }
 
-/* افکت چشمک زن مکان‌نما (Cursor) هنگام تایپ */
 .typing-cursor::after { content: '▌'; animation: blink 1s step-start infinite; color: #8b5cf6; }
 @keyframes blink { 50% { opacity: 0; } }
-
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 .suggestions { display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; margin-bottom: 6px; }
 .suggestions button { background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.2); color: #c4b5fd; padding: 4px 12px; border-radius: 12px; font-size: 11px; cursor: pointer; transition: 0.2s; font-weight: 500; font-family: inherit; }
 .suggestions button:hover { background: rgba(139, 92, 246, 0.25); transform: scale(0.95); }
 
-/* نوار ارسال پیام */
 .chat-input-wrapper { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
 .chat-input-row { display: flex; gap: 6px; align-items: center; }
 .chat-input-row input[type="text"] { flex: 1; padding: 10px 14px; border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.06); background: rgba(255, 255, 255, 0.04); color: #e8edf5; font-size: 13px; outline: none; transition: 0.2s; font-family: inherit; }
@@ -169,10 +131,46 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
 .btn-create { background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; }
 .btn-create:hover { transform: scale(0.98); }
 
-/* ====== تور راهنما (Clash of Clans Style) ====== */
-#tourOverlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: rgba(0, 0, 0, 0.7); z-index: 99999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
-.tour-highlight { position: absolute; box-shadow: 0 0 0 9999px rgba(0,0,0,0.75), 0 0 20px rgba(139, 92, 246, 0.8); border-radius: 12px; transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); z-index: 100000; pointer-events: none; border: 2px solid #8b5cf6; background: rgba(139, 92, 246, 0.1); }
-.tour-tooltip { position: absolute; background: #1a1a2e; border: 2px solid #8b5cf6; border-radius: 16px; padding: 15px; width: 260px; color: #e8edf5; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 100001; transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); font-size: 13px; line-height: 1.6; }
+/* ====== تور راهنما (نسخه فیکس شده) ====== */
+#tourOverlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh;
+    z-index: 99999; display: none; align-items: center; justify-content: center;
+    pointer-events: none; /* اجازه میده کاربر کلیک کنه */
+}
+.tour-highlight {
+    position: absolute;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.85); /* پرده تاریک */
+    border-radius: 12px;
+    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    z-index: 100000;
+    pointer-events: none;
+    border: 2px solid #8b5cf6;
+    background: transparent;
+}
+/* کلاس موقت برای روشن کردن دکمه‌ای که داره توضیح داده میشه */
+.tour-active-element {
+    position: relative !important;
+    z-index: 100002 !important;
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.8) !important;
+    border-radius: 8px;
+    background-color: #1a1a2e !important; /* پس‌زمینه موقت که زیرش معلوم نشه */
+}
+.tour-tooltip {
+    position: absolute;
+    background: #1a1a2e;
+    border: 2px solid #8b5cf6;
+    border-radius: 16px;
+    padding: 15px;
+    width: 280px; /* عرض ثابت برای جلوگیری از خروج از صفحه */
+    max-width: 90vw;
+    color: #e8edf5;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    z-index: 100003;
+    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    font-size: 13px;
+    line-height: 1.6;
+    pointer-events: auto; /* دکمه‌های تولتیپ کلیک‌پذیر بشن */
+}
 .tour-tooltip h4 { color: #c4b5fd; margin-bottom: 8px; font-size: 15px; }
 .tour-tooltip p { margin-bottom: 12px; }
 .tour-btns { display: flex; justify-content: space-between; gap: 8px; }
@@ -210,9 +208,8 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                 <div class="page-header">
                     <h2><i class="fas fa-robot"></i> دستیار هوشمند</h2>
                     <div class="page-actions">
-                        <button onclick="startTour()" title="تور راهنما" style="width: auto; padding: 0 10px; gap: 5px;">
-                            <i class="fas fa-question"></i> 
-                            <span style="font-size: 11px; font-family: inherit; font-weight: bold;">تور راهنما</span>
+                        <button onclick="startTour()" title="تور راهنما">
+                            <i class="fas fa-question"></i> <span style="font-size: 11px; font-weight: bold;">تور راهنما</span>
                         </button>
                         <button id="musicBtn" onclick="toggleMusic()" title="رادیو Lofi"><i class="fas fa-music"></i></button>
                         <button onclick="clearChat()" title="پاک کردن چت"><i class="fas fa-trash-alt"></i></button>
@@ -448,7 +445,6 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                             
                             if (msg.sender === 'bot') {
                                 msgDiv.innerHTML = `${icon} <span class="msg-content">${content}</span>`;
-                                // اضافه کردن دکمه‌ها برای پیام‌های قدیمی
                                 msgDiv.insertAdjacentHTML('beforeend', getMsgActionsHTML());
                             } else {
                                 msgDiv.innerHTML = `${icon} ${content}`;
@@ -707,7 +703,6 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                 return parts.join('');
             }
 
-            // ===== دکمه‌های زیر پیام =====
             function getMsgActionsHTML() {
                 return `
                     <div class="msg-actions" style="display: flex;">
@@ -744,7 +739,6 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                 }
             };
 
-            // ===== کپی و اعمال کد =====
             window.copyCodeBlock = function(btn) {
                 const container = btn.closest('.code-block-container');
                 if(!container) return;
@@ -836,13 +830,13 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                     const actionsHTML = getMsgActionsHTML();
                     msgDiv.insertAdjacentHTML('beforeend', actionsHTML);
                     const actionsDiv = msgDiv.querySelector('.msg-actions');
-                    actionsDiv.style.display = 'none'; // مخفی کردن تا وقتی تایپ تموم بشه
+                    actionsDiv.style.display = 'none';
 
                     const contentSpan = msgDiv.querySelector('.msg-content');
                     
                     if (animate) {
                         return typeWriter(text, contentSpan).then(() => {
-                            actionsDiv.style.display = 'flex'; // نمایش دکمه‌ها بعد از تایپ
+                            actionsDiv.style.display = 'flex';
                             chatHistory.push({ sender, text });
                             saveChatMemory();
                         });
@@ -912,16 +906,21 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
             };
 
             // ==========================================
-            // 🎓 تور راهنما
+            // 🎓 تور راهنما (نسخه فیکس شده)
             // ==========================================
             const tourSteps = [
-                { element: '#chatMessages', title: '🤖 چت هوشمند', text: 'اینجا محل گفتگو با هوش مصنوعی است. می‌تونی سوال بپرسی، کد بگیری یا باگ‌هات رو بفرستی تا برات حل کنم.' },
-                { element: '#contextBtn', title: '🧠 کدبینی', text: 'وقتی این دکمه روشن باشه (بنفش بشه)، هوش مصنوعی تمام کدهای تو و خطاهای کنسول رو می‌بینه تا دقیق‌تر بتونه کمکت کنه.' },
-                { element: '#musicBtn', title: '🎵 رادیو Lofi', text: 'موسیقی ملایم و بی‌کلام مخصوص برنامه‌نویسی. برای تمرکز بیشتر می‌تونی روشنش کنی.' },
-                { element: '#tabs', title: '📁 تب‌های کد', text: 'اینجا فایل‌های پروژه شماست. با کلیک روی هر تب می‌تونی HTML، CSS یا JS رو ویرایش کنی. با دکمه + می‌تونی فایل جدید بسازی.' },
-                { element: '#runCodeBtnTop', title: '▶️ اجرای کد', text: 'وقتی کدت رو نوشتی، با زدن این دکمه به تب پیش‌نمایش میری و نتیجه رو زنده می‌بینی.' },
-                { element: '#consoleToggleBtn', title: '🐞 کنسول باگ‌یاب', text: 'اگر کدت خطا داشته باشه، اینجا خطاها (Errors) رو نشونت میده. (خودکار هم باز میشه).' },
-                { element: '#previewWrapper', title: '📺 پیش‌نمایش زنده', text: 'اینجا خروجی کدهای شماست. می‌تونی سایز دستگاه رو عوض کنی یا تمام‌صفحه ببینی.' }
+                // تب اول: چت
+                { page: 0, element: '#chatMessages', title: '🤖 چت هوشمند', text: 'اینجا محل گفتگو با هوش مصنوعی است. سوال بپرس، ایده بگیر یا کد بخواه.' },
+                { page: 0, element: '#contextBtn', title: '🧠 کدبینی', text: 'وقتی این دکمه روشن باشه (بنفش بشه)، هوش مصنوعی تمام کدهای تو و خطاهای کنسول رو می‌بینه تا دقیق‌تر کمکت کنه.' },
+                { page: 0, element: '#musicBtn', title: '🎵 رادیو Lofi', text: 'موسیقی ملایم مخصوص برنامه‌نویسی. برای تمرکز بیشتر روشنش کن.' },
+                
+                // تب دوم: ادیتور
+                { page: 1, element: '#tabs', title: '📁 تب‌های کد', text: 'فایل‌های پروژه شما. با کلیک روی هر تب HTML، CSS یا JS رو ویرایش کن. دکمه + هم فایل جدید می‌سازه.' },
+                { page: 1, element: '#runCodeBtnTop', title: '▶️ اجرای کد', text: 'وقتی کدت رو نوشتی، اینجا رو بزن تا به تب پیش‌نمایش بری و نتیجه رو زنده ببینی.' },
+                
+                // تب سوم: پیش‌نمایش
+                { page: 2, element: '#consoleToggleBtn', title: '🐞 کنسول باگ‌یاب', text: 'اگر کدت خطای جاوااسکریپت داشته باشه، اینجا خطاها رو نشونت میده و خودکار هم باز میشه.' },
+                { page: 2, element: '#previewWrapper', title: '📺 پیش‌نمایش زنده', text: 'اینجا خروجی کدهای شماست. می‌تونی سایز دستگاه رو عوض کنی یا تمام‌صفحه ببینی.' }
             ];
 
             let currentTourStep = 0;
@@ -942,38 +941,71 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                 }
 
                 const step = tourSteps[currentTourStep];
-                const el = document.querySelector(step.element);
                 
+                // ۱. بررسی تغییر تب
+                if (currentPage !== step.page) {
+                    goTo(step.page);
+                    // صبر برای اتمام انیمیشن سوایپ
+                    setTimeout(() => highlightElement(step), 500);
+                } else {
+                    highlightElement(step);
+                }
+            }
+
+            function highlightElement(step) {
+                const el = document.querySelector(step.element);
                 if (!el) { nextTourStep(); return; }
 
+                // ۲. پاک کردن هایلایت قبلی
+                document.querySelectorAll('.tour-active-element').forEach(e => e.classList.remove('tour-active-element'));
+                
+                // ۳. روشن کردن المان فعلی (بالا بردن z-index)
+                el.classList.add('tour-active-element');
+
+                // اسکرول به المان (در صورت نیاز داخل کانتینر)
                 el.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
                 setTimeout(() => {
                     const rect = el.getBoundingClientRect();
-                    const padding = 8;
+                    const padding = 8; // فاصله حاشیه از دکمه
 
+                    // ۴. تنظیم دقیق پرده هایلایت
                     tourHighlight.style.width = `${rect.width + padding*2}px`;
                     tourHighlight.style.height = `${rect.height + padding*2}px`;
                     tourHighlight.style.left = `${rect.left - padding}px`;
                     tourHighlight.style.top = `${rect.top - padding}px`;
 
+                    // ۵. تنظیم متن تولتیپ
                     document.getElementById('tourTitle').innerText = step.title;
                     document.getElementById('tourText').innerText = step.text;
                     
+                    // ۶. محاسبه هوشمند موقعیت تولتیپ (جلوگیری از خروج از صفحه)
+                    const tooltipWidth = 280;
+                    const tooltipHeight = 130; // تخمینی
+                    
                     let tooltipTop = rect.bottom + 20;
-                    let tooltipLeft = rect.left + (rect.width / 2) - 130;
+                    let tooltipLeft = rect.left + (rect.width / 2) - (tooltipWidth / 2);
 
-                    if (tooltipTop + 150 > window.innerHeight) tooltipTop = rect.top - 150;
+                    // اگر پایین صفحه جا نمی‌شد، ببرش بالا
+                    if (tooltipTop + tooltipHeight > window.innerHeight) {
+                        tooltipTop = rect.top - tooltipHeight - 20;
+                    }
+                    
+                    // جلوگیری از خروج از لبه چپ و راست
                     if (tooltipLeft < 10) tooltipLeft = 10;
-                    if (tooltipLeft + 260 > window.innerWidth) tooltipLeft = window.innerWidth - 270;
+                    if (tooltipLeft + tooltipWidth > window.innerWidth) tooltipLeft = window.innerWidth - tooltipWidth - 10;
+                    
+                    // جلوگیری از خروج از لبه بالا
+                    if (tooltipTop < 10) tooltipTop = 10;
 
                     tourTooltip.style.top = `${tooltipTop}px`;
                     tourTooltip.style.left = `${tooltipLeft}px`;
 
+                    // تنظیم متن دکمه آخر
                     const nextBtn = document.getElementById('tourNextBtn');
                     if (currentTourStep === tourSteps.length - 1) nextBtn.innerText = 'پایان 🎉';
                     else nextBtn.innerText = 'بعدی';
-                }, 300);
+                }, 100); // تاخیر کوچک برای اعمال z-index
             }
 
             window.nextTourStep = function() {
@@ -983,6 +1015,7 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
 
             window.endTour = function() {
                 tourOverlay.style.display = 'none';
+                document.querySelectorAll('.tour-active-element').forEach(e => e.classList.remove('tour-active-element'));
                 localStorage.setItem('noboghe_tour_seen', 'true');
             };
 
