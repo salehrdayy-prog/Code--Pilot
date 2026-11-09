@@ -45,8 +45,8 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
 .preview-wrapper.device-desktop iframe { max-width: 100%; margin: 0; display: block; }
 .preview-wrapper iframe { width: 100%; height: 100%; border: none; background: #ffffff; position: absolute; top: 0; left: 0; transition: all 0.3s ease; }
 .preview-wrapper iframe.fullscreen-active { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; z-index: 9999; background: #ffffff; border-radius: 0; }
-.chat-container { flex: 1 1 auto; display: flex; flex-direction: column; gap: 6px; min-height: 0; }
-.chat-messages { flex: 1; background: rgba(255, 255, 255, 0.02); border-radius: 14px; padding: 10px; overflow-y: auto; border: 1px solid rgba(255, 255, 255, 0.04); display: flex; flex-direction: column; gap: 6px; min-height: 80px; }
+.chat-container { flex: 1 1 auto; display: flex; flex-direction: column; gap: 6px; min-height: 0; position: relative; }
+.chat-messages { flex: 1; background: rgba(255, 255, 255, 0.02); border-radius: 14px; padding: 10px; overflow-y: auto; border: 1px solid rgba(255, 255, 255, 0.04); display: flex; flex-direction: column; gap: 6px; min-height: 80px; scroll-behavior: smooth; }
 .chat-messages .msg { padding: 8px 12px; border-radius: 14px; max-width: 85%; font-size: 13px; line-height: 1.6; animation: fadeIn 0.3s ease; white-space: pre-wrap; word-wrap: break-word; }
 .chat-messages .msg.user { background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
 .chat-messages .msg.bot { background: rgba(255, 255, 255, 0.06); color: #c8d8ec; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.04); }
@@ -61,6 +61,29 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
 .chat-messages .msg.bot pre { margin: 0; padding: 10px; border: none; background: transparent; overflow-x: auto; direction: ltr; text-align: left; font-family: 'Droid Sans Mono', monospace; font-size: 12px; }
 .chat-messages .msg.bot pre code { background: transparent; padding: 0; color: #d4d4d4; white-space: pre-wrap; }
 .chat-messages .msg.bot code { background: rgba(0, 0, 0, 0.4); padding: 2px 5px; border-radius: 4px; font-family: 'Droid Sans Mono', monospace; font-size: 11px; color: #79c0ff; }
+
+/* دکمه رفتن به پایین */
+#scrollBottomBtn {
+    position: absolute;
+    bottom: 70px;
+    right: 20px;
+    background: #8b5cf6;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: none; /* ابتدا مخفی */
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    z-index: 10;
+    transition: transform 0.2s, opacity 0.2s;
+}
+#scrollBottomBtn.show { display: flex; }
+#scrollBottomBtn:hover { transform: scale(1.1); }
 
 /* افکت چشمک زن مکان‌نما (Cursor) هنگام تایپ */
 .typing-cursor::after { content: '▌'; animation: blink 1s step-start infinite; color: #8b5cf6; }
@@ -139,7 +162,14 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                         <button onclick="quickSend('HTML چیه؟')">📄 HTML</button>
                         <button onclick="quickSend('یادگیری از کجا شروع کنم؟')">📚 یادگیری</button>
                     </div>
+                    
                     <div class="chat-messages" id="chatMessages"></div>
+                    
+                    <!-- 👈 دکمه شناور برای رفتن به پایین -->
+                    <button id="scrollBottomBtn" onclick="scrollToBottom(true)">
+                        <i class="fas fa-arrow-down"></i>
+                    </button>
+
                     <div class="typing-indicator" id="typingIndicator">
                         <span></span><span></span><span></span>
                     </div>
@@ -264,6 +294,7 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
             const typingIndicator = document.getElementById('typingIndicator');
             const tabsContainer = document.getElementById('tabs');
             const newFileModal = document.getElementById('newFileModal');
+            const scrollBottomBtn = document.getElementById('scrollBottomBtn');
             
             // المان‌های عکس
             const imageInput = document.getElementById('imageInput');
@@ -274,11 +305,35 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
             const totalPages = 3;
             let toastTimer = null;
             let chatHistory = [];
-            let attachedImageBase64 = null; // 👈 متغیر نگهداری عکس
+            let attachedImageBase64 = null;
+            let isBotTyping = false; // 👈 وضعیت تایپ کردن ربات
 
             const FILES_STORAGE_KEY = 'noboghe-mobile-files-v2';
             let files = {};
             let currentFileName = null;
+
+            // ===== اسکرول هوشمند =====
+            function isScrolledToBottom() {
+                // اگر فاصله کاربر تا پایین کمتر از 50 پیکسل باشه، یعنی پایین هست
+                return chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 50;
+            }
+
+            function scrollToBottom(force = false) {
+                if (force || isScrolledToBottom()) {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    scrollBottomBtn.classList.remove('show');
+                }
+            }
+
+            // مدیریت دکمه شناور
+            chatMessages.addEventListener('scroll', () => {
+                if (isScrolledToBottom()) {
+                    scrollBottomBtn.classList.remove('show');
+                } else {
+                    // اگر ربات تایپ می‌کند یا کاربر بالا رفته، دکمه را نشان بده
+                    scrollBottomBtn.classList.add('show');
+                }
+            });
 
             // ===== مدیریت عکس =====
             window.handleImageUpload = function(e) {
@@ -289,7 +344,6 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                 reader.onload = function(event) {
                     const img = new Image();
                     img.onload = function() {
-                        // فشرده‌سازی عکس با Canvas برای کاهش حجم
                         const canvas = document.createElement('canvas');
                         const MAX_WIDTH = 800;
                         const MAX_HEIGHT = 800;
@@ -313,7 +367,6 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
 
-                        // تبدیل به Base64 با کیفیت ۷۰٪ (کاهش حجم)
                         attachedImageBase64 = canvas.toDataURL('image/jpeg', 0.7);
                         
                         imagePreview.src = attachedImageBase64;
@@ -322,7 +375,7 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                     img.src = event.target.result;
                 };
                 reader.readAsDataURL(file);
-                imageInput.value = ''; // ریست کردن اینپوت
+                imageInput.value = ''; 
             };
 
             window.removeImage = function() {
@@ -354,7 +407,7 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                             msgDiv.innerHTML = `${icon} ${content}`;
                             chatMessages.appendChild(msgDiv);
                         });
-                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                        scrollToBottom(true); // بعد از لود، برو پایین
                     } else {
                         addMessage("سلام! من نابغه‌کد هستم. 🤖\n\nهر سوالی داری بپرس! می‌تونی عکس هم برام بفرستی تا بررسی کنم.", "bot", false);
                     }
@@ -596,18 +649,28 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                 let i = 0;
                 element.innerHTML = ''; 
                 element.classList.add('typing-cursor');
+                isBotTyping = true; // 👈 شروع تایپ
                 
                 return new Promise(resolve => {
                     const interval = setInterval(() => {
                         element.textContent += text.charAt(i);
                         i++;
-                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                        
+                        // 👈 فقط در صورتی که کاربر پایین باشد، اسکرول کن
+                        if (isScrolledToBottom()) {
+                            chatMessages.scrollTop = chatMessages.scrollHeight;
+                        }
                         
                         if (i >= text.length) {
                             clearInterval(interval);
                             element.classList.remove('typing-cursor');
                             element.innerHTML = formatMessage(text);
-                            chatMessages.scrollTop = chatMessages.scrollHeight;
+                            
+                            if (isScrolledToBottom()) {
+                                chatMessages.scrollTop = chatMessages.scrollHeight;
+                            }
+                            
+                            isBotTyping = false; // 👈 پایان تایپ
                             resolve();
                         }
                     }, speed);
@@ -624,23 +687,22 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                     if (imageBase64) content += `<br><img src="${imageBase64}" alt="عکس">`;
                     msgDiv.innerHTML = content;
                     chatMessages.appendChild(msgDiv);
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    scrollToBottom(true); // وقتی پیام خودت رو میفرستی، برو پایین
                     chatHistory.push({ sender, text, image: imageBase64 });
                     saveChatMemory();
                     return Promise.resolve();
                 } else {
                     msgDiv.innerHTML = `${icon} <span class="msg-content"></span>`;
                     chatMessages.appendChild(msgDiv);
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
-                    chatHistory.push({ sender, text });
-                    saveChatMemory();
                     
                     const contentSpan = msgDiv.querySelector('.msg-content');
                     if (animate) {
                         return typeWriter(text, contentSpan);
                     } else {
                         contentSpan.innerHTML = formatMessage(text);
-                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                        scrollToBottom(true);
+                        chatHistory.push({ sender, text });
+                        saveChatMemory();
                         return Promise.resolve();
                     }
                 }
@@ -654,19 +716,17 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
 
                 if (!text && !imageToSend) return;
 
-                // اضافه کردن پیام کاربر همراه با عکس (اگر بود)
                 await addMessage(text || "این عکس را بررسی کن", 'user', false, imageToSend);
                 
                 aiInput.value = '';
-                removeImage(); // پاک کردن پیش‌نمایش عکس
+                removeImage(); 
 
                 typingIndicator.style.display = 'flex';
-                chatMessages.scrollTop = chatMessages.scrollHeight;
+                scrollToBottom(true); // اسکرول به پایین برای دیدن نشانگر تایپ
 
-                // ارسال تاریخچه (بدون عکس‌های قبلی برای صرفه‌جویی در توکن)
                 const historyForAPI = chatHistory
-                    .filter(m => m.sender !== 'user' || !m.image) // حذف عکس‌های قدیمی از تاریخچه
-                    .slice(0, -1) // پیام فعلی که الان اضافه کردیم رو از تاریخچه حذف می‌کنیم چون جداگانه می‌فرستیم
+                    .filter(m => m.sender !== 'user' || !m.image) 
+                    .slice(0, -1) 
                     .map(m => ({
                         role: m.sender === "user" ? "user" : "assistant",
                         content: m.text
@@ -680,13 +740,22 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                 typingIndicator.style.display = 'none';
 
                 if (result.ok) {
-                    await addMessage(result.reply, "bot", true);
+                    // 👈 قبل از شروع تایپ، چک کن ببینیم کاربر پایینه یا نه
+                    const shouldAutoScroll = isScrolledToBottom();
+                    const botMsgPromise = addMessage(result.reply, "bot", true);
+                    
+                    // اگر کاربر پایین بود، اسکرول کن. اگر بالا بود، دکمه رو نشون بده.
+                    if (!shouldAutoScroll) {
+                        scrollBottomBtn.classList.add('show');
+                    }
+                    
+                    await botMsgPromise;
                 } else {
                     const botMsg = document.createElement('div');
                     botMsg.className = 'msg bot';
                     botMsg.innerHTML = `<i class="fas fa-robot"></i> <span style="color: #ff6b6b;">❌ خطا در اتصال به سرور:<br>${result.error}</span>`;
                     chatMessages.appendChild(botMsg);
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    scrollToBottom(true);
                 }
             };
 
