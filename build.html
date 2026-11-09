@@ -47,28 +47,61 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
 .preview-wrapper iframe.fullscreen-active { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; z-index: 9999; background: #ffffff; border-radius: 0; }
 
 /* ====== کنسول باگ‌یاب ====== */
-#consolePanel {
-    position: absolute; bottom: 0; left: 0; width: 100%; height: 200px;
-    background: rgba(10, 14, 20, 0.95); border-top: 1px solid #333;
-    z-index: 100; display: none; flex-direction: column;
-    transition: transform 0.3s ease;
-}
+#consolePanel { position: absolute; bottom: 0; left: 0; width: 100%; height: 200px; background: rgba(10, 14, 20, 0.95); border-top: 1px solid #333; z-index: 100; display: none; flex-direction: column; transition: transform 0.3s ease; }
 #consolePanel.show { display: flex; }
 .console-header { display: flex; justify-content: space-between; padding: 5px 10px; background: #161b22; font-size: 12px; color: #8aa3c9; border-bottom: 1px solid #333; }
 .console-body { flex: 1; overflow-y: auto; padding: 8px; font-family: 'Droid Sans Mono', monospace; font-size: 11px; direction: ltr; text-align: left; }
 .console-line { padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,0.05); word-wrap: break-word; }
 .console-line.error { color: #ff6b6b; background: rgba(255, 107, 107, 0.1); }
 .console-line.log { color: #4ade80; }
-.console-line.warn { color: #facc15; }
 .console-clear-btn { background: transparent; border: none; color: #ff6b6b; cursor: pointer; font-size: 11px; }
 
 /* ====== چت ====== */
 .chat-container { flex: 1 1 auto; display: flex; flex-direction: column; gap: 6px; min-height: 0; position: relative; }
 .chat-messages { flex: 1; background: rgba(255, 255, 255, 0.02); border-radius: 14px; padding: 10px; overflow-y: auto; border: 1px solid rgba(255, 255, 255, 0.04); display: flex; flex-direction: column; gap: 6px; min-height: 80px; scroll-behavior: smooth; }
 .chat-messages .msg { padding: 8px 12px; border-radius: 14px; max-width: 85%; font-size: 13px; line-height: 1.6; animation: fadeIn 0.3s ease; white-space: pre-wrap; word-wrap: break-word; }
+
+/* 👈 فونت پیام‌های هوش مصنوعی ضخیم‌تر و روشن‌تر شد */
 .chat-messages .msg.user { background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
-.chat-messages .msg.bot { background: rgba(255, 255, 255, 0.06); color: #c8d8ec; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.04); }
-.chat-messages .msg i { margin-left: 6px; }
+.chat-messages .msg.bot { background: rgba(255, 255, 255, 0.08); color: #ffffff; font-weight: 500; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.06); }
+.chat-messages .msg i { margin-left: 6px; color: #c4b5fd; }
+
+/* 👈 دکمه‌های زیر پیام هوش مصنوعی */
+.msg-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+.msg-actions button {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #c4b5fd;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: 0.2s;
+    font-family: inherit;
+}
+.msg-actions button:hover {
+    background: rgba(139, 92, 246, 0.2);
+    color: #fff;
+}
+.msg-actions button.active-up {
+    background: rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+    border-color: rgba(34, 197, 94, 0.4);
+}
+.msg-actions button.active-down {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    border-color: rgba(239, 68, 68, 0.4);
+}
 
 /* استایل‌های بلاک کد و دکمه‌های کپی و اعمال */
 .code-block-container { background: #0a0e14; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; margin: 10px 0; overflow: hidden; direction: ltr; text-align: left; }
@@ -135,16 +168,39 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
 .btn-cancel:hover { background: rgba(255, 255, 255, 0.12); }
 .btn-create { background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; }
 .btn-create:hover { transform: scale(0.98); }
+
+/* ====== تور راهنما (Clash of Clans Style) ====== */
+#tourOverlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: rgba(0, 0, 0, 0.7); z-index: 99999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+.tour-highlight { position: absolute; box-shadow: 0 0 0 9999px rgba(0,0,0,0.75), 0 0 20px rgba(139, 92, 246, 0.8); border-radius: 12px; transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); z-index: 100000; pointer-events: none; border: 2px solid #8b5cf6; background: rgba(139, 92, 246, 0.1); }
+.tour-tooltip { position: absolute; background: #1a1a2e; border: 2px solid #8b5cf6; border-radius: 16px; padding: 15px; width: 260px; color: #e8edf5; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 100001; transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); font-size: 13px; line-height: 1.6; }
+.tour-tooltip h4 { color: #c4b5fd; margin-bottom: 8px; font-size: 15px; }
+.tour-tooltip p { margin-bottom: 12px; }
+.tour-btns { display: flex; justify-content: space-between; gap: 8px; }
+.tour-btns button { flex: 1; padding: 8px; border-radius: 8px; border: none; font-family: inherit; font-size: 12px; cursor: pointer; font-weight: 600; }
+.btn-skip { background: rgba(255,255,255,0.1); color: #aaa; }
+.btn-next { background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; }
+
 @media (max-width: 420px) { .phone { width: 100vw; height: 100dvh; max-height: none; border-radius: 0; box-shadow: none; border: none; } .editor-bottom-bar { padding: 4px 6px; min-height: 36px; border-radius: 0; } .page-header h2 { font-size: 22px; } .page-header h2 i { font-size: 14px; } }
 @media (max-height: 700px) { .phone { height: 100dvh; max-height: none; } }
 @supports (padding: env(safe-area-inset-bottom)) { .editor-bottom-bar { padding-bottom: calc(6px + env(safe-area-inset-bottom)); } .nav-dots { padding-bottom: calc(4px + env(safe-area-inset-bottom)); } }
     </style>
 </head>
 <body>
-    <!-- 👈 آهنگ پس‌زمینه Lofi (پخش خودکار نیست، با دکمه پخش می‌شود) -->
     <audio id="lofiAudio" loop>
         <source src="https://stream.zeno.fm/0r0xa792kwzuv" type="audio/mpeg">
     </audio>
+
+    <div id="tourOverlay">
+        <div id="tourHighlight" class="tour-highlight"></div>
+        <div id="tourTooltip" class="tour-tooltip">
+            <h4 id="tourTitle"></h4>
+            <p id="tourText"></p>
+            <div class="tour-btns">
+                <button class="btn-skip" onclick="endTour()">رد کردن</button>
+                <button class="btn-next" id="tourNextBtn" onclick="nextTourStep()">بعدی</button>
+            </div>
+        </div>
+    </div>
 
     <div class="phone" id="phone">
         <div class="container" id="container">
@@ -154,9 +210,12 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                 <div class="page-header">
                     <h2><i class="fas fa-robot"></i> دستیار هوشمند</h2>
                     <div class="page-actions">
+                        <button onclick="startTour()" title="تور راهنما" style="width: auto; padding: 0 10px; gap: 5px;">
+                            <i class="fas fa-question"></i> 
+                            <span style="font-size: 11px; font-family: inherit; font-weight: bold;">تور راهنما</span>
+                        </button>
                         <button id="musicBtn" onclick="toggleMusic()" title="رادیو Lofi"><i class="fas fa-music"></i></button>
                         <button onclick="clearChat()" title="پاک کردن چت"><i class="fas fa-trash-alt"></i></button>
-                        <button onclick="exportChat()" title="خروجی چت"><i class="fas fa-download"></i></button>
                     </div>
                 </div>
                 <div class="chat-container">
@@ -165,7 +224,6 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                         <button onclick="quickSend('چطوری یه سایت بسازم؟')">🌐 ساخت سایت</button>
                         <button onclick="quickSend('خطای کدم رو چطور حل کنم؟')">🐞 رفع خطا</button>
                         <button onclick="quickSend('ماشین حساب بنویس')">🧮 ماشین حساب</button>
-                        <button onclick="quickSend('HTML چیه؟')">📄 HTML</button>
                     </div>
                     
                     <div class="chat-messages" id="chatMessages"></div>
@@ -180,7 +238,6 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                     
                     <div class="chat-input-wrapper">
                         <div class="chat-input-row">
-                            <!-- 👈 دکمه هوشمند برای ارسال کد به هوش مصنوعی -->
                             <button class="action-btn" id="contextBtn" onclick="toggleContext()" title="هوش مصنوعی کد و باگ‌ها را ببیند">
                                 <i class="fas fa-brain"></i>
                             </button>
@@ -198,7 +255,7 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                 <div class="page-header">
                     <h2><i class="fas fa-code"></i> ویرایشگر</h2>
                     <div class="page-actions">
-                        <button onclick="runCode()" title="اجرا"><i class="fas fa-play"></i></button>
+                        <button id="runCodeBtnTop" onclick="runCode()" title="اجرا"><i class="fas fa-play"></i></button>
                         <button onclick="formatCode()" title="زیبا‌سازی"><i class="fas fa-wand-magic-sparkles"></i></button>
                     </div>
                 </div>
@@ -218,13 +275,7 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                     <button onclick="saveFile()" title="ذخیره"><i class="fas fa-save"></i></button>
                     <button onclick="nextTab()" title="تب بعدی"><i class="fas fa-arrow-right"></i></button>
                     <button onclick="prevTab()" title="تب قبلی"><i class="fas fa-arrow-left"></i></button>
-                    <button onclick="findInEditor()" title="جستجو"><i class="fas fa-search"></i></button>
-                    <button onclick="undoAction()" title="بازگشت"><i class="fas fa-rotate-left"></i></button>
-                    <button onclick="redoAction()" title="رفتن به جلو"><i class="fas fa-rotate-right"></i></button>
                     <button onclick="copyContent()" title="کپی"><i class="fas fa-copy"></i></button>
-                    <button id="submitExerciseBtn" onclick="submitExerciseOnce()" title="ثبت تمرین" style="display:none;">
-                        <i class="fas fa-check-circle"></i> ثبت تمرین
-                    </button>
                     <button onclick="goToDone()" title="دریافت پروژه"><i class="fas fa-download"></i></button>
                 </div>
             </div>
@@ -235,7 +286,6 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                     <h2><i class="fas fa-eye"></i> پیش‌نمایش</h2>
                     <div class="page-actions">
                         <button onclick="refreshPreview()" title="بروزرسانی"><i class="fas fa-sync-alt"></i></button>
-                        <!-- 👈 دکمه کنسول باگ‌یاب -->
                         <button id="consoleToggleBtn" onclick="toggleConsole()" title="کنسول باگ‌یاب"><i class="fas fa-bug"></i></button>
                         <button onclick="toggleDeviceSize()" title="تغییر سایز"><i class="fas fa-mobile-alt"></i></button>
                         <button onclick="toggleFullscreenPreview()" title="تمام صفحه"><i class="fas fa-expand"></i></button>
@@ -244,7 +294,6 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                 <div class="preview-wrapper" id="previewWrapper">
                     <iframe id="frame" sandbox="allow-scripts allow-modals allow-same-origin"></iframe>
                     
-                    <!-- پنل کنسول -->
                     <div id="consolePanel">
                         <div class="console-header">
                             <span><i class="fas fa-terminal"></i> Console</span>
@@ -334,32 +383,23 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
             };
 
             // ===== سیستم کنسول =====
-            window.toggleConsole = function() {
-                consolePanel.classList.toggle('show');
-            };
-            
-            window.clearConsole = function() {
-                consoleLogs = [];
-                consoleBody.innerHTML = '<div class="console-line log">کنسول پاک شد.</div>';
-            };
+            window.toggleConsole = function() { consolePanel.classList.toggle('show'); };
+            window.clearConsole = function() { consoleLogs = []; consoleBody.innerHTML = '<div class="console-line log">کنسول پاک شد.</div>'; };
 
-            // گرفتن لاگ‌ها از iframe
             window.addEventListener('message', function(e) {
                 if (e.data && e.data.type === 'CONSOLE_LOG') {
-                    const msg = e.data.message;
-                    consoleLogs.push({ type: 'log', message: msg });
+                    consoleLogs.push({ type: 'log', message: e.data.message });
                     const div = document.createElement('div');
                     div.className = 'console-line log';
-                    div.innerText = msg;
+                    div.innerText = e.data.message;
                     consoleBody.appendChild(div);
                     consoleBody.scrollTop = consoleBody.scrollHeight;
                 }
                 if (e.data && e.data.type === 'CONSOLE_ERROR') {
-                    const msg = e.data.message;
-                    consoleLogs.push({ type: 'error', message: msg });
+                    consoleLogs.push({ type: 'error', message: e.data.message });
                     const div = document.createElement('div');
                     div.className = 'console-line error';
-                    div.innerText = msg;
+                    div.innerText = e.data.message;
                     consoleBody.appendChild(div);
                     consoleBody.scrollTop = consoleBody.scrollHeight;
                 }
@@ -403,8 +443,17 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                             const msgDiv = document.createElement('div');
                             msgDiv.className = `msg ${msg.sender}`;
                             const icon = msg.sender === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+                            
                             let content = msg.sender === 'user' ? escapeHTML(msg.text) : formatMessage(msg.text);
-                            msgDiv.innerHTML = `${icon} ${content}`;
+                            
+                            if (msg.sender === 'bot') {
+                                msgDiv.innerHTML = `${icon} <span class="msg-content">${content}</span>`;
+                                // اضافه کردن دکمه‌ها برای پیام‌های قدیمی
+                                msgDiv.insertAdjacentHTML('beforeend', getMsgActionsHTML());
+                            } else {
+                                msgDiv.innerHTML = `${icon} ${content}`;
+                            }
+                            
                             chatMessages.appendChild(msgDiv);
                         });
                         scrollToBottom(true);
@@ -543,9 +592,6 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                 } catch (e) { showToast('⚠️ خطا در زیبا‌سازی', true); }
             };
 
-            window.undoAction = function() { document.execCommand('undo'); }
-            window.redoAction = function() { document.execCommand('redo'); }
-            window.findInEditor = function() { showToast('🔍 جستجو در موبایل با Ctrl+F'); }
             window.copyContent = function() { if (navigator.clipboard) navigator.clipboard.writeText(codeEditor.value).then(() => showToast('📄 کد کپی شد!')); else showToast('⚠️ کپی پشتیبانی نمی‌شود', true); };
 
             window.closeEditor = function() {
@@ -568,7 +614,6 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                 
                 html = html.replace(/<link[^>]*href=["'][^"']+\.css["'][^>]*>/gi, '').replace(/<script[^>]*src=["'][^"']+\.js["'][^>]*><\/script>/gi, '');
                 
-                // 👈 تزریق اسکریپت برای گرفتن لاگ‌ها و خطاهای درون iframe
                 const loggerScript = `
                 <script>
                     window.onerror = function(msg, url, line) {
@@ -602,10 +647,9 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
 
             function autoPreview() { frame.srcdoc = buildPreviewHTML(); }
             window.runCode = function() { 
-                clearConsole(); // پاک کردن لاگ‌های قبلی موقع اجرای مجدد
+                clearConsole(); 
                 autoPreview(); 
                 goTo(2); 
-                // خودکار باز کردن کنسول اگر خطایی رخ داد
                 setTimeout(() => {
                     if (consoleLogs.some(l => l.type === 'error')) {
                         consolePanel.classList.add('show');
@@ -636,7 +680,7 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
             };
 
             // ==========================================
-            // 🧠 AI CHAT & FORMATTING & TYPEWRITER
+            // 🧠 AI CHAT & FORMATTING
             // ==========================================
 
             function escapeHTML(str) {
@@ -663,6 +707,44 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                 return parts.join('');
             }
 
+            // ===== دکمه‌های زیر پیام =====
+            function getMsgActionsHTML() {
+                return `
+                    <div class="msg-actions" style="display: flex;">
+                        <button onclick="copyMsgText(this)" title="کپی"><i class="fas fa-copy"></i> کپی</button>
+                        <button onclick="rateMsg(this, 'up')" title="پاسخ خوب بود"><i class="fas fa-thumbs-up"></i></button>
+                        <button onclick="rateMsg(this, 'down')" title="پاسخ خوب نبود"><i class="fas fa-thumbs-down"></i></button>
+                    </div>
+                `;
+            }
+
+            window.copyMsgText = function(btn) {
+                const contentSpan = btn.closest('.msg').querySelector('.msg-content');
+                const textToCopy = contentSpan.innerText;
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        const orig = btn.innerHTML;
+                        btn.innerHTML = '<i class="fas fa-check"></i> کپی شد';
+                        setTimeout(() => btn.innerHTML = orig, 2000);
+                    });
+                }
+            };
+
+            window.rateMsg = function(btn, type) {
+                const actions = btn.closest('.msg-actions');
+                actions.querySelectorAll('button').forEach(b => {
+                    b.classList.remove('active-up', 'active-down');
+                });
+                if (type === 'up') {
+                    btn.classList.add('active-up');
+                    showToast('ممنون از بازخوردت! 💜');
+                } else {
+                    btn.classList.add('active-down');
+                    showToast('ممنون، سعی می‌کنم بهتر بشم! 🛠️');
+                }
+            };
+
+            // ===== کپی و اعمال کد =====
             window.copyCodeBlock = function(btn) {
                 const container = btn.closest('.code-block-container');
                 if(!container) return;
@@ -690,7 +772,6 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                 else if (lang.includes('html')) targetFile = 'index.html';
                 
                 if (!files[targetFile]) files[targetFile] = '';
-                
                 files[targetFile] = codeText;
                 saveFilesToLocal();
                 
@@ -751,11 +832,23 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                 } else {
                     msgDiv.innerHTML = `${icon} <span class="msg-content"></span>`;
                     chatMessages.appendChild(msgDiv);
+                    
+                    const actionsHTML = getMsgActionsHTML();
+                    msgDiv.insertAdjacentHTML('beforeend', actionsHTML);
+                    const actionsDiv = msgDiv.querySelector('.msg-actions');
+                    actionsDiv.style.display = 'none'; // مخفی کردن تا وقتی تایپ تموم بشه
+
                     const contentSpan = msgDiv.querySelector('.msg-content');
+                    
                     if (animate) {
-                        return typeWriter(text, contentSpan);
+                        return typeWriter(text, contentSpan).then(() => {
+                            actionsDiv.style.display = 'flex'; // نمایش دکمه‌ها بعد از تایپ
+                            chatHistory.push({ sender, text });
+                            saveChatMemory();
+                        });
                     } else {
                         contentSpan.innerHTML = formatMessage(text);
+                        actionsDiv.style.display = 'flex';
                         scrollToBottom(true);
                         chatHistory.push({ sender, text });
                         saveChatMemory();
@@ -780,7 +873,6 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                     .slice(0, -1) 
                     .map(m => ({ role: m.sender === "user" ? "user" : "assistant", content: m.text }));
 
-                // 👈 ساخت Context در صورتی که کاربر دکمه کدبینی را روشن کرده باشد
                 let codeContext = null;
                 if (isContextEnabled) {
                     let filesStr = "";
@@ -819,19 +911,79 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
                 showToast('🧹 حافظه و چت پاک شد!');
             };
 
-            window.exportChat = function() {
-                if (chatHistory.length === 0) { showToast('⚠️ هنوز پیامی توی چت نیست!'); return; }
-                let output = '--- تاریخچه چت ---\n\n';
-                chatHistory.forEach(msg => {
-                    const prefix = msg.sender === 'user' ? '👤 کاربر' : '🤖 نابغه‌کد';
-                    output += `${prefix}: ${msg.text}\n\n`;
-                });
-                if (navigator.clipboard) navigator.clipboard.writeText(output).then(() => showToast('📋 چت کپی شد!'));
-                else {
-                    const blob = new Blob([output], { type: 'text/plain' });
-                    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'chat_history.txt'; a.click();
-                    showToast('📥 چت دانلود شد!');
+            // ==========================================
+            // 🎓 تور راهنما
+            // ==========================================
+            const tourSteps = [
+                { element: '#chatMessages', title: '🤖 چت هوشمند', text: 'اینجا محل گفتگو با هوش مصنوعی است. می‌تونی سوال بپرسی، کد بگیری یا باگ‌هات رو بفرستی تا برات حل کنم.' },
+                { element: '#contextBtn', title: '🧠 کدبینی', text: 'وقتی این دکمه روشن باشه (بنفش بشه)، هوش مصنوعی تمام کدهای تو و خطاهای کنسول رو می‌بینه تا دقیق‌تر بتونه کمکت کنه.' },
+                { element: '#musicBtn', title: '🎵 رادیو Lofi', text: 'موسیقی ملایم و بی‌کلام مخصوص برنامه‌نویسی. برای تمرکز بیشتر می‌تونی روشنش کنی.' },
+                { element: '#tabs', title: '📁 تب‌های کد', text: 'اینجا فایل‌های پروژه شماست. با کلیک روی هر تب می‌تونی HTML، CSS یا JS رو ویرایش کنی. با دکمه + می‌تونی فایل جدید بسازی.' },
+                { element: '#runCodeBtnTop', title: '▶️ اجرای کد', text: 'وقتی کدت رو نوشتی، با زدن این دکمه به تب پیش‌نمایش میری و نتیجه رو زنده می‌بینی.' },
+                { element: '#consoleToggleBtn', title: '🐞 کنسول باگ‌یاب', text: 'اگر کدت خطا داشته باشه، اینجا خطاها (Errors) رو نشونت میده. (خودکار هم باز میشه).' },
+                { element: '#previewWrapper', title: '📺 پیش‌نمایش زنده', text: 'اینجا خروجی کدهای شماست. می‌تونی سایز دستگاه رو عوض کنی یا تمام‌صفحه ببینی.' }
+            ];
+
+            let currentTourStep = 0;
+            const tourOverlay = document.getElementById('tourOverlay');
+            const tourHighlight = document.getElementById('tourHighlight');
+            const tourTooltip = document.getElementById('tourTooltip');
+
+            window.startTour = function() {
+                currentTourStep = 0;
+                tourOverlay.style.display = 'flex';
+                showTourStep();
+            };
+
+            function showTourStep() {
+                if (currentTourStep >= tourSteps.length) {
+                    endTour();
+                    return;
                 }
+
+                const step = tourSteps[currentTourStep];
+                const el = document.querySelector(step.element);
+                
+                if (!el) { nextTourStep(); return; }
+
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                setTimeout(() => {
+                    const rect = el.getBoundingClientRect();
+                    const padding = 8;
+
+                    tourHighlight.style.width = `${rect.width + padding*2}px`;
+                    tourHighlight.style.height = `${rect.height + padding*2}px`;
+                    tourHighlight.style.left = `${rect.left - padding}px`;
+                    tourHighlight.style.top = `${rect.top - padding}px`;
+
+                    document.getElementById('tourTitle').innerText = step.title;
+                    document.getElementById('tourText').innerText = step.text;
+                    
+                    let tooltipTop = rect.bottom + 20;
+                    let tooltipLeft = rect.left + (rect.width / 2) - 130;
+
+                    if (tooltipTop + 150 > window.innerHeight) tooltipTop = rect.top - 150;
+                    if (tooltipLeft < 10) tooltipLeft = 10;
+                    if (tooltipLeft + 260 > window.innerWidth) tooltipLeft = window.innerWidth - 270;
+
+                    tourTooltip.style.top = `${tooltipTop}px`;
+                    tourTooltip.style.left = `${tooltipLeft}px`;
+
+                    const nextBtn = document.getElementById('tourNextBtn');
+                    if (currentTourStep === tourSteps.length - 1) nextBtn.innerText = 'پایان 🎉';
+                    else nextBtn.innerText = 'بعدی';
+                }, 300);
+            }
+
+            window.nextTourStep = function() {
+                currentTourStep++;
+                showTourStep();
+            };
+
+            window.endTour = function() {
+                tourOverlay.style.display = 'none';
+                localStorage.setItem('noboghe_tour_seen', 'true');
             };
 
             // ===== INIT =====
@@ -841,7 +993,13 @@ body { margin: 0; height: 100%; height: 100dvh; min-height: 100dvh; display: fle
             codeEditor.value = files[currentFileName];
             updateLineNumbers(); renderTabs(); codeEditor.scrollTop = 0; autoPreview();
             newFileModal.addEventListener('click', function(e) { if (e.target === newFileModal) window.closeNewFileModal(); });
-            setTimeout(() => { showToast('🚀 نابغه‌کد راه‌اندازی شد!'); }, 500);
+            
+            setTimeout(() => { 
+                showToast('🚀 نابغه‌کد راه‌اندازی شد!'); 
+                if (!localStorage.getItem('noboghe_tour_seen')) {
+                    startTour();
+                }
+            }, 1000);
         })();
     </script>
 
