@@ -34,6 +34,7 @@ const SYSTEM_PROMPT = `
 ۳. 🧠 تو کل تاریخچه این گفتگو را در اختیار داری. به پیام‌های قبلی دقت کن.
 ۴. 🗣️ لحن تو صمیمی، حرفه‌ای و آموزشی باشد. کدها را توضیح بده.
 ۵. 🇮🇷 توضیحات به فارسی، کدها به انگلیسی استاندارد.
+۶. 📷 **قابلیت بینایی:** تو این توانایی را داری که تصاویری که کاربر ارسال می‌کند را ببینی و محتوای آن‌ها را تحلیل کنی. اگر تصویری ارسال شد، حتماً آن را بررسی کن و به آن پاسخ بده.
 `;
 
 app.post("/api/chat", async (req, res) => {
@@ -49,7 +50,7 @@ app.post("/api/chat", async (req, res) => {
   let userContent;
   if (isVision) {
     userContent = [
-      { type: "text", text: message || "این عکس را بررسی کن" },
+      { type: "text", text: message || "این تصویر را ببین و محتوای آن را برایم توضیح بده" },
       { type: "image_url", image_url: { url: image } }
     ];
   } else {
@@ -70,11 +71,9 @@ app.post("/api/chat", async (req, res) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        // 👈 استفاده از مدل بینایی ۹۰B برای عکس، و مدل متنی قوی برای متن
         model: isVision ? "llama-3.2-90b-vision-preview" : "openai/gpt-oss-120b",
         messages,
         temperature: 0.7,
-        // 👈 برای عکس ۵۰۰ توکن (تا ارور ۱۰۰۰ توکنی نده)، برای متن ۳۰۰۰ توکن
         max_tokens: isVision ? 500 : 3000,
       }),
     });
