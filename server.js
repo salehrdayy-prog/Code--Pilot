@@ -43,14 +43,11 @@ app.post("/api/chat", async (req, res) => {
     return res.status(400).json({ error: "پیام یا عکس نامعتبر است" });
   }
 
-  // 👈 تشخیص خودکار: آیا عکس فرستاده شده؟
   const isVision = !!image;
-
   const safeHistory = Array.isArray(history) ? history.slice(-6) : [];
   
   let userContent;
   if (isVision) {
-    // ساختار مخصوص مدل بینایی
     userContent = [
       { type: "text", text: message || "این عکس را بررسی کن" },
       { type: "image_url", image_url: { url: image } }
@@ -73,12 +70,12 @@ app.post("/api/chat", async (req, res) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        // 👈 انتخاب هوشمند مدل بر اساس وجود عکس
-        model: isVision ? "qwen/qwen3.8-27b" : "openai/gpt-oss-120b",
+        // 👈 استفاده از مدل بینایی ۹۰B برای عکس، و مدل متنی قوی برای متن
+        model: isVision ? "llama-3.2-90b-vision-preview" : "openai/gpt-oss-120b",
         messages,
         temperature: 0.7,
-        // 👈 اگر عکس بود سقف توکن رو کم می‌کنیم (برای جلوگیری از ارور گروک)، اگر متن بود زیاد می‌کنیم (برای کدهای طولانی)
-        max_tokens: isVision ? 800 : 3000,
+        // 👈 برای عکس ۵۰۰ توکن (تا ارور ۱۰۰۰ توکنی نده)، برای متن ۳۰۰۰ توکن
+        max_tokens: isVision ? 500 : 3000,
       }),
     });
 
