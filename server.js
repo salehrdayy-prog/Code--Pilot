@@ -37,19 +37,32 @@ const SYSTEM_PROMPT = `
 `;
 
 app.post("/api/chat", async (req, res) => {
-  const { message, history } = req.body || {};
+  const { message, history, image } = req.body || {};
 
-  if (!message || typeof message !== "string") {
-    return res.status(400).json({ error: "پیام نامعتبر است" });
+  if (!message && !image) {
+    return res.status(400).json({ error: "پیام یا عکس نامعتبر است" });
   }
 
-  // 👈 کاهش تاریخچه به ۶ پیام آخر تا فضای کافی برای جواب‌های طولانی بمونه
+  // 👈 تشخیص خودکار: آیا عکس فرستاده شده؟
+  const isVision = !!image;
+
   const safeHistory = Array.isArray(history) ? history.slice(-6) : [];
   
+  let userContent;
+  if (isVision) {
+    // ساختار مخصوص مدل بینایی
+    userContent = [
+      { type: "text", text: message || "این عکس را بررسی کن" },
+      { type: "image_url", image_url: { url: image } }
+    ];
+  } else {
+    userContent = message;
+  }
+
   const messages = [
     { role: "system", content: SYSTEM_PROMPT },
     ...safeHistory,
-    { role: "user", content: message },
+    { role: "user", content: userContent },
   ];
 
   try {
@@ -60,12 +73,12 @@ app.post("/api/chat", async (req, res) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        // 👈 برگشت به مدل متنی با سقف بالا
-        model: "openai/gpt-oss-120b", 
+        // 👈 انتخاب هوشمند مدل بر اساس وجود عکس
+        model: isVision ? "qwen/qwen3.8-27b" : "openai/gpt-oss-120b",
         messages,
         temperature: 0.7,
-        // 👈 افزایش سقف خروجی به 3000 توکن (کدهای طولانی)
-        max_tokens: 3000, 
+        // 👈 اگر عکس بود سقف توکن رو کم می‌کنیم (برای جلوگیری از ارور گروک)، اگر متن بود زیاد می‌کنیم (برای کدهای طولانی)
+        max_tokens: isVision ? 800 : 3000,
       }),
     });
 
