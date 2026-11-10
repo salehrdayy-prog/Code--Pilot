@@ -2,6 +2,9 @@ import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 import "dotenv/config";
+import dns from "node:dns";
+
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
