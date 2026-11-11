@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import "dotenv/config";
 import dns from "node:dns";
 
+// 👈 حل مشکل DNS برای اتصال به مونگو در Render
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 const app = express();
