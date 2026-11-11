@@ -2,10 +2,6 @@ import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 import "dotenv/config";
-import dns from "node:dns";
-
-// 👈 حل مشکل DNS برای اتصال به مونگو در Render
-dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,28 +16,25 @@ app.options('*', cors());
 app.use(express.json({ limit: "10mb" }));
 
 // ================== اتصال به دیتابیس ==================
-mongoose.connect(MONGO_URI)
+mongoose.connect(MONGO_URI, { 
+    useNewUrlParser: true, 
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000 
+})
   .then(() => console.log("✅ Connected to MongoDB"))
   .catch(err => console.error("❌ MongoDB Connection Error:", err));
 
 // ================== مدل‌های دیتابیس ==================
 const UserSchema = new mongoose.Schema({
-  name: String,
-  phone: String,
-  email: String,
-  password: String,
+  name: String, phone: String, email: String, password: String,
   role: { type: String, default: "user" },
-  coins: { type: Number, default: 0 },
-  xp: { type: Number, default: 0 }
+  coins: { type: Number, default: 0 }, xp: { type: Number, default: 0 }
 });
 const User = mongoose.model("User", UserSchema);
 
 const OrderSchema = new mongoose.Schema({
-  buyerId: String,
-  buyerName: String,
-  amount: Number,
-  label: String,
-  status: { type: String, default: "pending" }, // pending, approved, rejected
+  buyerId: String, buyerName: String, amount: Number, label: String,
+  status: { type: String, default: "pending" }, 
   date: { type: String, default: () => new Date().toLocaleDateString("fa-IR") }
 });
 const Order = mongoose.model("Order", OrderSchema);
@@ -49,7 +42,6 @@ const Order = mongoose.model("Order", OrderSchema);
 // ================== API ها ==================
 app.get("/health", (_req, res) => res.json({ ok: true, status: "Live" }));
 
-// ۱. ثبت نام
 app.post("/api/register", async (req, res) => {
   try {
     const { name, phone, email, password } = req.body;
@@ -61,21 +53,16 @@ app.post("/api/register", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ۲. ورود
 app.post("/api/login", async (req, res) => {
   try {
     const { loginValue, password } = req.body;
-    const user = await User.findOne({ 
-      $or: [{ phone: loginValue }, { email: loginValue }],
-      password: password 
-    });
+    const user = await User.findOne({ $or: [{ phone: loginValue }, { email: loginValue }], password });
     if (!user) return res.status(401).json({ error: "اطلاعات اشتباه است" });
     if (user.status === "blocked") return res.status(403).json({ error: "حساب مسدود است" });
     res.json({ ok: true, user });
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ۳. دریافت اطلاعات کاربر
 app.get("/api/user/:id", async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -83,7 +70,6 @@ app.get("/api/user/:id", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "کاربر پیدا نشد" }); }
 });
 
-// ۴. ثبت سفارش سکه
 app.post("/api/orders", async (req, res) => {
   try {
     const { buyerId, buyerName, amount, label } = req.body;
@@ -93,7 +79,6 @@ app.post("/api/orders", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "خطا در ثبت سفارش" }); }
 });
 
-// ۵. دریافت همه سفارشات (برای ادمین)
 app.get("/api/admin/orders", async (req, res) => {
   try {
     const orders = await Order.find().sort({ _id: -1 });
@@ -101,27 +86,19 @@ app.get("/api/admin/orders", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ۶. تایید سفارش (اضافه کردن سکه)
 app.post("/api/admin/approve", async (req, res) => {
   try {
     const { orderId } = req.body;
     const order = await Order.findById(orderId);
     if (!order || order.status !== "pending") return res.status(400).json({ error: "سفارش نامعتبر" });
-
     const user = await User.findById(order.buyerId);
     if (!user) return res.status(404).json({ error: "کاربر پیدا نشد" });
-
-    order.status = "approved";
-    await order.save();
-
-    user.coins += order.amount;
-    await user.save();
-
+    order.status = "approved"; await order.save();
+    user.coins += order.amount; await user.save();
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ۷. دریافت لیست کاربران (برای ادمین)
 app.get("/api/admin/users", async (req, res) => {
   try {
     const users = await User.find();
@@ -130,13 +107,7 @@ app.get("/api/admin/users", async (req, res) => {
 });
 
 // ================== هوش مصنوعی ==================
-const SYSTEM_PROMPT = `
-تو «نابغه‌کد» (NobogheCode) هستی؛ یک مشاور، ایده‌پرداز و مربی برنامه‌نویسی.
-۱. ⛔ هرگز سلام تکراری نکن.
-۲. 😊 از ایموجی‌ها به اندازه استفاده کن.
-۳. 🧠 اول نیاز کاربر رو بپرس، بعد کد بده.
-۴. 💻 کدها رو داخل بلاک مارک‌داون بذار.
-`;
+const SYSTEM_PROMPT = `تو «نابغه‌کد» هستی؛ یک مشاور، ایده‌پرداز و مربی برنامه‌نویسی. ۱. ⛔ هرگز سلام تکراری نکن. ۲. 😊 از ایموجی استفاده کن. ۳. 🧠 اول نیاز کاربر رو بپرس، بعد کد بده. ۴. 💻 کدها رو داخل بلاک مارک‌داون بذار.`;
 
 app.post("/api/chat", async (req, res) => {
   const { message, history, codeContext } = req.body || {};
@@ -144,7 +115,6 @@ app.post("/api/chat", async (req, res) => {
   const safeHistory = Array.isArray(history) ? history.slice(-6) : [];
   let userContent = message;
   if (codeContext) userContent = `${message}\n\n[اطلاعات محیط]\n${codeContext}`;
-
   const messages = [{ role: "system", content: SYSTEM_PROMPT }, ...safeHistory, { role: "user", content: userContent }];
 
   try {
