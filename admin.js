@@ -82,16 +82,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function fetchData() {
     userCountEl.textContent = "در حال دریافت اطلاعات...";
     
-    // گرفتن کاربران
+    // 👈 صبر کردن برای بیدار شدن سرور رایگان
+    await new Promise(resolve => setTimeout(resolve, 3000)); 
+
     const usersRes = await getAllUsers();
     if (usersRes.ok) {
       allUsers = usersRes.data.users;
       renderUsers(allUsers);
     } else {
-      userCountEl.textContent = "❌ خطا در دریافت کاربران";
+      userCountEl.textContent = "❌ خطا در دریافت کاربران از سرور";
     }
 
-    // گرفتن سفارشات
     const ordersRes = await getAllOrders();
     if (ordersRes.ok) {
       allOrders = ordersRes.data.orders;
@@ -125,7 +126,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const res = await approveCoinOrder(orderId);
     if (res.ok) {
       alert('✅ سفارش با موفقیت تایید شد.');
-      fetchData(); // بروزرسانی لیست
+      fetchData(); 
     } else {
       alert('❌ خطا در تایید سفارش: ' + res.error);
     }

@@ -66,18 +66,17 @@ const initDB = async () => {
 };
 initDB();
 
-app.use(cors({ origin: '*', methods: ['GET', 'POST', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization'] }));
-app.options('*', cors());
+// 👈 باز کردن کامل CORS برای جلوگیری از هرگونه خطای دسترسی
+app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
 // ================== API ها ==================
 app.get("/health", (_req, res) => res.json({ ok: true, status: "Live" }));
 
-// 👈 تغییر: قبول کردن نقش (role) از ورودی
 app.post("/api/register", async (req, res) => {
   try {
     const { name, phone, email, password } = req.body;
-    const role = req.body.role || 'user'; // اگر نقشی ارسال شده بود استفاده کن
+    const role = req.body.role || 'user'; 
     
     const existing = await pool.query('SELECT * FROM users WHERE phone = $1 OR email = $2', [phone, email]);
     if (existing.rows.length > 0) return res.status(400).json({ error: "شماره یا ایمیل تکراری است" });
