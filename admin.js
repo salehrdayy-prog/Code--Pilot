@@ -14,13 +14,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   const userCountEl = document.getElementById('userCount');
   const ordersList = document.getElementById('ordersList');
   
-  // 👈 آدرس مستقیم سرور (بدون واسطه api.js)
-  const API_URL = "https://code-pilot-5.onrender.com/api";
+  // 👈 آدرس سرور (بدون /api در انتها، چون توی fetch اضافه میشه)
+  const SERVER_URL = "https://code-pilot-5.onrender.com";
 
   let allUsers = [];
+  let allOrders = [];
 
   // ======================
-  // 🎨 رندر جدول
+  // 🎨 رندر جدول کاربران
   // ======================
   function renderUsers(usersToRender) {
     table.innerHTML = "";
@@ -50,27 +51,68 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // ======================
-  // 🔄 دریافت کاربران (مستقیم از سرور)
+  // 📦 رندر سفارشات (با استایل زیبا)
   // ======================
-  async function fetchUsers() {
-    userCountEl.textContent = "در حال دریافت اطلاعات...";
+  function renderOrders(orders) {
+    if (!ordersList) return;
     
-    // صبر برای بیدار شدن سرور
+    if (orders.length === 0) {
+      ordersList.innerHTML = `<p style="color: #8aa3c9; text-align: center; padding: 20px;">هنوز سفارشی ثبت نشده است.</p>`;
+      return;
+    }
+
+    ordersList.innerHTML = orders.map((order) => `
+      <div class="order-item" style="border: 1px solid rgba(139, 92, 246, 0.2); padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <strong style="color:#c4b5fd; font-size: 16px;">${order.label}</strong>
+          <br><small style="color:#8aa3c9;">خریدار: ${order.buyer_name || 'نامشخص'}</small>
+          <br><small style="color:#8aa3c9;">تاریخ: ${order.date}</small>
+          <br><span style="color:${order.status === 'pending' ? '#facc15' : order.status === 'approved' ? '#4ade80' : '#f85149'}; font-weight: bold;">
+            ${order.status === 'pending' ? '⏳ در انتظار' : order.status === 'approved' ? '✅ تأیید شده' : '❌ رد شده'}
+          </span>
+        </div>
+        <div>
+          <button onclick="approveOrder(${order.id})" ${order.status !== 'pending' ? 'disabled' : ''} 
+            style="background:${order.status === 'pending' ? '#238636' : '#333'}; color:white; border:none; padding:10px 16px; border-radius:8px; cursor:${order.status === 'pending' ? 'pointer' : 'not-allowed'}; font-family: inherit; font-weight: bold;">
+            ${order.status === 'pending' ? 'تأیید و اضافه سکه' : 'تأیید شده'}
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ======================
+  // 🔄 دریافت اطلاعات از سرور (مستقیم)
+  // ======================
+  async function fetchData() {
+    userCountEl.textContent = "در حال دریافت اطلاعات...";
+
+    // صبر برای بیدار شدن سرور رایگان
     await new Promise(resolve => setTimeout(resolve, 2000));
 
+    // ۱. گرفتن کاربران
     try {
-      const res = await fetch(`${API_URL}/admin/users`);
-      const data = await res.json();
-      
-      if (data.ok && data.users) {
-        allUsers = data.users;
+      const usersRes = await fetch(`${SERVER_URL}/api/admin/users`);
+      const usersData = await usersRes.json();
+      if (usersData.ok) {
+        allUsers = usersData.users;
         renderUsers(allUsers);
-      } else {
-        userCountEl.textContent = "❌ خطا در داده‌های دریافتی";
       }
-    } catch (err) {
-      console.error(err);
-      userCountEl.textContent = "❌ خطا در ارتباط با سرور";
+    } catch (err) { 
+      userCountEl.textContent = "❌ خطا در دریافت کاربران"; 
+      console.error(err); 
+    }
+
+    // ۲. گرفتن سفارشات
+    try {
+      const ordersRes = await fetch(`${SERVER_URL}/api/admin/orders`);
+      const ordersData = await ordersRes.json();
+      if (ordersData.ok) {
+        allOrders = ordersData.orders;
+        renderOrders(allOrders);
+      }
+    } catch (err) { 
+      console.error("خطا در سفارشات", err); 
     }
   }
 
@@ -79,10 +121,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ======================
   searchInput.addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase().trim();
-    if (!term) {
-      renderUsers(allUsers);
-      return;
-    }
+    if (!term) { renderUsers(allUsers); return; }
     const filtered = allUsers.filter(u => 
       (u.name && u.name.toLowerCase().includes(term)) ||
       (u.phone && u.phone.includes(term)) ||
@@ -90,6 +129,32 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
     renderUsers(filtered);
   });
+
+  // ======================
+  // ✅ تایید سفارش
+  // ======================
+  window.approveOrder = async function(orderId) {
+    if (!confirm('آیا از تایید این سفارش و اضافه کردن سکه مطمئن هستید؟')) return;
+    
+    try {
+      const res = await fetch(`${SERVER_URL}/api/admin/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId })
+      });
+      const data = await res.json();
+      
+      if (data.ok) {
+        alert('✅ سفارش تایید شد و سکه‌ها به کاربر اضافه شد.');
+        fetchData(); // بروزرسانی لیست
+      } else {
+        alert('❌ خطا در تایید: ' + data.error);
+      }
+    } catch (err) {
+      alert('❌ خطا در ارتباط با سرور');
+      console.error(err);
+    }
+  };
 
   // ======================
   // 🚪 خروج
@@ -101,5 +166,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // اجرای اولیه
-  fetchUsers();
+  fetchData();
 });
