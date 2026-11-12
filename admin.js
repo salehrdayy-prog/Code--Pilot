@@ -14,11 +14,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   const userCountEl = document.getElementById('userCount');
   const ordersList = document.getElementById('ordersList');
   
+  // 👈 آدرس مستقیم سرور (بدون واسطه api.js)
+  const API_URL = "https://code-pilot-5.onrender.com/api";
+
   let allUsers = [];
-  let allOrders = [];
 
   // ======================
-  // 🎨 رندر جدول کاربران
+  // 🎨 رندر جدول
   // ======================
   function renderUsers(usersToRender) {
     table.innerHTML = "";
@@ -48,55 +50,27 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // ======================
-  // 📦 رندر سفارشات
+  // 🔄 دریافت کاربران (مستقیم از سرور)
   // ======================
-  function renderOrders(orders) {
-    if (!ordersList) return;
-    if (orders.length === 0) {
-      ordersList.innerHTML = `<p style="color: #8aa3c9;">هنوز سفارشی ثبت نشده است.</p>`;
-      return;
-    }
-
-    ordersList.innerHTML = orders.map((order) => `
-      <div class="order-item">
-        <div>
-          <strong>${order.label}</strong>
-          <br><small style="color:#c4b5fd">خریدار: ${order.buyer_name || 'نامشخص'}</small>
-          <br><small>تاریخ: ${order.date}</small>
-          <br><span style="color:${order.status === 'pending' ? '#facc15' : order.status === 'approved' ? '#4ade80' : '#f85149'}">
-            ${order.status === 'pending' ? '⏳ در انتظار' : order.status === 'approved' ? '✅ تأیید شده' : '❌ رد شده'}
-          </span>
-        </div>
-        <div>
-          <button class="approve" onclick="approveOrder(${order.id})" ${order.status !== 'pending' ? 'disabled' : ''}>
-            تأیید و اضافه سکه
-          </button>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  // ======================
-  // 🔄 دریافت اطلاعات از سرور
-  // ======================
-  async function fetchData() {
+  async function fetchUsers() {
     userCountEl.textContent = "در حال دریافت اطلاعات...";
     
-    // 👈 صبر کردن برای بیدار شدن سرور رایگان
-    await new Promise(resolve => setTimeout(resolve, 3000)); 
+    // صبر برای بیدار شدن سرور
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
-    const usersRes = await getAllUsers();
-    if (usersRes.ok) {
-      allUsers = usersRes.data.users;
-      renderUsers(allUsers);
-    } else {
-      userCountEl.textContent = "❌ خطا در دریافت کاربران از سرور";
-    }
-
-    const ordersRes = await getAllOrders();
-    if (ordersRes.ok) {
-      allOrders = ordersRes.data.orders;
-      renderOrders(allOrders);
+    try {
+      const res = await fetch(`${API_URL}/admin/users`);
+      const data = await res.json();
+      
+      if (data.ok && data.users) {
+        allUsers = data.users;
+        renderUsers(allUsers);
+      } else {
+        userCountEl.textContent = "❌ خطا در داده‌های دریافتی";
+      }
+    } catch (err) {
+      console.error(err);
+      userCountEl.textContent = "❌ خطا در ارتباط با سرور";
     }
   }
 
@@ -118,21 +92,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // ======================
-  // ✅ تایید سفارش
-  // ======================
-  window.approveOrder = async function(orderId) {
-    if (!confirm('آیا از تایید این سفارش و اضافه کردن سکه مطمئن هستید؟')) return;
-    
-    const res = await approveCoinOrder(orderId);
-    if (res.ok) {
-      alert('✅ سفارش با موفقیت تایید شد.');
-      fetchData(); 
-    } else {
-      alert('❌ خطا در تایید سفارش: ' + res.error);
-    }
-  };
-
-  // ======================
   // 🚪 خروج
   // ======================
   logoutBtn.addEventListener('click', () => {
@@ -142,5 +101,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // اجرای اولیه
-  fetchData();
+  fetchUsers();
 });
