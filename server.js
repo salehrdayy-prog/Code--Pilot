@@ -59,6 +59,17 @@ const initDB = async () => {
         date VARCHAR(255)
       );
     `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS reviews (
+        id SERIAL PRIMARY KEY,
+        user_id INT REFERENCES users(id),
+        user_name VARCHAR(255),
+        text TEXT,
+        rating INT,
+        likes INT DEFAULT 0,
+        date VARCHAR(255)
+      );
+    `);
     console.log("✅ Tables ready");
   } catch (e) {
     console.error("❌ Error creating tables:", e);
@@ -66,7 +77,6 @@ const initDB = async () => {
 };
 initDB();
 
-// 👈 باز کردن کامل CORS برای جلوگیری از هرگونه خطای دسترسی
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
@@ -165,6 +175,47 @@ app.get("/api/projects/:userId", async (req, res) => {
     const result = await pool.query('SELECT * FROM projects WHERE user_id = $1 ORDER BY id DESC', [req.params.userId]);
     res.json({ ok: true, projects: result.rows });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطا در دریافت پروژه‌ها" }); }
+});
+
+// ================== نظرات ==================
+app.post("/api/reviews", async (req, res) => {
+  try {
+    const { userId, userName, text, rating, date } = req.body;
+    const result = await pool.query(
+      'INSERT INTO reviews (user_id, user_name, text, rating, date) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [userId, userName, text, rating, date]
+    );
+    res.json({ ok: true, review: result.rows[0] });
+  } catch (e) { console.error(e); res.status(500).json({ error: "خطا در ثبت نظر" }); }
+});
+
+app.get("/api/reviews", async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM reviews ORDER BY id DESC');
+    res.json({ ok: true, reviews: result.rows });
+  } catch (e) { console.error(e); res.status(500).json({ error: "خطا در دریافت نظرات" }); }
+});
+
+app.post("/api/reviews/delete", async (req, res) => {
+  try {
+    const { reviewId, userId, userRole } = req.body;
+    
+    const reviewResult = await pool.query('SELECT * FROM reviews WHERE id = $1', [reviewId]);
+    if (reviewResult.rows.length === 0) return res.status(404).json({ error: "نظر پیدا نشد" });
+    
+    const review = reviewResult.rows[0];
+
+    // فقط ادمین یا صاحب نظر می‌تونه حذف کنه
+    if (userRole !== 'admin' && review.user_id !== userId) {
+      return res.status(403).json({ error: "شما فقط می‌توانید نظر خودتان را حذف کنید" });
+    }
+
+    await pool.query('DELETE FROM reviews WHERE id = $1', [reviewId]);
+    res.json({ ok: true });
+  } catch (e) { 
+    console.error(e); 
+    res.status(500).json({ error: "خطای سرور" }); 
+  }
 });
 
 // ================== هوش مصنوعی ==================
