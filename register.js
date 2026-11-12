@@ -6,6 +6,26 @@ document.addEventListener("DOMContentLoaded", () => {
   const passwordInput = document.getElementById('password');
   const rulesBox = document.querySelector(".password-rules");
 
+  // 👈 تابع ساخت ادمین پیش‌فرض
+  async function createDefaultAdmin() {
+    const res = await apiRequest('/admin/users');
+    if (res.ok && res.data.users) {
+      const hasAdmin = res.data.users.find(u => u.role === 'admin');
+      if (!hasAdmin) {
+        await apiRequest('/register', 'POST', {
+          name: 'Admin',
+          phone: '09876543210',
+          email: 'admin@gmail.com',
+          password: '654321',
+          role: 'admin' // نقش ادمین رو به سرور می‌فرستیم
+        });
+        console.log('✅ Default admin created');
+      }
+    }
+  }
+  createDefaultAdmin();
+
+  // ===== قوانین پسورد =====
   if (passwordInput) {
     passwordInput.addEventListener("focus", () => {
       if (passwordInput.value) rulesBox.style.display = "block";
@@ -49,7 +69,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const email = emailInput.value.trim();
     const password = passwordInput.value;
 
-    // فراخوانی تابع از api.js
     const result = await registerUser(name, phone, email, password);
 
     if (!result.ok) {
@@ -61,7 +80,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const user = result.data.user;
 
-    // ذخیره سشن و اطلاعات
     localStorage.setItem('session', JSON.stringify({ id: user.id, role: user.role }));
     localStorage.setItem('loggedInUser', JSON.stringify(user));
     localStorage.setItem('username', user.name);

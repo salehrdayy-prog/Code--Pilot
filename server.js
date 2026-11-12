@@ -73,14 +73,18 @@ app.use(express.json({ limit: "10mb" }));
 // ================== API ها ==================
 app.get("/health", (_req, res) => res.json({ ok: true, status: "Live" }));
 
+// 👈 تغییر: قبول کردن نقش (role) از ورودی
 app.post("/api/register", async (req, res) => {
   try {
     const { name, phone, email, password } = req.body;
+    const role = req.body.role || 'user'; // اگر نقشی ارسال شده بود استفاده کن
+    
     const existing = await pool.query('SELECT * FROM users WHERE phone = $1 OR email = $2', [phone, email]);
     if (existing.rows.length > 0) return res.status(400).json({ error: "شماره یا ایمیل تکراری است" });
+    
     const newUser = await pool.query(
       'INSERT INTO users (name, phone, email, password, role) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [name, phone, email, password, 'user']
+      [name, phone, email, password, role]
     );
     res.json({ ok: true, user: newUser.rows[0] });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
