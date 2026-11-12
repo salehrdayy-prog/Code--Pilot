@@ -1,5 +1,5 @@
 // ============================================================
-// dashboard.js - کاملاً هماهنگ با dashboard.html
+// dashboard.js - متصل به دیتابیس ابری
 // ============================================================
 
 // ===== ۱. منوی کناری =====
@@ -19,12 +19,19 @@ function loadUserData() {
     const xp = localStorage.getItem('userXP') || '۰';
     const coins = localStorage.getItem('userCoins') || '۰';
 
-    document.getElementById('profile-name').textContent = name;
-    document.getElementById('profile-level').textContent = level;
-    document.getElementById('menu-username').textContent = name;
-    document.getElementById('menu-level').textContent = level;
-    document.getElementById('profile-xp').textContent = xp;
-    document.getElementById('profile-coins').textContent = coins;
+    const elName = document.getElementById('profile-name');
+    const elLevel = document.getElementById('profile-level');
+    const elMenuName = document.getElementById('menu-username');
+    const elMenuLevel = document.getElementById('menu-level');
+    const elXp = document.getElementById('profile-xp');
+    const elCoins = document.getElementById('profile-coins');
+
+    if (elName) elName.textContent = name;
+    if (elLevel) elLevel.textContent = level;
+    if (elMenuName) elMenuName.textContent = name;
+    if (elMenuLevel) elMenuLevel.textContent = level;
+    if (elXp) elXp.textContent = xp;
+    if (elCoins) elCoins.textContent = coins;
 }
 
 // ===== ۳. آواتار =====
@@ -46,9 +53,35 @@ function loadAvatar() {
     }
 }
 
-// ===== ۴. پروژه‌ها =====
-function loadDashboardProjects() {
-    const projects = JSON.parse(localStorage.getItem('projects') || '[]');
+// ===== ۴. پروژه‌ها (از دیتابیس ابری) =====
+async function loadDashboardProjects() {
+    const container = document.getElementById('projects-list');
+    if (!container) return;
+
+    const session = JSON.parse(localStorage.getItem('session'));
+
+    // اگر لاگین نبود، از حافظه محلی می‌خونیم
+    if (!session || !session.id) {
+        const localProjects = JSON.parse(localStorage.getItem('projects') || '[]');
+        renderProjectsList(localProjects);
+        return;
+    }
+
+    // دریافت از دیتابیس ابری (تابع getUserProjects از api.js میاد)
+    const result = await getUserProjects(session.id);
+    
+    if (result.ok) {
+        renderProjectsList(result.data.projects);
+    } else {
+        console.warn('خطا در دریافت پروژه‌ها از دیتابیس:', result.error);
+        // در صورت خطا، از حافظه محلی استفاده می‌کنیم
+        const localProjects = JSON.parse(localStorage.getItem('projects') || '[]');
+        renderProjectsList(localProjects);
+    }
+}
+
+// تابع کمکی برای نمایش لیست
+function renderProjectsList(projects) {
     const container = document.getElementById('projects-list');
     if (!container) return;
 
@@ -62,106 +95,66 @@ function loadDashboardProjects() {
                 </a>
             </div>
         `;
-        document.getElementById('profile-projects').innerText = '۰';
+        const countEl = document.getElementById('profile-projects');
+        if (countEl) countEl.innerText = '۰';
         return;
     }
 
     container.innerHTML = '';
     
     projects.forEach((project, index) => {
-        const projectName = project.name || 'بی‌نام';
-        const projectDate = project.date || 'تاریخ نامشخص';
-
         const div = document.createElement('div');
         div.className = 'project-card';
         
         div.innerHTML = `
             <div class="project-info">
-                <h4>${projectName}</h4>
-                <p>${projectDate}</p>
+                <h4>${project.name || 'بی‌نام'}</h4>
+                <p>${project.date || 'تاریخ نامشخص'}</p>
             </div>
             <div class="project-actions">
-                <button class="open-btn" onclick="openProject(${index})">
+                <button class="open-btn" onclick="openProjectFromDB(${index})">
                     <i class="fas fa-folder-open"></i>
-                </button>
-                <button class="delete-btn" onclick="deleteProject(${index})">
-                    <i class="fas fa-trash-alt"></i>
                 </button>
             </div>
         `;
-        
         container.appendChild(div);
     });
 
-    document.getElementById('profile-projects').innerText = projects.length;
+    const countEl = document.getElementById('profile-projects');
+    if (countEl) countEl.innerText = projects.length;
 }
 
-// ===== ۵. باز کردن پروژه (اصلاح شده) =====
-function openProject(index) {
-    const projects = JSON.parse(localStorage.getItem('projects') || '[]');
-    
-    if (!projects[index]) {
-        alert('❌ پروژه پیدا نشد!');
-        return;
+// تابع باز کردن پروژه از دیتابیس
+window.openProjectFromDB = async function(index) {
+    const session = JSON.parse(localStorage.getItem('session'));
+    if (!session || !session.id) return alert('لطفاً دوباره وارد شوید.');
+
+    const result = await getUserProjects(session.id);
+    if (result.ok && result.data.projects[index]) {
+        const project = result.data.projects[index];
+        
+        // ذخیره اطلاعات پروژه برای build.html
+        localStorage.setItem('currentProject', JSON.stringify(project));
+        localStorage.setItem('html', project.html || '');
+        localStorage.setItem('css', project.css || '');
+        localStorage.setItem('js', project.js || '');
+        
+        window.location.href = 'build.html';
     }
+};
 
-    const project = projects[index];
-
-    // ذخیره پروژه برای build.html
-    localStorage.setItem('currentProject', JSON.stringify(project));
-    localStorage.setItem('selectedIdea', project.name);
-    
-    // ذخیره کدها برای done.html
-    localStorage.setItem('html', project.html || '');
-    localStorage.setItem('css', project.css || '');
-    localStorage.setItem('js', project.js || '');
-
-    window.location.href = 'build.html';
-}
-
-// ===== ۶. حذف پروژه =====
-function deleteProject(index) {
-    if (!confirm('آیا مطمئنی که می‌خواهی این پروژه را حذف کنی؟')) return;
-    
-    const projects = JSON.parse(localStorage.getItem('projects') || '[]');
-    if (projects[index]) {
-        projects.splice(index, 1);
-        localStorage.setItem('projects', JSON.stringify(projects));
-        loadDashboardProjects();
-        alert('✅ پروژه حذف شد!');
-    } else {
-        alert('❌ پروژه پیدا نشد!');
-    }
-}
-
-// ===== ۷. خروج =====
-function logout() {
-    if (confirm('آیا مطمئنی می‌خواهی خارج شوی؟')) {
-        localStorage.removeItem('username');
-        localStorage.removeItem('userAvatar');
-        localStorage.removeItem('userLevel');
-        localStorage.removeItem('projects');
-        window.location.href = 'index.html';
-    }
-}
-
-// ===== ۸. اجرا پس از بارگذاری کامل صفحه =====
+// ===== ۸. اجرا پس از بارگذاری =====
 document.addEventListener('DOMContentLoaded', function() {
     loadUserData();
     loadAvatar();
     loadDashboardProjects();
 
-    // مدیریت آپلود عکس
     const avatarInput = document.getElementById('avatar-input');
     if (avatarInput) {
         avatarInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
-            if (!file.type.startsWith('image/')) {
-                alert('لطفاً یک تصویر انتخاب کنید.');
-                this.value = '';
-                return;
-            }
+            if (!file.type.startsWith('image/')) { alert('لطفاً یک تصویر انتخاب کنید.'); return; }
 
             const reader = new FileReader();
             reader.onload = function(event) {

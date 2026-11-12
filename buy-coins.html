@@ -141,6 +141,9 @@
         <a href="store.html" class="back-link"><i class="fas fa-arrow-left"></i> بازگشت به فروشگاه</a>
     </div>
 
+    <!-- اسکریپت ارتباط با سرور -->
+    <script src="api.js"></script>
+
     <script>
         // ===== نمایش سکه در هدر =====
         function updateHeaderCoins() {
@@ -180,22 +183,27 @@
         }
         checkFreeGiftStatus();
 
-        // ===== سفارش سکه (بدون پرداخت خودکار) =====
+        // ===== سفارش سکه (متصل به دیتابیس ابری) =====
         function orderCoins(amount, label) {
             if (!confirm(`آیا می‌خواهید ${label} را سفارش دهید؟\nپس از تأیید ادمین، سکه‌ها به حساب شما اضافه خواهد شد.`)) return;
 
-            // ذخیره سفارش در localStorage
-            const orders = JSON.parse(localStorage.getItem('coin_orders')) || [];
-            orders.push({
-                id: Date.now(),
-                amount: amount,
-                label: label,
-                status: 'pending',
-                date: new Date().toLocaleDateString('fa-IR')
-            });
-            localStorage.setItem('coin_orders', JSON.stringify(orders));
+            const session = JSON.parse(localStorage.getItem('session'));
+            const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser'));
+            const buyerName = loggedInUser ? loggedInUser.name : (localStorage.getItem('username') || 'کاربر');
 
-            alert(`📦 سفارش ${label} ثبت شد!\nمنتظر تأیید ادمین باشید.`);
+            if (!session || !session.id) {
+                alert('لطفاً ابتدا وارد حساب خود شوید.');
+                return;
+            }
+
+            // ارسال سفارش به دیتابیس ابری
+            createCoinOrder(session.id, buyerName, amount, label).then(result => {
+                if (result.ok) {
+                    alert(`📦 سفارش ${label} با موفقیت ثبت شد!\nمنتظر تأیید ادمین باشید.`);
+                } else {
+                    alert(`❌ خطا در ثبت سفارش: ${result.error}`);
+                }
+            });
         }
     </script>
 

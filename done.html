@@ -287,11 +287,12 @@ h1{ font-size:32px; }
   </div>
 
   <button class="btn primary" onclick="downloadZip()">📥 دانلود ZIP</button>
-  <button class="btn outline" onclick="saveProject()">💾 ذخیره پروژه</button>
+  <button class="btn outline" onclick="saveProject()">💾 ذخیره در دیتابیس</button>
   <button class="btn outline" onclick="goHome()">🏠 بازگشت</button>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="api.js"></script>
 
 <script>
 // ================= 🎊 CONFETTI =================
@@ -375,6 +376,8 @@ function logout(){
   localStorage.removeItem("username");
   localStorage.removeItem("userAvatar");
   localStorage.removeItem("userLevel");
+  localStorage.removeItem("session");
+  localStorage.removeItem("loggedInUser");
   window.location.href = "index.html";
 }
 
@@ -449,51 +452,39 @@ function downloadZip(){
   }
 }
 
-// ================= ذخیره پروژه (بدون تکرار) =================
-function saveProject() {
-  // گرفتن اطلاعات پروژه فعلی
-  const currentProject = JSON.parse(localStorage.getItem("currentProject") || "{}");
+// ================= ذخیره پروژه در دیتابیس ابری =================
+async function saveProject() {
+  const session = JSON.parse(localStorage.getItem('session'));
+  if (!session || !session.id) {
+    alert("لطفاً ابتدا وارد حساب خود شوید.");
+    return;
+  }
 
-  // گرفتن کدها از لوکال استوریج
+  const currentProject = JSON.parse(localStorage.getItem("currentProject") || "{}");
   const html = localStorage.getItem("html") || "";
   const css = localStorage.getItem("css") || "";
   const js = localStorage.getItem("js") || "";
+  const projectName = currentProject.name || localStorage.getItem("selectedIdea") || "پروژه جدید";
+  const date = new Date().toLocaleDateString("fa-IR");
 
-  // گرفتن لیست پروژه‌های موجود
-  let projects = JSON.parse(localStorage.getItem("projects") || "[]");
-
-  // چک کردن اینکه آیا این پروژه از قبل توی لیست هست یا نه
-  let idx = -1;
-  if (currentProject.id) {
-    idx = projects.findIndex((p) => p.id === currentProject.id);
+  const btn = document.querySelector('button[onclick="saveProject()"]');
+  if(btn) {
+    btn.disabled = true;
+    btn.innerText = "در حال ذخیره...";
   }
 
-  if (idx >= 0) {
-    // اگر بود، فقط کدهای جدید رو جایگزین می‌کنیم (آپدیت)
-    projects[idx] = {
-      ...projects[idx],
-      html: html || projects[idx].html || "",
-      css: css || projects[idx].css || "",
-      js: js || projects[idx].js || "",
-    };
+  const result = await saveProjectToDB(session.id, projectName, html, css, js, date);
+
+  if (result.ok) {
+    alert("پروژه در دیتابیس ابری ذخیره شد 😎🔥");
+    window.location.href = "dashboard.html";
   } else {
-    // اگر نبود، به عنوان یک پروژه جدید اضافه می‌کنیم
-    projects.push({
-      id: currentProject.id || Date.now(),
-      name: currentProject.name || localStorage.getItem("selectedIdea") || "پروژه جدید",
-      html,
-      css,
-      js,
-      date: new Date().toLocaleDateString("fa-IR"),
-    });
+    alert("❌ خطا در ذخیره پروژه: " + result.error);
+    if(btn) {
+      btn.disabled = false;
+      btn.innerText = "💾 ذخیره در دیتابیس";
+    }
   }
-
-  // ذخیره در لوکال استوریج
-  localStorage.setItem("projects", JSON.stringify(projects));
-
-  // پیام و انتقال
-  alert("پروژه با موفقیت ذخیره شد 😎🔥");
-  window.location.href = "dashboard.html";
 }
 
 // ================= بازگشت =================

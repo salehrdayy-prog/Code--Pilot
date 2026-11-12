@@ -8,47 +8,61 @@ const { Pool } = pg;
 const app = express();
 const PORT = process.env.PORT || 3000;
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
-const SUPABASE_DB_URL = process.env.SUPABASE_DB_URL; // 👈 اسم متغیر رو عوض کردیم
+const SUPABASE_DB_URL = process.env.SUPABASE_DB_URL;
 
 if (!GROQ_API_KEY) { console.error("❌ GROQ_API_KEY تنظیم نشده است"); process.exit(1); }
 if (!SUPABASE_DB_URL) { console.error("❌ SUPABASE_DB_URL تنظیم نشده است"); process.exit(1); }
 
-// اتصال به دیتابیس PostgreSQL (Supabase)
 const pool = new Pool({
   connectionString: SUPABASE_DB_URL,
-  ssl: { rejectUnauthorized: false } // برای اتصال امن به Supabase
+  ssl: { rejectUnauthorized: false }
 });
 
 pool.connect()
   .then(() => console.log("✅ Connected to Supabase (PostgreSQL)"))
   .catch(err => console.error("❌ Supabase Connection Error:", err));
 
-// ساخت جدول‌ها (اگر وجود نداشته باشن)
+// ساخت جدول‌ها
 const initDB = async () => {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY,
-      name VARCHAR(255),
-      phone VARCHAR(255) UNIQUE,
-      email VARCHAR(255) UNIQUE,
-      password VARCHAR(255),
-      role VARCHAR(50) DEFAULT 'user',
-      coins INT DEFAULT 0,
-      xp INT DEFAULT 0
-    );
-  `);
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS orders (
-      id SERIAL PRIMARY KEY,
-      buyer_id INT REFERENCES users(id),
-      buyer_name VARCHAR(255),
-      amount INT,
-      label VARCHAR(255),
-      status VARCHAR(50) DEFAULT 'pending',
-      date VARCHAR(255)
-    );
-  `);
-  console.log("✅ Tables ready");
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255),
+        phone VARCHAR(255) UNIQUE,
+        email VARCHAR(255) UNIQUE,
+        password VARCHAR(255),
+        role VARCHAR(50) DEFAULT 'user',
+        coins INT DEFAULT 0,
+        xp INT DEFAULT 0
+      );
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS orders (
+        id SERIAL PRIMARY KEY,
+        buyer_id INT REFERENCES users(id),
+        buyer_name VARCHAR(255),
+        amount INT,
+        label VARCHAR(255),
+        status VARCHAR(50) DEFAULT 'pending',
+        date VARCHAR(255)
+      );
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS projects (
+        id SERIAL PRIMARY KEY,
+        user_id INT REFERENCES users(id),
+        name VARCHAR(255),
+        html TEXT,
+        css TEXT,
+        js TEXT,
+        date VARCHAR(255)
+      );
+    `);
+    console.log("✅ Tables ready");
+  } catch (e) {
+    console.error("❌ Error creating tables:", e);
+  }
 };
 initDB();
 
@@ -59,7 +73,6 @@ app.use(express.json({ limit: "10mb" }));
 // ================== API ها ==================
 app.get("/health", (_req, res) => res.json({ ok: true, status: "Live" }));
 
-// ۱. ثبت نام
 app.post("/api/register", async (req, res) => {
   try {
     const { name, phone, email, password } = req.body;
@@ -73,7 +86,6 @@ app.post("/api/register", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ۲. ورود
 app.post("/api/login", async (req, res) => {
   try {
     const { loginValue, password } = req.body;
@@ -86,7 +98,6 @@ app.post("/api/login", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ۳. دریافت اطلاعات کاربر
 app.get("/api/user/:id", async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM users WHERE id = $1', [req.params.id]);
@@ -94,7 +105,6 @@ app.get("/api/user/:id", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "کاربر پیدا نشد" }); }
 });
 
-// ۴. ثبت سفارش سکه
 app.post("/api/orders", async (req, res) => {
   try {
     const { buyerId, buyerName, amount, label } = req.body;
@@ -107,7 +117,6 @@ app.post("/api/orders", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطا در ثبت سفارش" }); }
 });
 
-// ۵. دریافت همه سفارشات (ادمین)
 app.get("/api/admin/orders", async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM orders ORDER BY id DESC');
@@ -115,7 +124,6 @@ app.get("/api/admin/orders", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ۶. تایید سفارش (اضافه کردن سکه)
 app.post("/api/admin/approve", async (req, res) => {
   try {
     const { orderId } = req.body;
@@ -130,12 +138,30 @@ app.post("/api/admin/approve", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ۷. دریافت لیست کاربران (ادمین)
 app.get("/api/admin/users", async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM users ORDER BY id DESC');
     res.json({ ok: true, users: result.rows });
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
+});
+
+// ================== پروژه‌ها ==================
+app.post("/api/projects", async (req, res) => {
+  try {
+    const { userId, name, html, css, js, date } = req.body;
+    const result = await pool.query(
+      'INSERT INTO projects (user_id, name, html, css, js, date) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [userId, name, html, css, js, date]
+    );
+    res.json({ ok: true, project: result.rows[0] });
+  } catch (e) { console.error(e); res.status(500).json({ error: "خطا در ذخیره پروژه" }); }
+});
+
+app.get("/api/projects/:userId", async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM projects WHERE user_id = $1 ORDER BY id DESC', [req.params.userId]);
+    res.json({ ok: true, projects: result.rows });
+  } catch (e) { console.error(e); res.status(500).json({ error: "خطا در دریافت پروژه‌ها" }); }
 });
 
 // ================== هوش مصنوعی ==================
