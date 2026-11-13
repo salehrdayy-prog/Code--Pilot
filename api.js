@@ -16,7 +16,7 @@ async function apiRequest(endpoint, method = "GET", body = null) {
 async function registerUser(name, phone, email, password) { return await apiRequest("/register", "POST", { name, phone, email, password }); }
 async function loginUser(loginValue, password) { return await apiRequest("/login", "POST", { loginValue, password }); }
 async function getAllUsers() { return await apiRequest("/admin/users"); }
-async function createCoinOrder(buyerId, buyerName, amount, label) { return await apiRequest("/orders", "POST", { buyerId, buyerName, amount, label }); }
+async function createCoinOrder(buyerId, buyerName, amount, label, trackingCode) { return await apiRequest("/orders", "POST", { buyerId, buyerName, amount, label, trackingCode }); }
 async function getAllOrders() { return await apiRequest("/admin/orders"); }
 async function approveCoinOrder(orderId) { return await apiRequest("/admin/approve", "POST", { orderId }); }
 async function deleteOrderAPI(orderId) { return await apiRequest("/admin/orders/delete", "POST", { orderId }); }

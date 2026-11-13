@@ -22,6 +22,7 @@ pool.connect()
   .then(() => console.log("✅ Connected to Supabase (PostgreSQL)"))
   .catch(err => console.error("❌ Supabase Connection Error:", err));
 
+// ساخت جدول‌ها
 const initDB = async () => {
   try {
     await pool.query(`
@@ -34,7 +35,7 @@ const initDB = async () => {
         role VARCHAR(50) DEFAULT 'user',
         coins INT DEFAULT 0,
         xp INT DEFAULT 0,
-        plan VARCHAR(50) DEFAULT 'free' -- 👈 اضافه کردن پلن
+        plan VARCHAR(50) DEFAULT 'free'
       );
     `);
     await pool.query(`
@@ -48,8 +49,12 @@ const initDB = async () => {
         amount INT,
         label VARCHAR(255),
         status VARCHAR(50) DEFAULT 'pending',
+        tracking_code VARCHAR(255),
         date VARCHAR(255)
       );
+    `);
+    await pool.query(`
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_code VARCHAR(255);
     `);
     await pool.query(`
       CREATE TABLE IF NOT EXISTS projects (
@@ -121,27 +126,46 @@ app.get("/api/user/:id", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "کاربر پیدا نشد" }); }
 });
 
-// ================== اشتراک ==================
+// ================== اشتراک (با کسر ۱۰۰۰ سکه) ==================
 app.post("/api/subscribe", async (req, res) => {
   try {
     const { userId, plan } = req.body;
     if (!userId || !plan) return res.status(400).json({ error: "اطلاعات ناقص است" });
-    
-    await pool.query('UPDATE users SET plan = $1 WHERE id = $2', [plan, userId]);
-    res.json({ ok: true, message: "اشتراک با موفقیت فعال شد" });
-  } catch (e) { 
-    console.error(e); 
-    res.status(500).json({ error: "خطای سرور در فعال‌سازی اشتراک" }); 
+
+    const PLAN_COST = 1000; 
+
+    const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+    if (userResult.rows.length === 0) return res.status(404).json({ error: "کاربر پیدا نشد" });
+    const user = userResult.rows[0];
+
+    if (user.plan === 'pro') {
+      return res.status(400).json({ error: "شما از قبل کاربر ویژه هستید" });
+    }
+
+    if (user.coins < PLAN_COST) {
+      return res.status(400).json({ error: "سکه کافی نیست! برای خرید اشتراک به ۱۰۰۰ سکه نیاز دارید." });
+    }
+
+    const updatedUserResult = await pool.query(
+      'UPDATE users SET coins = coins - $1, plan = $2 WHERE id = $3 RETURNING *',
+      [PLAN_COST, plan, userId]
+    );
+
+    res.json({ ok: true, user: updatedUserResult.rows[0], message: "اشتراک با موفقیت فعال شد" });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "خطای سرور در فعال‌سازی اشتراک" });
   }
 });
 
+// ================== سفارشات ==================
 app.post("/api/orders", async (req, res) => {
   try {
-    const { buyerId, buyerName, amount, label } = req.body;
+    const { buyerId, buyerName, amount, label, trackingCode } = req.body; 
     const date = new Date().toLocaleDateString("fa-IR");
     await pool.query(
-      'INSERT INTO orders (buyer_id, buyer_name, amount, label, date) VALUES ($1, $2, $3, $4, $5)',
-      [buyerId, buyerName, amount, label, date]
+      'INSERT INTO orders (buyer_id, buyer_name, amount, label, tracking_code, date) VALUES ($1, $2, $3, $4, $5, $6)',
+      [buyerId, buyerName, amount, label, trackingCode, date] 
     );
     res.json({ ok: true });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطا در ثبت سفارش" }); }
@@ -176,6 +200,7 @@ app.post("/api/admin/orders/delete", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
+// ================== کاربران (ادمین) ==================
 app.get("/api/admin/users", async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM users ORDER BY id DESC');
@@ -194,6 +219,7 @@ app.post("/api/admin/users/delete", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
+// ================== پروژه‌ها ==================
 app.post("/api/projects", async (req, res) => {
   try {
     const { userId, name, html, css, js, date } = req.body;

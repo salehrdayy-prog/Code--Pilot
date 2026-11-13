@@ -1,6 +1,9 @@
 document.addEventListener("DOMContentLoaded", async () => {
   const session = JSON.parse(localStorage.getItem('session'));
-  if (!session || session.role !== 'admin') { window.location.href = "login.html"; return; }
+  if (!session || session.role !== 'admin') {
+    window.location.href = "login.html";
+    return;
+  }
 
   const table = document.getElementById('userTable');
   const logoutBtn = document.getElementById('logout');
@@ -41,7 +44,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // ======================
-  // 📦 رندر سفارشات
+  // 📦 رندر سفارشات (با شماره پیگیری)
   // ======================
   function renderOrders(orders) {
     if (!ordersList) return;
@@ -56,6 +59,8 @@ document.addEventListener("DOMContentLoaded", async () => {
           <strong style="color:#c4b5fd; font-size: 16px;">${order.label}</strong>
           <br><small style="color:#8aa3c9;">خریدار: ${order.buyer_name || 'نامشخص'}</small>
           <br><small style="color:#8aa3c9;">تاریخ: ${order.date}</small>
+          <br><small style="color:#facc15; font-weight: bold;">شماره پیگیری: ${order.tracking_code || 'ثبت نشده'}</small>
+          
           <br><span style="color:${order.status === 'pending' ? '#facc15' : order.status === 'approved' ? '#4ade80' : '#f85149'}; font-weight: bold;">
             ${order.status === 'pending' ? '⏳ در انتظار' : order.status === 'approved' ? '✅ تأیید شده' : '❌ رد شده'}
           </span>
