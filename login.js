@@ -41,6 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem('username', user.name || 'کاربر');
     localStorage.setItem('userXP', user.xp || 0);
     localStorage.setItem('userCoins', user.coins || 0); 
+    localStorage.setItem('userPlan', user.plan || 'free'); // 👈 ذخیره پلن
 
     if (user.role === "admin") {
       window.location.href = "admin.html";

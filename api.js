@@ -19,12 +19,12 @@ async function getAllUsers() { return await apiRequest("/admin/users"); }
 async function createCoinOrder(buyerId, buyerName, amount, label) { return await apiRequest("/orders", "POST", { buyerId, buyerName, amount, label }); }
 async function getAllOrders() { return await apiRequest("/admin/orders"); }
 async function approveCoinOrder(orderId) { return await apiRequest("/admin/approve", "POST", { orderId }); }
+async function deleteOrderAPI(orderId) { return await apiRequest("/admin/orders/delete", "POST", { orderId }); }
+async function deleteUserAPI(userId) { return await apiRequest("/admin/users/delete", "POST", { userId }); }
 async function saveProjectToDB(userId, name, html, css, js, date) { return await apiRequest("/projects", "POST", { userId, name, html, css, js, date }); }
 async function getUserProjects(userId) { return await apiRequest(`/projects/${userId}`); }
 async function submitReview(userId, userName, text, rating, date) { return await apiRequest("/reviews", "POST", { userId, userName, text, rating, date }); }
 async function getAllReviews() { return await apiRequest("/reviews"); }
 async function deleteReview(reviewId, userId, userRole) { return await apiRequest("/reviews/delete", "POST", { reviewId, userId, userRole }); }
 async function likeReviewAPI(reviewId, action) { return await apiRequest("/reviews/like", "POST", { reviewId, action }); }
-async function deleteOrderAPI(orderId) {
-  return await apiRequest("/admin/orders/delete", "POST", { orderId });
-}
+async function upgradeSubscription(userId, plan) { return await apiRequest("/subscribe", "POST", { userId, plan }); }

@@ -22,7 +22,6 @@ pool.connect()
   .then(() => console.log("✅ Connected to Supabase (PostgreSQL)"))
   .catch(err => console.error("❌ Supabase Connection Error:", err));
 
-// ساخت جدول‌ها
 const initDB = async () => {
   try {
     await pool.query(`
@@ -34,8 +33,12 @@ const initDB = async () => {
         password VARCHAR(255),
         role VARCHAR(50) DEFAULT 'user',
         coins INT DEFAULT 0,
-        xp INT DEFAULT 0
+        xp INT DEFAULT 0,
+        plan VARCHAR(50) DEFAULT 'free' -- 👈 اضافه کردن پلن
       );
+    `);
+    await pool.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS plan VARCHAR(50) DEFAULT 'free';
     `);
     await pool.query(`
       CREATE TABLE IF NOT EXISTS orders (
@@ -83,7 +86,6 @@ app.use(express.json({ limit: "10mb" }));
 // ================== API ها ==================
 app.get("/health", (_req, res) => res.json({ ok: true, status: "Live" }));
 
-// ۱. ثبت نام
 app.post("/api/register", async (req, res) => {
   try {
     const { name, phone, email, password } = req.body;
@@ -100,7 +102,6 @@ app.post("/api/register", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ۲. ورود
 app.post("/api/login", async (req, res) => {
   try {
     const { loginValue, password } = req.body;
@@ -113,7 +114,6 @@ app.post("/api/login", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ۳. اطلاعات کاربر
 app.get("/api/user/:id", async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM users WHERE id = $1', [req.params.id]);
@@ -121,7 +121,20 @@ app.get("/api/user/:id", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "کاربر پیدا نشد" }); }
 });
 
-// ۴. ثبت سفارش سکه
+// ================== اشتراک ==================
+app.post("/api/subscribe", async (req, res) => {
+  try {
+    const { userId, plan } = req.body;
+    if (!userId || !plan) return res.status(400).json({ error: "اطلاعات ناقص است" });
+    
+    await pool.query('UPDATE users SET plan = $1 WHERE id = $2', [plan, userId]);
+    res.json({ ok: true, message: "اشتراک با موفقیت فعال شد" });
+  } catch (e) { 
+    console.error(e); 
+    res.status(500).json({ error: "خطای سرور در فعال‌سازی اشتراک" }); 
+  }
+});
+
 app.post("/api/orders", async (req, res) => {
   try {
     const { buyerId, buyerName, amount, label } = req.body;
@@ -134,7 +147,6 @@ app.post("/api/orders", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطا در ثبت سفارش" }); }
 });
 
-// ۵. دریافت سفارشات (ادمین)
 app.get("/api/admin/orders", async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM orders ORDER BY id DESC');
@@ -142,7 +154,6 @@ app.get("/api/admin/orders", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ۶. تایید سفارش
 app.post("/api/admin/approve", async (req, res) => {
   try {
     const { orderId } = req.body;
@@ -157,7 +168,6 @@ app.post("/api/admin/approve", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ۷. حذف سفارش (ادمین)
 app.post("/api/admin/orders/delete", async (req, res) => {
   try {
     const { orderId } = req.body;
@@ -166,7 +176,6 @@ app.post("/api/admin/orders/delete", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ۸. دریافت کاربران (ادمین)
 app.get("/api/admin/users", async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM users ORDER BY id DESC');
@@ -174,21 +183,17 @@ app.get("/api/admin/users", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ۹. حذف کاربر (ادمین)
 app.post("/api/admin/users/delete", async (req, res) => {
   try {
     const { userId } = req.body;
-    // حذف وابستگی‌ها
     await pool.query('DELETE FROM orders WHERE buyer_id = $1', [userId]);
     await pool.query('DELETE FROM projects WHERE user_id = $1', [userId]);
     await pool.query('DELETE FROM reviews WHERE user_id = $1', [userId]);
-    // حذف کاربر
     await pool.query('DELETE FROM users WHERE id = $1', [userId]);
     res.json({ ok: true });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ================== پروژه‌ها ==================
 app.post("/api/projects", async (req, res) => {
   try {
     const { userId, name, html, css, js, date } = req.body;
@@ -223,7 +228,7 @@ app.get("/api/reviews", async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM reviews ORDER BY id DESC');
     res.json({ ok: true, reviews: result.rows });
-  } catch (e) { console.error(e); res.status(500).json({ error: "خطا در دریافت نظرات" }); }
+  } catch (e) { res.status(500).json({ error: "خطا در دریافت نظرات" }); }
 });
 
 app.post("/api/reviews/delete", async (req, res) => {

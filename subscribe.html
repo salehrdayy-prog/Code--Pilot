@@ -3,237 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>اشتراک | نابغه‌کد</title>
+    <title>اشتراک ویژه | نابغه‌کد</title>
     <link rel="stylesheet" href="themes.css">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: #02030a; color: #e8edf5; min-height: 100vh; }
+        body { background: #02030a; color: #e8edf5; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        
+        .sub-container { max-width: 800px; width: 100%; text-align: center; }
+        .sub-title { font-size: 28px; color: #c4b5fd; margin-bottom: 10px; }
+        .sub-subtitle { color: #8aa3c9; margin-bottom: 40px; font-size: 15px; }
 
-        .navbar {
-            background: rgba(13, 17, 23, 0.8);
-            backdrop-filter: blur(12px);
-            padding: 14px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-        }
-        .navbar .title { font-size: 20px; font-weight: 700; color: #d4dcec; display: flex; align-items: center; gap: 10px; }
-        .navbar .title i { color: #8b5cf6; }
-        .navbar .coins { background: rgba(139, 92, 246, 0.15); padding: 6px 14px; border-radius: 20px; color: #c4b5fd; font-weight: 600; display: flex; align-items: center; gap: 6px; }
-
-        .sub-container {
-            max-width: 900px;
-            margin: 30px auto;
-            padding: 0 16px;
-        }
-
-        .section-title {
-            font-size: 24px;
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 30px;
-            color: #d4dcec;
-        }
-
-        .plans-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-        }
-
+        .plans-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        
         .plan-card {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: 20px;
             padding: 30px 20px;
-            text-align: center;
-            transition: 0.3s;
             position: relative;
+            transition: 0.3s;
         }
-        .plan-card:hover {
-            background: rgba(139, 92, 246, 0.06);
-            border-color: rgba(139, 92, 246, 0.3);
-            transform: translateY(-8px);
-        }
-        .plan-card.popular {
+        .plan-card.pro {
             border-color: #8b5cf6;
-            box-shadow: 0 0 40px rgba(139, 92, 246, 0.15);
+            background: rgba(139, 92, 246, 0.05);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.15);
         }
-        .plan-card .badge {
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, #7c3aed, #6d28d9);
-            padding: 4px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            color: #fff;
-        }
-        .plan-card .icon { font-size: 48px; display: block; margin-bottom: 10px; }
-        .plan-card h3 { font-size: 22px; color: #e8edf5; margin-bottom: 6px; }
-        .plan-card .price { font-size: 28px; font-weight: 700; color: #facc15; margin: 10px 0; }
-        .plan-card .price span { font-size: 14px; color: #8aa3c9; font-weight: 400; }
-        .plan-card ul { list-style: none; padding: 0; margin: 16px 0; text-align: right; }
-        .plan-card ul li { padding: 6px 0; color: #a0b0d0; font-size: 14px; display: flex; align-items: center; gap: 8px; }
-        .plan-card ul li i { color: #4ade80; font-size: 14px; }
-
-        .btn-sub {
-            background: linear-gradient(135deg, #7c3aed, #6d28d9);
-            color: #fff;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            width: 100%;
-            font-size: 16px;
-        }
-        .btn-sub:hover { transform: scale(0.96); }
-        .btn-sub:disabled { opacity: 0.5; cursor: not-allowed; }
+        .plan-card:hover { transform: translateY(-5px); }
         
-        .current-plan {
-            margin-top: 30px;
-            text-align: center;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 16px;
-            padding: 16px;
-            border: 1px solid rgba(255,255,255,0.06);
+        .badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #8b5cf6; color: white; padding: 4px 16px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        
+        .plan-name { font-size: 20px; font-weight: 700; margin-bottom: 10px; color: #fff; }
+        .plan-price { font-size: 36px; font-weight: 800; color: #c4b5fd; margin-bottom: 20px; }
+        .plan-price span { font-size: 14px; color: #8aa3c9; font-weight: normal; }
+        
+        .features { list-style: none; text-align: right; margin-bottom: 30px; }
+        .features li { padding: 8px 0; font-size: 14px; color: #a0b0d0; display: flex; align-items: center; gap: 10px; }
+        .features li i.fa-check { color: #4ade80; }
+        .features li i.fa-times { color: #ef4444; }
+        
+        .btn-plan {
+            width: 100%; padding: 14px; border-radius: 12px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: inherit;
         }
+        .btn-free { background: rgba(255,255,255,0.06); color: #8aa3c9; cursor: default; }
+        .btn-pro { background: linear-gradient(135deg, #7c3aed, #6d28d9); color: white; box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4); }
+        .btn-pro:hover { transform: scale(0.98); }
+        .btn-pro:disabled { background: #238636; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
-    <nav class="navbar">
-        <span class="title"><i class="fas fa-crown"></i> اشتراک</span>
-        <span class="coins" id="headerCoins"><i class="fas fa-coins"></i> ۰</span>
-    </nav>
-
     <div class="sub-container">
-        <h2 class="section-title">🚀 سطح اشتراک خود را انتخاب کنید</h2>
+        <h1 class="sub-title">👑 ارتقاء به نابغه‌کد پرو</h1>
+        <p class="sub-subtitle">با اشتراک ویژه، محدودیت‌ها را بشکن و پروژه‌های نامحدود بساز!</p>
 
         <div class="plans-grid">
-
-            <!-- رایگان -->
+            <!-- پلن رایگان -->
             <div class="plan-card">
-                <div class="icon">🆓</div>
-                <h3>رایگان</h3>
-                <div class="price">۰ <span>سکه</span></div>
-                <ul>
-                    <li><i class="fas fa-check"></i> ۵ تمرین مبتدی</li>
-                    <li><i class="fas fa-check"></i> ۳ قالب ساده</li>
-                    <li><i class="fas fa-check"></i> ساخت ۲ پروژه در روز</li>
+                <div class="plan-name">رایگان</div>
+                <div class="plan-price">۰ <span>تومان / ماهانه</span></div>
+                <ul class="features">
+                    <li><i class="fas fa-check"></i> ساخت حداکثر ۳ پروژه</li>
+                    <li><i class="fas fa-check"></i> دسترسی به هوش مصنوعی پایه</li>
+                    <li><i class="fas fa-times"></i> تمرین‌های پیشرفته</li>
+                    <li><i class="fas fa-times"></i> تمام قالب‌ها</li>
                 </ul>
-                <button class="btn-sub" onclick="subscribe('free')" id="btn-free" disabled>فعال</button>
+                <button class="btn-plan btn-free" disabled>پلن فعلی</button>
             </div>
 
-            <!-- پرمیوم -->
-            <div class="plan-card popular">
-                <span class="badge">محبوب</span>
-                <div class="icon">💎</div>
-                <h3>پرمیوم</h3>
-                <div class="price">۵۰۰ <span>سکه</span></div>
-                <ul>
-                    <li><i class="fas fa-check"></i> تمام تمرین‌ها</li>
-                    <li><i class="fas fa-check"></i> تمام قالب‌ها</li>
-                    <li><i class="fas fa-check"></i> هوش مصنوعی پیشرفته</li>
-                    <li><i class="fas fa-check"></i> ساخت نامحدود پروژه</li>
+            <!-- پلن پرو -->
+            <div class="plan-card pro">
+                <div class="badge">پیشنهاد ویژه</div>
+                <div class="plan-name">ویژه (Pro)</div>
+                <div class="plan-price">۹۹,۰۰۰ <span>تومان / ماهانه</span></div>
+                <ul class="features">
+                    <li><i class="fas fa-check"></i> ساخت پروژه نامحدود</li>
+                    <li><i class="fas fa-check"></i> دسترسی به تمام قابلیت‌های AI</li>
+                    <li><i class="fas fa-check"></i> تمام تمرین‌های پیشرفته</li>
+                    <li><i class="fas fa-check"></i> تمام قالب‌های رنگی</li>
                 </ul>
-                <button class="btn-sub" onclick="subscribe('premium')" id="btn-premium">خرید اشتراک</button>
+                <button id="upgradeBtn" class="btn-plan btn-pro" onclick="upgradeToPro()">ارتقاء به پرو 🚀</button>
             </div>
-
-            <!-- VIP -->
-            <div class="plan-card">
-                <div class="icon">👑</div>
-                <h3>VIP</h3>
-                <div class="price">۱۰۰۰ <span>سکه</span></div>
-                <ul>
-                    <li><i class="fas fa-check"></i> همه چیز پرمیوم</li>
-                    <li><i class="fas fa-check"></i> پشتیبانی اولویت‌دار</li>
-                    <li><i class="fas fa-check"></i> نشان VIP در پروفایل</li>
-                    <li><i class="fas fa-check"></i> ۲ برابر XP و سکه</li>
-                </ul>
-                <button class="btn-sub" onclick="subscribe('vip')" id="btn-vip">خرید اشتراک</button>
-            </div>
-
-        </div>
-
-        <div class="current-plan" id="currentPlanDisplay">
-            <p>اشتراک فعلی شما: <strong id="planText">رایگان</strong></p>
         </div>
     </div>
 
-    <script src="store.js"></script>
+    <script src="api.js"></script>
     <script>
-        // ==================== نمایش سکه در هدر ====================
-        function updateHeaderCoins() {
-            const coins = parseInt(localStorage.getItem('userCoins')) || 0;
-            const el = document.getElementById('headerCoins');
-            if (el) el.innerHTML = `<i class="fas fa-coins"></i> ${coins}`;
-        }
-        updateHeaderCoins();
-
-        // ==================== نمایش اشتراک فعلی ====================
-        function loadCurrentPlan() {
-            const plan = localStorage.getItem('subscription') || 'free';
-            const planTexts = { free: '🆓 رایگان', premium: '💎 پرمیوم', vip: '👑 VIP' };
-            document.getElementById('planText').textContent = planTexts[plan] || 'رایگان';
-
-            // غیرفعال کردن دکمه‌های دیگر
-            document.querySelectorAll('.btn-sub').forEach(btn => btn.disabled = false);
-            document.getElementById('btn-' + plan).disabled = true;
-            document.getElementById('btn-' + plan).textContent = '✅ فعال';
-        }
-        loadCurrentPlan();
-
-        // ==================== خرید اشتراک ====================
-        function subscribe(plan) {
-            const price = { free: 0, premium: 500, vip: 1000 };
-            const coins = parseInt(localStorage.getItem('userCoins')) || 0;
-
-            if (plan === 'free') {
-                alert('شما در حال حاضر در پلن رایگان هستید.');
-                return;
+        document.addEventListener('DOMContentLoaded', () => {
+            const plan = localStorage.getItem('userPlan') || 'free';
+            if (plan === 'pro') {
+                const btn = document.getElementById('upgradeBtn');
+                btn.innerText = '✅ شما کاربر ویژه هستید';
+                btn.disabled = true;
+                btn.style.background = '#238636';
             }
+        });
 
-            if (coins < price[plan]) {
-                alert(`❌ سکه کافی نیست! نیاز به ${price[plan]} سکه دارید.`);
-                return;
-            }
+        async function upgradeToPro() {
+            const session = JSON.parse(localStorage.getItem('session'));
+            if (!session || !session.id) { alert('لطفاً ابتدا وارد حساب خود شوید.'); window.location.href = 'login.html'; return; }
+            if (!confirm('آیا برای ارتقاء به پلن ویژه موافقت می‌کنید؟ (فعلاً شبیه‌سازی شده)')) return;
 
-            if (!confirm(`آیا مطمئنید که می‌خواهید اشتراک ${plan} را خریداری کنید؟`)) return;
+            const btn = document.getElementById('upgradeBtn');
+            btn.innerText = 'در حال پردازش...';
+            btn.disabled = true;
 
-            // کسر سکه
-            localStorage.setItem('userCoins', (coins - price[plan]).toString());
+            const result = await upgradeSubscription(session.id, 'pro');
 
-            // ذخیره اشتراک
-            localStorage.setItem('subscription', plan);
-            localStorage.setItem('subscription_expires', Date.now() + 30 * 24 * 60 * 60 * 1000); // ۳۰ روز
-
-            alert(`✅ اشتراک ${plan} با موفقیت فعال شد!`);
-
-            updateHeaderCoins();
-            loadCurrentPlan();
-        }
-
-        // ==================== بررسی اعتبار اشتراک ====================
-        function checkSubscription() {
-            const plan = localStorage.getItem('subscription') || 'free';
-            const expires = parseInt(localStorage.getItem('subscription_expires')) || 0;
-            if (plan !== 'free' && Date.now() > expires) {
-                localStorage.setItem('subscription', 'free');
-                localStorage.removeItem('subscription_expires');
-                alert('⏳ اشتراک شما منقضی شد! برای تمدید به فروشگاه بروید.');
-                loadCurrentPlan();
+            if (result.ok) {
+                localStorage.setItem('userPlan', 'pro');
+                alert('🎉 تبریک! اشتراک ویژه شما با موفقیت فعال شد. حالا می‌توانید پروژه‌های نامحدود بسازید.');
+                btn.innerText = '✅ شما کاربر ویژه هستید';
+                btn.style.background = '#238636';
+                setTimeout(() => { window.location.href = 'ideas.html'; }, 1500);
+            } else {
+                alert('❌ خطا در فعال‌سازی اشتراک: ' + result.error);
+                btn.innerText = 'ارتقاء به پرو 🚀';
+                btn.disabled = false;
             }
         }
-        checkSubscription();
     </script>
 </body>
 </html>
