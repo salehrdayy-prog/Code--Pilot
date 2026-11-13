@@ -67,6 +67,7 @@ async function loadReviews(){
 
   reviews.forEach(r => {
     const isOwner = currentUser && (currentUser.id === r.user_id || currentUser.role === 'admin');
+    const isLiked = r.likes > 0; // برای سادگی، اگر لایک داشت قرمز نشون میدیم
     
     const div = document.createElement("div");
     div.className = "review-card";
@@ -74,7 +75,7 @@ async function loadReviews(){
       <div class="review-header">
         <b>${r.user_name}</b>
         <div class="review-actions">
-          <span class="like" onclick="likeReview(${r.id}, ${r.likes})">❤️ ${r.likes}</span>
+          <span class="like ${isLiked ? 'liked' : ''}" onclick="likeReview(${r.id}, ${r.likes})">❤️ ${r.likes}</span>
           ${isOwner ? `<span onclick="deleteMyReview(${r.id})" style="cursor:pointer; color:#f85149; font-weight:bold; margin-right:10px;" title="حذف نظر">🗑</span>` : ''}
         </div>
       </div>
@@ -104,8 +105,18 @@ async function deleteMyReview(reviewId) {
 }
 
 // ================= لایک =================
-function likeReview(id, currentLikes){
-  alert("لایک ثبت شد! (در نسخه بعدی به دیتابیس وصل می‌شه)");
+async function likeReview(id, currentLikes){
+  const isLiked = event.target.classList.contains('liked');
+  const action = isLiked ? 'unlike' : 'like';
+  
+  const result = await likeReviewAPI(id, action);
+
+  if (result.ok) {
+    event.target.classList.toggle('liked');
+    event.target.innerText = `❤️ ${result.data.likes}`;
+  } else {
+    alert("خطا در ثبت لایک");
+  }
 }
 
 // اجرا فقط اگر صفحه reviews باشه

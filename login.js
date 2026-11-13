@@ -25,7 +25,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const loginValue = loginInput.value.trim();
     const password = passwordInput.value;
 
-    // فراخوانی تابع از فایل api.js
     const result = await loginUser(loginValue, password);
 
     if (!result.ok) {
@@ -37,12 +36,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const user = result.data.user;
 
-    // ذخیره سشن و اطلاعات کاربر در مرورگر
     localStorage.setItem('session', JSON.stringify({ id: user.id, role: user.role }));
     localStorage.setItem('loggedInUser', JSON.stringify(user));
     localStorage.setItem('username', user.name || 'کاربر');
     localStorage.setItem('userXP', user.xp || 0);
-    localStorage.setItem('userCoins', user.coins || 0);
+    localStorage.setItem('userCoins', user.coins || 0); 
 
     if (user.role === "admin") {
       window.location.href = "admin.html";

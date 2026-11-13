@@ -2,7 +2,6 @@
 let selectedSample = null;
 let selectedExercise = null;
 
-
 // ==================== STORAGE ====================
 function getProjects() {
     try {
@@ -16,533 +15,99 @@ function saveProjects(projects) {
     localStorage.setItem("projects", JSON.stringify(projects));
 }
 
+// ==================== محدودیت‌ها (قفل تمرین‌ها) ====================
+function isExerciseUnlocked(level) {
+    const owned = JSON.parse(localStorage.getItem('owned_items')) || [];
+    if (level === 'intermediate') return owned.includes('ex-intermediate');
+    if (level === 'advanced') return owned.includes('ex-advanced');
+    return true; // مبتدی همیشه باز است
+}
 
-// ==================== SAMPLES (۱۰ نمونه‌کار) ====================
+// ==================== SAMPLES ====================
 const samples = [
     {
         id: "calculator",
         name: "🧮 ماشین حساب",
         desc: "محاسبات ساده با عملیات جمع، تفریق، ضرب و تقسیم",
-        html: `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ماشین حساب</title>
-        <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="calculator">
-        <input type="text" id="display" readonly>
-        <div class="buttons">
-            <button onclick="clearDisplay()">C</button>
-            <button onclick="deleteLast()">DEL</button>
-            <button onclick="appendNumber('/')">/</button>
-            <button onclick="appendNumber('*')">*</button>
-            <button onclick="appendNumber('7')">7</button>
-            <button onclick="appendNumber('8')">8</button>
-            <button onclick="appendNumber('9')">9</button>
-            <button onclick="appendNumber('-')">-</button>
-            <button onclick="appendNumber('4')">4</button>
-            <button onclick="appendNumber('5')">5</button>
-            <button onclick="appendNumber('6')">6</button>
-            <button onclick="appendNumber('+')">+</button>
-            <button onclick="appendNumber('1')">1</button>
-            <button onclick="appendNumber('2')">2</button>
-            <button onclick="appendNumber('3')">3</button>
-            <button onclick="calculate()">=</button>
-            <button onclick="appendNumber('0')">0</button>
-            <button onclick="appendNumber('.')">.</button>
-        </div>
-    </div>
-    <script src="script.js"></script>
-
-</body>
-</html>`,
-        css: `* { box-sizing: border-box; }
-body {
-    display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;
-    background: #1a1a2e; font-family: sans-serif;
-}
-.calculator {
-    background: #0d1117; padding: 20px; border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 300px;
-}
-#display {
-    width: 100%; height: 60px; background: #161b22; color: #fff;
-    font-size: 28px; text-align: right; padding: 10px; border: none;
-    border-radius: 8px; margin-bottom: 12px;
-}
-.buttons {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
-}
-.buttons button {
-    padding: 16px; font-size: 18px; border: none; border-radius: 8px;
-    background: #161b22; color: #fff; cursor: pointer; transition: 0.2s;
-}
-.buttons button:hover { background: #2d3748; }
-.buttons button:nth-child(4n) { background: #8b5cf6; }
-.buttons button:nth-child(4n):hover { background: #7c3aed; }
-.buttons button:last-child { grid-column: span 2; }`,
-        js: `let display = document.getElementById('display');
-function appendNumber(num) {
-    display.value += num;
-}
-function clearDisplay() {
-    display.value = '';
-}
-function deleteLast() {
-    display.value = display.value.slice(0, -1);
-}
-function calculate() {
-    try {
-        display.value = eval(display.value);
-    } catch {
-        display.value = 'خطا';
-    }
-}`
+        html: `<!DOCTYPE html>\n<html>\n<head>\n    <meta charset="UTF-8">\n    <title>ماشین حساب</title>\n    <link rel="stylesheet" href="style.css">\n</head>\n<body>\n    <div class="calculator">\n        <input type="text" id="display" readonly>\n        <div class="buttons">\n            <button onclick="clearDisplay()">C</button>\n            <button onclick="deleteLast()">DEL</button>\n            <button onclick="appendNumber('/')">/</button>\n            <button onclick="appendNumber('*')">*</button>\n            <button onclick="appendNumber('7')">7</button>\n            <button onclick="appendNumber('8')">8</button>\n            <button onclick="appendNumber('9')">9</button>\n            <button onclick="appendNumber('-')">-</button>\n            <button onclick="appendNumber('4')">4</button>\n            <button onclick="appendNumber('5')">5</button>\n            <button onclick="appendNumber('6')">6</button>\n            <button onclick="appendNumber('+')">+</button>\n            <button onclick="appendNumber('1')">1</button>\n            <button onclick="appendNumber('2')">2</button>\n            <button onclick="appendNumber('3')">3</button>\n            <button onclick="calculate()">=</button>\n            <button onclick="appendNumber('0')">0</button>\n            <button onclick="appendNumber('.')">.</button>\n        </div>\n    </div>\n    <script src="script.js"></script>\n</body>\n</html>`,
+        css: `* { box-sizing: border-box; }\nbody { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #1a1a2e; font-family: sans-serif; }\n.calculator { background: #0d1117; padding: 20px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 300px; }\n#display { width: 100%; height: 60px; background: #161b22; color: #fff; font-size: 28px; text-align: right; padding: 10px; border: none; border-radius: 8px; margin-bottom: 12px; }\n.buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }\n.buttons button { padding: 16px; font-size: 18px; border: none; border-radius: 8px; background: #161b22; color: #fff; cursor: pointer; transition: 0.2s; }\n.buttons button:hover { background: #2d3748; }\n.buttons button:nth-child(4n) { background: #8b5cf6; }\n.buttons button:nth-child(4n):hover { background: #7c3aed; }\n.buttons button:last-child { grid-column: span 2; }`,
+        js: `let display = document.getElementById('display');\nfunction appendNumber(num) { display.value += num; }\nfunction clearDisplay() { display.value = ''; }\nfunction deleteLast() { display.value = display.value.slice(0, -1); }\nfunction calculate() { try { display.value = eval(display.value); } catch { display.value = 'خطا'; } }`
     },
     {
         id: "todo",
         name: "📝 لیست کارها",
         desc: "مدیریت کارهای روزانه با افزودن و حذف",
-        html: `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لیست کارها</title>
-        <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="todo-container">
-        <h1>📝 لیست کارها</h1>
-        <div class="input-row">
-            <input type="text" id="todoInput" placeholder="کار جدید...">
-            <button onclick="addTodo()">افزودن</button>
-        </div>
-        <ul id="todoList"></ul>
-    </div>
-    <script src="script.js"></script>
-
-</body>
-</html>`,
-        css: `* { box-sizing: border-box; }
-body {
-    display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;
-    background: #1a1a2e; font-family: sans-serif; color: #fff;
-}
-.todo-container {
-    background: #0d1117; padding: 20px; border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 320px;
-}
-h1 { text-align: center; color: #8b5cf6; margin-bottom: 16px; }
-.input-row { display: flex; gap: 8px; margin-bottom: 16px; }
-.input-row input {
-    flex: 1; padding: 10px; border-radius: 8px; border: none;
-    background: #161b22; color: #fff; outline: none;
-}
-.input-row button {
-    padding: 10px 16px; border: none; border-radius: 8px;
-    background: #8b5cf6; color: #fff; cursor: pointer;
-}
-ul { list-style: none; padding: 0; margin: 0; }
-li {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 10px; background: #161b22; border-radius: 8px; margin-bottom: 6px;
-}
-li button {
-    background: #ef4444; border: none; color: #fff; padding: 4px 10px;
-    border-radius: 6px; cursor: pointer;
-}`,
-        js: `let todoInput = document.getElementById('todoInput');
-let todoList = document.getElementById('todoList');
-function addTodo() {
-    const text = todoInput.value.trim();
-    if (!text) return;
-    const li = document.createElement('li');
-    li.innerHTML = \`<span>\${text}</span> <button onclick="removeTodo(this)">حذف</button>\`;
-    todoList.appendChild(li);
-    todoInput.value = '';
-}
-function removeTodo(btn) {
-    btn.parentElement.remove();
-}`
+        html: `<!DOCTYPE html>\n<html>\n<head>\n    <meta charset="UTF-8">\n    <title>لیست کارها</title>\n    <link rel="stylesheet" href="style.css">\n</head>\n<body>\n    <div class="todo-container">\n        <h1>📝 لیست کارها</h1>\n        <div class="input-row">\n            <input type="text" id="todoInput" placeholder="کار جدید...">\n            <button onclick="addTodo()">افزودن</button>\n        </div>\n        <ul id="todoList"></ul>\n    </div>\n    <script src="script.js"></script>\n</body>\n</html>`,
+        css: `* { box-sizing: border-box; }\nbody { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #1a1a2e; font-family: sans-serif; color: #fff; }\n.todo-container { background: #0d1117; padding: 20px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 320px; }\nh1 { text-align: center; color: #8b5cf6; margin-bottom: 16px; }\n.input-row { display: flex; gap: 8px; margin-bottom: 16px; }\n.input-row input { flex: 1; padding: 10px; border-radius: 8px; border: none; background: #161b22; color: #fff; outline: none; }\n.input-row button { padding: 10px 16px; border: none; border-radius: 8px; background: #8b5cf6; color: #fff; cursor: pointer; }\nul { list-style: none; padding: 0; margin: 0; }\nli { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #161b22; border-radius: 8px; margin-bottom: 6px; }\nli button { background: #ef4444; border: none; color: #fff; padding: 4px 10px; border-radius: 6px; cursor: pointer; }`,
+        js: `let todoInput = document.getElementById('todoInput');\nlet todoList = document.getElementById('todoList');\nfunction addTodo() { const text = todoInput.value.trim(); if (!text) return; const li = document.createElement('li'); li.innerHTML = \`<span>\${text}</span> <button onclick="removeTodo(this)">حذف</button>\`; todoList.appendChild(li); todoInput.value = ''; }\nfunction removeTodo(btn) { btn.parentElement.remove(); }`
     },
     {
         id: "counter",
         name: "🔢 شمارنده",
         desc: "شمارنده ساده با دکمه‌های افزایش، کاهش و ریست",
-        html: `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>شمارنده</title>
-        <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="counter">
-        <h1 id="count">0</h1>
-        <div class="buttons">
-            <button onclick="decrease()">-</button>
-            <button onclick="reset()">⟲</button>
-            <button onclick="increase()">+</button>
-        </div>
-    </div>
-    <script src="script.js"></script>
-
-</body>
-</html>`,
-        css: `* { box-sizing: border-box; }
-body {
-    display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;
-    background: #1a1a2e; font-family: sans-serif; color: #fff;
-}
-.counter {
-    background: #0d1117; padding: 30px; border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; width: 200px;
-}
-#count { font-size: 60px; color: #8b5cf6; margin: 10px 0; }
-.buttons { display: flex; justify-content: center; gap: 10px; }
-.buttons button {
-    padding: 10px 20px; font-size: 24px; border: none; border-radius: 8px;
-    background: #161b22; color: #fff; cursor: pointer; transition: 0.2s;
-}
-.buttons button:hover { background: #2d3748; }
-.buttons button:nth-child(2) { background: #8b5cf6; }
-.buttons button:nth-child(2):hover { background: #7c3aed; }`,
-        js: `let count = 0;
-let countEl = document.getElementById('count');
-function increase() {
-    count++;
-    countEl.textContent = count;
-}
-function decrease() {
-    count--;
-    countEl.textContent = count;
-}
-function reset() {
-    count = 0;
-    countEl.textContent = count;
-}`
+        html: `<!DOCTYPE html>\n<html>\n<head>\n    <meta charset="UTF-8">\n    <title>شمارنده</title>\n    <link rel="stylesheet" href="style.css">\n</head>\n<body>\n    <div class="counter">\n        <h1 id="count">0</h1>\n        <div class="buttons">\n            <button onclick="decrease()">-</button>\n            <button onclick="reset()">⟲</button>\n            <button onclick="increase()">+</button>\n        </div>\n    </div>\n    <script src="script.js"></script>\n</body>\n</html>`,
+        css: `* { box-sizing: border-box; }\nbody { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #1a1a2e; font-family: sans-serif; color: #fff; }\n.counter { background: #0d1117; padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; width: 200px; }\n#count { font-size: 60px; color: #8b5cf6; margin: 10px 0; }\n.buttons { display: flex; justify-content: center; gap: 10px; }\n.buttons button { padding: 10px 20px; font-size: 24px; border: none; border-radius: 8px; background: #161b22; color: #fff; cursor: pointer; transition: 0.2s; }\n.buttons button:hover { background: #2d3748; }\n.buttons button:nth-child(2) { background: #8b5cf6; }\n.buttons button:nth-child(2):hover { background: #7c3aed; }`,
+        js: `let count = 0;\nlet countEl = document.getElementById('count');\nfunction increase() { count++; countEl.textContent = count; }\nfunction decrease() { count--; countEl.textContent = count; }\nfunction reset() { count = 0; countEl.textContent = count; }`
     },
     {
         id: "color",
         name: "🎨 تغییر رنگ",
         desc: "تغییر رنگ پس‌زمینه با کلیک دکمه",
-        html: `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تغییر رنگ</title>
-        <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="color-box" id="colorBox">
-        <h2>🎨 رنگ من</h2>
-        <button onclick="changeColor()">تغییر رنگ</button>
-    </div>
-    <script src="script.js"></script>
-
-</body>
-</html>`,
-        css: `* { box-sizing: border-box; }
-body {
-    display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;
-    background: #1a1a2e; font-family: sans-serif; color: #fff;
-}
-.color-box {
-    background: #0d1117; padding: 30px; border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; width: 250px;
-}
-.color-box h2 { margin-bottom: 20px; }
-.color-box button {
-    padding: 12px 24px; border: none; border-radius: 8px;
-    background: #8b5cf6; color: #fff; font-size: 16px; cursor: pointer;
-    transition: 0.2s;
-}
-.color-box button:hover { background: #7c3aed; }`,
-        js: `let colorBox = document.getElementById('colorBox');
-let colors = ['#8b5cf6', '#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#ec4899'];
-let index = 0;
-function changeColor() {
-    index = (index + 1) % colors.length;
-    colorBox.style.background = colors[index];
-}`
+        html: `<!DOCTYPE html>\n<html>\n<head>\n    <meta charset="UTF-8">\n    <title>تغییر رنگ</title>\n    <link rel="stylesheet" href="style.css">\n</head>\n<body>\n    <div class="color-box" id="colorBox">\n        <h2>🎨 رنگ من</h2>\n        <button onclick="changeColor()">تغییر رنگ</button>\n    </div>\n    <script src="script.js"></script>\n</body>\n</html>`,
+        css: `* { box-sizing: border-box; }\nbody { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #1a1a2e; font-family: sans-serif; color: #fff; }\n.color-box { background: #0d1117; padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; width: 250px; transition: 0.3s; }\n.color-box h2 { margin-bottom: 20px; }\n.color-box button { padding: 12px 24px; border: none; border-radius: 8px; background: #8b5cf6; color: #fff; font-size: 16px; cursor: pointer; transition: 0.2s; }\n.color-box button:hover { background: #7c3aed; }`,
+        js: `let colorBox = document.getElementById('colorBox');\nlet colors = ['#8b5cf6', '#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#ec4899'];\nlet index = 0;\nfunction changeColor() { index = (index + 1) % colors.length; colorBox.style.background = colors[index]; }`
     },
     {
         id: "stopwatch",
         name: "⏱️ کرنومتر",
         desc: "شروع، توقف و ریست زمان",
-        html: `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>کرنومتر</title>
-        <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="stopwatch">
-        <h1 id="timer">00:00:00</h1>
-        <button onclick="startTimer()">شروع</button>
-        <button onclick="stopTimer()">توقف</button>
-        <button onclick="resetTimer()">ریست</button>
-    </div>
-    <script src="script.js"></script>
-
-</body>
-</html>`,
-        css: `* { box-sizing: border-box; }
-body {
-    display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;
-    background: #1a1a2e; font-family: sans-serif; color: #fff;
-}
-.stopwatch {
-    text-align: center;
-    background: #0d1117; padding: 30px; border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 250px;
-}
-#timer { font-size: 48px; margin-bottom: 20px; }
-button { padding: 10px 20px; margin: 0 5px; border: none; border-radius: 8px; cursor: pointer; background: #8b5cf6; color: #fff; }
-button:hover { background: #7c3aed; }`,
-        js: `let seconds = 0, interval;
-function updateTimer() {
-    const h = String(Math.floor(seconds / 3600)).padStart(2, '0');
-    const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
-    const s = String(seconds % 60).padStart(2, '0');
-    document.getElementById('timer').textContent = h + ':' + m + ':' + s;
-}
-function startTimer() {
-    if (interval) return;
-    interval = setInterval(() => { seconds++; updateTimer(); }, 1000);
-}
-function stopTimer() { clearInterval(interval); interval = null; }
-function resetTimer() { stopTimer(); seconds = 0; updateTimer(); }`
+        html: `<!DOCTYPE html>\n<html>\n<head>\n    <meta charset="UTF-8">\n    <title>کرنومتر</title>\n    <link rel="stylesheet" href="style.css">\n</head>\n<body>\n    <div class="stopwatch">\n        <h1 id="timer">00:00:00</h1>\n        <button onclick="startTimer()">شروع</button>\n        <button onclick="stopTimer()">توقف</button>\n        <button onclick="resetTimer()">ریست</button>\n    </div>\n    <script src="script.js"></script>\n</body>\n</html>`,
+        css: `* { box-sizing: border-box; }\nbody { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #1a1a2e; font-family: sans-serif; color: #fff; }\n.stopwatch { text-align: center; background: #0d1117; padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 250px; }\n#timer { font-size: 48px; margin-bottom: 20px; }\nbutton { padding: 10px 20px; margin: 0 5px; border: none; border-radius: 8px; cursor: pointer; background: #8b5cf6; color: #fff; }\nbutton:hover { background: #7c3aed; }`,
+        js: `let seconds = 0, interval;\nfunction updateTimer() { const h = String(Math.floor(seconds / 3600)).padStart(2, '0'); const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0'); const s = String(seconds % 60).padStart(2, '0'); document.getElementById('timer').textContent = h + ':' + m + ':' + s; }\nfunction startTimer() { if (interval) return; interval = setInterval(() => { seconds++; updateTimer(); }, 1000); }\nfunction stopTimer() { clearInterval(interval); interval = null; }\nfunction resetTimer() { stopTimer(); seconds = 0; updateTimer(); }`
     },
     {
         id: "quiz",
         name: "📝 آزمون چهارگزینه‌ای",
         desc: "یک آزمون ساده با سوالات و نمره‌دهی",
-        html: `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>آزمون</title>
-        <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div id="quiz">
-        <h2 id="question">سوال؟</h2>
-        <div id="options"></div>
-        <button onclick="nextQuestion()">بعدی</button>
-        <p id="score">نمره: 0</p>
-    </div>
-    <script src="script.js"></script>
-
-</body>
-</html>`,
-        css: `* { box-sizing: border-box; }
-body {
-    display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;
-    background: #1a1a2e; font-family: sans-serif; color: #fff;
-}
-#quiz { background: #0d1117; padding: 30px; border-radius: 16px; width: 300px; text-align: center; }
-#options button { display: block; width: 100%; margin: 8px 0; padding: 10px; border: none; border-radius: 8px; background: #2d3748; color: #fff; cursor: pointer; }
-#options button:hover { background: #8b5cf6; }`,
-        js: `const questions = [
-    { q: 'پایتخت ایران؟', options: ['تهران', 'اصفهان', 'شیراز', 'مشهد'], answer: 0 },
-    { q: '2+2؟', options: ['3', '4', '5', '6'], answer: 1 }
-];
-let current = 0, score = 0;
-function showQuestion() {
-    const q = questions[current];
-    document.getElementById('question').textContent = q.q;
-    const container = document.getElementById('options');
-    container.innerHTML = '';
-    q.options.forEach((opt, i) => {
-        const btn = document.createElement('button');
-        btn.textContent = opt;
-        btn.onclick = () => {
-            if (i === q.answer) score++;
-            document.getElementById('score').textContent = 'نمره: ' + score;
-            nextQuestion();
-        };
-        container.appendChild(btn);
-    });
-}
-function nextQuestion() {
-    current++;
-    if (current < questions.length) showQuestion();
-    else document.getElementById('quiz').innerHTML = '<h2>پایان آزمون!</h2><p>نمره نهایی: ' + score + '</p>';
-}
-showQuestion();`
+        html: `<!DOCTYPE html>\n<html>\n<head>\n    <meta charset="UTF-8">\n    <title>آزمون</title>\n    <link rel="stylesheet" href="style.css">\n</head>\n<body>\n    <div id="quiz">\n        <h2 id="question">سوال؟</h2>\n        <div id="options"></div>\n        <button onclick="nextQuestion()">بعدی</button>\n        <p id="score">نمره: 0</p>\n    </div>\n    <script src="script.js"></script>\n</body>\n</html>`,
+        css: `* { box-sizing: border-box; }\nbody { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #1a1a2e; font-family: sans-serif; color: #fff; }\n#quiz { background: #0d1117; padding: 30px; border-radius: 16px; width: 300px; text-align: center; }\n#options button { display: block; width: 100%; margin: 8px 0; padding: 10px; border: none; border-radius: 8px; background: #2d3748; color: #fff; cursor: pointer; }\n#options button:hover { background: #8b5cf6; }`,
+        js: `const questions = [\n    { q: 'پایتخت ایران؟', options: ['تهران', 'اصفهان', 'شیراز', 'مشهد'], answer: 0 },\n    { q: '2+2؟', options: ['3', '4', '5', '6'], answer: 1 }\n];\nlet current = 0, score = 0;\nfunction showQuestion() {\n    const q = questions[current];\n    document.getElementById('question').textContent = q.q;\n    const container = document.getElementById('options');\n    container.innerHTML = '';\n    q.options.forEach((opt, i) => {\n        const btn = document.createElement('button');\n        btn.textContent = opt;\n        btn.onclick = () => {\n            if (i === q.answer) score++;\n            document.getElementById('score').textContent = 'نمره: ' + score;\n            nextQuestion();\n        };\n        container.appendChild(btn);\n    });\n}\nfunction nextQuestion() {\n    current++;\n    if (current < questions.length) showQuestion();\n    else document.getElementById('quiz').innerHTML = '<h2>پایان آزمون!</h2><p>نمره نهایی: ' + score + '</p>';\n}\nshowQuestion();`
     },
     {
         id: "password",
         name: "🔐 تولید رمز تصادفی",
         desc: "تولید رمز قدرتمند با طول دلخواه",
-        html: `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تولید رمز</title>
-        <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="password-gen">
-        <h2>رمز تصادفی</h2>
-        <input type="number" id="length" value="12" min="4" max="32">
-        <button onclick="generate()">تولید</button>
-        <p id="result"></p>
-    </div>
-    <script src="script.js"></script>
-
-</body>
-</html>`,
-        css: `* { box-sizing: border-box; }
-body {
-    display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;
-    background: #1a1a2e; font-family: sans-serif; color: #fff;
-}
-.password-gen { background: #0d1117; padding: 30px; border-radius: 16px; text-align: center; width: 300px; }
-input { padding: 8px; border-radius: 8px; border: none; width: 60px; text-align: center; }
-button { padding: 8px 20px; border: none; border-radius: 8px; background: #8b5cf6; color: #fff; cursor: pointer; }
-#result { margin-top: 16px; font-size: 18px; word-break: break-all; }`,
-        js: `function generate() {
-    const length = document.getElementById('length').value;
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
-    let password = '';
-    for (let i = 0; i < length; i++) {
-        password += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    document.getElementById('result').textContent = password;
-}`
+        html: `<!DOCTYPE html>\n<html>\n<head>\n    <meta charset="UTF-8">\n    <title>تولید رمز</title>\n    <link rel="stylesheet" href="style.css">\n</head>\n<body>\n    <div class="password-gen">\n        <h2>رمز تصادفی</h2>\n        <input type="number" id="length" value="12" min="4" max="32">\n        <button onclick="generate()">تولید</button>\n        <p id="result"></p>\n    </div>\n    <script src="script.js"></script>\n</body>\n</html>`,
+        css: `* { box-sizing: border-box; }\nbody { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #1a1a2e; font-family: sans-serif; color: #fff; }\n.password-gen { background: #0d1117; padding: 30px; border-radius: 16px; text-align: center; width: 300px; }\ninput { padding: 8px; border-radius: 8px; border: none; width: 60px; text-align: center; }\nbutton { padding: 8px 20px; border: none; border-radius: 8px; background: #8b5cf6; color: #fff; cursor: pointer; }\n#result { margin-top: 16px; font-size: 18px; word-break: break-all; }`,
+        js: `function generate() {\n    const length = document.getElementById('length').value;\n    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';\n    let password = '';\n    for (let i = 0; i < length; i++) {\n        password += chars.charAt(Math.floor(Math.random() * chars.length));\n    }\n    document.getElementById('result').textContent = password;\n}`
     },
     {
         id: "weather",
         name: "🌤️ نمایش آب و هوا",
         desc: "نمایش دمای شهرها (شبیه‌سازی شده)",
-        html: `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>آب و هوا</title>
-        <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="weather">
-        <h2>آب و هوای تهران</h2>
-        <p id="temp">۲۵°C</p>
-        <button onclick="changeTemp()">بروزرسانی</button>
-    </div>
-    <script src="script.js"></script>
-
-</body>
-</html>`,
-        css: `* { box-sizing: border-box; }
-body {
-    display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;
-    background: #1a1a2e; font-family: sans-serif; color: #fff;
-}
-.weather { background: #0d1117; padding: 30px; border-radius: 16px; text-align: center; width: 250px; }
-#temp { font-size: 32px; margin: 16px 0; }
-button { padding: 10px 20px; border: none; border-radius: 8px; background: #8b5cf6; color: #fff; cursor: pointer; }`,
-        js: `function changeTemp() {
-    const temp = Math.floor(Math.random() * 40) + 10;
-    document.getElementById('temp').textContent = temp + '°C';
-}`
+        html: `<!DOCTYPE html>\n<html>\n<head>\n    <meta charset="UTF-8">\n    <title>آب و هوا</title>\n    <link rel="stylesheet" href="style.css">\n</head>\n<body>\n    <div class="weather">\n        <h2>آب و هوای تهران</h2>\n        <p id="temp">۲۵°C</p>\n        <button onclick="changeTemp()">بروزرسانی</button>\n    </div>\n    <script src="script.js"></script>\n</body>\n</html>`,
+        css: `* { box-sizing: border-box; }\nbody { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #1a1a2e; font-family: sans-serif; color: #fff; }\n.weather { background: #0d1117; padding: 30px; border-radius: 16px; text-align: center; width: 250px; }\n#temp { font-size: 32px; margin: 16px 0; }\nbutton { padding: 10px 20px; border: none; border-radius: 8px; background: #8b5cf6; color: #fff; cursor: pointer; }`,
+        js: `function changeTemp() {\n    const temp = Math.floor(Math.random() * 40) + 10;\n    document.getElementById('temp').textContent = temp + '°C';\n}`
     },
     {
         id: "notes",
         name: "📒 یادداشت‌ها",
         desc: "اضافه کردن و حذف یادداشت",
-        html: `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>یادداشت‌ها</title>
-        <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="notes">
-        <h2>یادداشت‌ها</h2>
-        <input type="text" id="noteInput" placeholder="یادداشت جدید...">
-        <button onclick="addNote()">افزودن</button>
-        <ul id="noteList"></ul>
-    </div>
-    <script src="script.js"></script>
-
-</body>
-</html>`,
-        css: `* { box-sizing: border-box; }
-body {
-    display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;
-    background: #1a1a2e; font-family: sans-serif; color: #fff;
-}
-.notes { background: #0d1117; padding: 30px; border-radius: 16px; width: 300px; }
-input { padding: 8px; border-radius: 8px; border: none; width: 70%; }
-button { padding: 8px 16px; border: none; border-radius: 8px; background: #8b5cf6; color: #fff; cursor: pointer; }
-ul { list-style: none; padding: 0; margin-top: 16px; }
-li { display: flex; justify-content: space-between; padding: 8px; background: #2d3748; border-radius: 8px; margin: 4px 0; }
-li button { background: #ef4444; padding: 4px 10px; }`,
-        js: `function addNote() {
-    const input = document.getElementById('noteInput');
-    const text = input.value.trim();
-    if (!text) return;
-    const li = document.createElement('li');
-    li.innerHTML = text + ' <button onclick="this.parentElement.remove()">حذف</button>';
-    document.getElementById('noteList').appendChild(li);
-    input.value = '';
-}`
+        html: `<!DOCTYPE html>\n<html>\n<head>\n    <meta charset="UTF-8">\n    <title>یادداشت‌ها</title>\n    <link rel="stylesheet" href="style.css">\n</head>\n<body>\n    <div class="notes">\n        <h2>یادداشت‌ها</h2>\n        <input type="text" id="noteInput" placeholder="یادداشت جدید...">\n        <button onclick="addNote()">افزودن</button>\n        <ul id="noteList"></ul>\n    </div>\n    <script src="script.js"></script>\n</body>\n</html>`,
+        css: `* { box-sizing: border-box; }\nbody { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #1a1a2e; font-family: sans-serif; color: #fff; }\n.notes { background: #0d1117; padding: 30px; border-radius: 16px; width: 300px; }\ninput { padding: 8px; border-radius: 8px; border: none; width: 70%; }\nbutton { padding: 8px 16px; border: none; border-radius: 8px; background: #8b5cf6; color: #fff; cursor: pointer; }\nul { list-style: none; padding: 0; margin-top: 16px; }\nli { display: flex; justify-content: space-between; padding: 8px; background: #2d3748; border-radius: 8px; margin: 4px 0; }\nli button { background: #ef4444; padding: 4px 10px; }`,
+        js: `function addNote() {\n    const input = document.getElementById('noteInput');\n    const text = input.value.trim();\n    if (!text) return;\n    const li = document.createElement('li');\n    li.innerHTML = text + ' <button onclick="this.parentElement.remove()">حذف</button>';\n    document.getElementById('noteList').appendChild(li);\n    input.value = '';\n}`
     },
     {
         id: "clock",
         name: "🕒 ساعت دیجیتال",
         desc: "ساعت دیجیتال با زمان لحظه‌ای",
-        html: `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ساعت دیجیتال</title>
-        <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="clock">
-        <h1 id="time">00:00:00</h1>
-    </div>
-    <script src="script.js"></script>
-
-</body>
-</html>`,
-        css: `* { box-sizing: border-box; }
-body {
-    display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;
-    background: #1a1a2e; font-family: sans-serif; color: #fff;
-}
-.clock { background: #0d1117; padding: 30px; border-radius: 16px; text-align: center; width: 250px; }
-#time { font-size: 48px; letter-spacing: 2px; }`,
-        js: `function updateClock() {
-    const now = new Date();
-    const h = String(now.getHours()).padStart(2, '0');
-    const m = String(now.getMinutes()).padStart(2, '0');
-    const s = String(now.getSeconds()).padStart(2, '0');
-    document.getElementById('time').textContent = h + ':' + m + ':' + s;
-}
-setInterval(updateClock, 1000);
-updateClock();`
+        html: `<!DOCTYPE html>\n<html>\n<head>\n    <meta charset="UTF-8">\n    <title>ساعت دیجیتال</title>\n    <link rel="stylesheet" href="style.css">\n</head>\n<body>\n    <div class="clock">\n        <h1 id="time">00:00:00</h1>\n    </div>\n    <script src="script.js"></script>\n</body>\n</html>`,
+        css: `* { box-sizing: border-box; }\nbody { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #1a1a2e; font-family: sans-serif; color: #fff; }\n.clock { background: #0d1117; padding: 30px; border-radius: 16px; text-align: center; width: 250px; }\n#time { font-size: 48px; letter-spacing: 2px; }`,
+        js: `function updateClock() {\n    const now = new Date();\n    const h = String(now.getHours()).padStart(2, '0');\n    const m = String(now.getMinutes()).padStart(2, '0');\n    const s = String(now.getSeconds()).padStart(2, '0');\n    document.getElementById('time').textContent = h + ':' + m + ':' + s;\n}\nsetInterval(updateClock, 1000);\nupdateClock();`
     }
 ];
 
-
-// ==================== EXERCISES (۱۸ تمرین) ====================
+// ==================== EXERCISES ====================
 const exercises = [
     { id: "ex-1", name: "متغیرسازی", level: "beginner", levelLabel: "🟢 مبتدی", desc: "یک متغیر به نام `name` بساز و مقدار 'Ali' رو توش ذخیره کن.", guide: "۱. با let یک متغیر بساز.\n۲. مقدار 'Ali' رو بهش بده.\n۳. با console.log چاپش کن." },
     { id: "ex-2", name: "تابع ساده", level: "beginner", levelLabel: "🟢 مبتدی", desc: "یک تابع به نام `sayHello` بنویس که 'Hello' رو چاپ کنه.", guide: "۱. با function تابعی به نام sayHello بساز.\n۲. داخلش 'Hello' رو چاپ کن.\n۳. تابع رو صدا بزن." },
@@ -563,7 +128,6 @@ const exercises = [
     { id: "ex-17", name: "مدیریت پارکینگ", level: "advanced", levelLabel: "🔴 پیشرفته", desc: "مدیریت پارکینگ با اضافه و حذف ماشین.", guide: "۱. کلاس Parking با ظرفیت بساز.\n۲. متدهای park, leave, available رو بنویس." },
     { id: "ex-18", name: "چاپ اعداد", level: "advanced", levelLabel: "🔴 پیشرفته", desc: "چاپ اعداد ۱ تا ۱۰۰ به جز بخش‌پذیر بر ۴.", guide: "۱. حلقه ۱ تا ۱۰۰.\n۲. اگر i % 4 !== 0 بود، چاپ کن." }
 ];
-
 
 // ==================== MODE ====================
 function selectMode(mode, el) {
@@ -587,7 +151,6 @@ function selectMode(mode, el) {
     }
 }
 
-
 // ==================== RENDER SAMPLES ====================
 function renderSamples() {
     const grid = document.getElementById("samples-grid");
@@ -602,7 +165,6 @@ function renderSamples() {
     });
 }
 
-
 // ==================== SELECT SAMPLE ====================
 function selectSample(sample, el) {
     document.querySelectorAll(".sample-card").forEach(c => c.classList.remove("active"));
@@ -613,7 +175,6 @@ function selectSample(sample, el) {
     disableExerciseBtn();
     showToast(`"${sample.name}" انتخاب شد 👍`);
 }
-
 
 // ==================== RENDER EXERCISES ====================
 function renderExercises() {
@@ -635,21 +196,13 @@ function renderExercises() {
     });
 }
 
-
 // ==================== SELECT EXERCISE ====================
 function selectExercise(exercise, el) {
-    // ===== بررسی قفل تمرین =====
-    const owned = JSON.parse(localStorage.getItem('owned_items')) || [];
-    
-    if (exercise.level === 'intermediate' && !owned.includes('ex-intermediate')) {
+    // 👈 چک کردن قفل تمرین
+    if (!isExerciseUnlocked(exercise.level)) {
         showToast("🔒 این تمرین قفل است! ابتدا آن را از فروشگاه بخرید.");
         return;
     }
-    if (exercise.level === 'advanced' && !owned.includes('ex-advanced')) {
-        showToast("🔒 این تمرین قفل است! ابتدا آن را از فروشگاه بخرید.");
-        return;
-    }
-    // ========================================
 
     document.querySelectorAll(".exercise-card").forEach(c => c.classList.remove("active"));
     el.classList.add("active");
@@ -660,20 +213,17 @@ function selectExercise(exercise, el) {
     showToast(`"${exercise.name}" انتخاب شد 🎯`);
 }
 
-
 // ==================== BUILD ====================
 function goToBuild() {
     if (!selectedSample) { showToast("یه پروژه انتخاب کن 😑"); return; }
     createProject(selectedSample);
 }
 
-
 // ==================== EXERCISE ====================
 function goToExercise() {
     if (!selectedExercise) { showToast("یه تمرین انتخاب کن 🎯"); return; }
     createExercise(selectedExercise);
 }
-
 
 // ==================== CUSTOM IDEA ====================
 function submitCustomIdea() {
@@ -684,7 +234,6 @@ function submitCustomIdea() {
     }
     createCustomProject(input.value.trim());
 }
-
 
 // ==================== CREATE PROJECT ====================
 function createProject(sample) {
@@ -702,21 +251,17 @@ function createProject(sample) {
     projects.push(project);
     saveProjects(projects);
     
-    // ========== افزایش XP و سکه ==========
+    // افزایش XP و سکه
     let currentXP = parseInt(localStorage.getItem('userXP')) || 0;
     let currentCoins = parseInt(localStorage.getItem('userCoins')) || 0;
-
     currentXP += 10;
     currentCoins += 5;
-
     localStorage.setItem('userXP', currentXP.toString());
     localStorage.setItem('userCoins', currentCoins.toString());
-    // ========================================
 
     showToast("پروژه ساخته شد 🚀 +۱۰ XP +۵ سکه");
     setTimeout(() => { window.location.href = "build.html"; }, 300);
 }
-
 
 // ==================== CREATE EXERCISE ====================
 function createExercise(exercise) {
@@ -731,28 +276,22 @@ function createExercise(exercise) {
     localStorage.removeItem("currentProject");
     localStorage.setItem("currentProject", JSON.stringify(project));
     
-    // ========== افزایش XP و سکه ==========
+    // افزایش XP و سکه
     let currentXP = parseInt(localStorage.getItem('userXP')) || 0;
     let currentCoins = parseInt(localStorage.getItem('userCoins')) || 0;
-
     currentXP += 5;
     currentCoins += 3;
-
     localStorage.setItem('userXP', currentXP.toString());
     localStorage.setItem('userCoins', currentCoins.toString());
-    // ========================================
 
     showToast("تمرین بارگذاری شد 🎯 +۵ XP +۳ سکه");
     setTimeout(() => { window.location.href = "build.html"; }, 300);
 }
 
-
-// ==================== CREATE CUSTOM PROJECT (با هوش مصنوعی) ====================
+// ==================== CREATE CUSTOM PROJECT ====================
 async function createCustomProject(idea) {
     showToast("🧠 هوش مصنوعی در حال تحلیل ایده شما...");
-
     const aiResponse = await simulateAIResponse(idea);
-
     const project = {
         id: Date.now(),
         name: idea.substring(0, 30) + (idea.length > 30 ? "..." : ""),
@@ -762,30 +301,24 @@ async function createCustomProject(idea) {
         date: new Date().toLocaleDateString("fa-IR"),
         isAI: true
     };
-
     localStorage.removeItem("currentProject");
     localStorage.setItem("currentProject", JSON.stringify(project));
     const projects = getProjects();
     projects.push(project);
     saveProjects(projects);
     
-    // ========== افزایش XP و سکه ==========
+    // افزایش XP و سکه
     let currentXP = parseInt(localStorage.getItem('userXP')) || 0;
     let currentCoins = parseInt(localStorage.getItem('userCoins')) || 0;
-
     currentXP += 15;
     currentCoins += 8;
-
     localStorage.setItem('userXP', currentXP.toString());
     localStorage.setItem('userCoins', currentCoins.toString());
-    // ========================================
 
     showToast("✨ پروژه با هوش مصنوعی ساخته شد! +۱۵ XP +۸ سکه");
     setTimeout(() => { window.location.href = "build.html"; }, 300);
 }
 
-
-// ==================== شبیه‌سازی هوش مصنوعی (موقت) ====================
 function simulateAIResponse(idea) {
     return new Promise((resolve) => {
         setTimeout(() => {
@@ -811,7 +344,6 @@ function simulateAIResponse(idea) {
         }, 1500);
     });
 }
-
 
 // ==================== BUTTONS ====================
 function enableBuildBtn() {
@@ -842,7 +374,6 @@ function disableExerciseBtn() {
     btn.disabled = true;
 }
 
-
 // ==================== TOAST ====================
 function showToast(msg) {
     let toast = document.createElement("div");
@@ -855,7 +386,6 @@ function showToast(msg) {
         setTimeout(() => toast.remove(), 300);
     }, 2000);
 }
-
 
 // ==================== MENU ====================
 function toggleMenu() {

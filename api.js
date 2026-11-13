@@ -24,3 +24,4 @@ async function getUserProjects(userId) { return await apiRequest(`/projects/${us
 async function submitReview(userId, userName, text, rating, date) { return await apiRequest("/reviews", "POST", { userId, userName, text, rating, date }); }
 async function getAllReviews() { return await apiRequest("/reviews"); }
 async function deleteReview(reviewId, userId, userRole) { return await apiRequest("/reviews/delete", "POST", { reviewId, userId, userRole }); }
+async function likeReviewAPI(reviewId, action) { return await apiRequest("/reviews/like", "POST", { reviewId, action }); }

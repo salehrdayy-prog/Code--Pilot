@@ -205,13 +205,32 @@ app.post("/api/reviews/delete", async (req, res) => {
     
     const review = reviewResult.rows[0];
 
-    // فقط ادمین یا صاحب نظر می‌تونه حذف کنه
     if (userRole !== 'admin' && review.user_id !== userId) {
       return res.status(403).json({ error: "شما فقط می‌توانید نظر خودتان را حذف کنید" });
     }
 
     await pool.query('DELETE FROM reviews WHERE id = $1', [reviewId]);
     res.json({ ok: true });
+  } catch (e) { 
+    console.error(e); 
+    res.status(500).json({ error: "خطای سرور" }); 
+  }
+});
+
+// لایک یا آنلایک
+app.post("/api/reviews/like", async (req, res) => {
+  try {
+    const { reviewId, action } = req.body; 
+    
+    const reviewResult = await pool.query('SELECT * FROM reviews WHERE id = $1', [reviewId]);
+    if (reviewResult.rows.length === 0) return res.status(404).json({ error: "نظر پیدا نشد" });
+    
+    const currentLikes = reviewResult.rows[0].likes || 0;
+    const newLikes = action === 'like' ? currentLikes + 1 : Math.max(0, currentLikes - 1);
+
+    await pool.query('UPDATE reviews SET likes = $1 WHERE id = $2', [newLikes, reviewId]);
+    
+    res.json({ ok: true, likes: newLikes });
   } catch (e) { 
     console.error(e); 
     res.status(500).json({ error: "خطای سرور" }); 
