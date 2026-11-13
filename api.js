@@ -25,3 +25,6 @@ async function submitReview(userId, userName, text, rating, date) { return await
 async function getAllReviews() { return await apiRequest("/reviews"); }
 async function deleteReview(reviewId, userId, userRole) { return await apiRequest("/reviews/delete", "POST", { reviewId, userId, userRole }); }
 async function likeReviewAPI(reviewId, action) { return await apiRequest("/reviews/like", "POST", { reviewId, action }); }
+async function deleteOrderAPI(orderId) {
+  return await apiRequest("/admin/orders/delete", "POST", { orderId });
+}

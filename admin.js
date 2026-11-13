@@ -1,12 +1,6 @@
 document.addEventListener("DOMContentLoaded", async () => {
-  // ======================
-  // 🔐 چک سشن ادمین
-  // ======================
   const session = JSON.parse(localStorage.getItem('session'));
-  if (!session || session.role !== 'admin') {
-    window.location.href = "login.html";
-    return;
-  }
+  if (!session || session.role !== 'admin') { window.location.href = "login.html"; return; }
 
   const table = document.getElementById('userTable');
   const logoutBtn = document.getElementById('logout');
@@ -14,14 +8,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   const userCountEl = document.getElementById('userCount');
   const ordersList = document.getElementById('ordersList');
   
-  // 👈 آدرس سرور (بدون /api در انتها، چون توی fetch اضافه میشه)
-  const SERVER_URL = "https://code-pilot-5.onrender.com";
-
+  const API_URL = "https://code-pilot-5.onrender.com/api";
   let allUsers = [];
-  let allOrders = [];
 
   // ======================
-  // 🎨 رندر جدول کاربران
+  // 🎨 رندر کاربران
   // ======================
   function renderUsers(usersToRender) {
     table.innerHTML = "";
@@ -41,8 +32,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         <td>${user.role === 'admin' ? '<span style="color:#8b5cf6">ادمین</span>' : '<span style="color:#4ade80">کاربر</span>'}</td>
         <td class="action-btns">
           ${user.role !== 'admin' ? `
-            <button class="edit" onclick="alert('ویرایش در نسخه بعدی')">ویرایش</button>
-            <button class="delete" onclick="alert('حذف در نسخه بعدی')">حذف</button>
+            <button class="delete" onclick="deleteUser(${user.id})" style="background:#da3633; color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">حذف</button>
           ` : `<span style="color:#8aa3c9">-</span>`}
         </td>
       `;
@@ -51,11 +41,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // ======================
-  // 📦 رندر سفارشات (با استایل زیبا)
+  // 📦 رندر سفارشات
   // ======================
   function renderOrders(orders) {
     if (!ordersList) return;
-    
     if (orders.length === 0) {
       ordersList.innerHTML = `<p style="color: #8aa3c9; text-align: center; padding: 20px;">هنوز سفارشی ثبت نشده است.</p>`;
       return;
@@ -71,49 +60,35 @@ document.addEventListener("DOMContentLoaded", async () => {
             ${order.status === 'pending' ? '⏳ در انتظار' : order.status === 'approved' ? '✅ تأیید شده' : '❌ رد شده'}
           </span>
         </div>
-        <div>
+        <div style="display:flex; gap:5px;">
           <button onclick="approveOrder(${order.id})" ${order.status !== 'pending' ? 'disabled' : ''} 
             style="background:${order.status === 'pending' ? '#238636' : '#333'}; color:white; border:none; padding:10px 16px; border-radius:8px; cursor:${order.status === 'pending' ? 'pointer' : 'not-allowed'}; font-family: inherit; font-weight: bold;">
-            ${order.status === 'pending' ? 'تأیید و اضافه سکه' : 'تأیید شده'}
+            ${order.status === 'pending' ? 'تأیید' : 'تأیید شده'}
           </button>
+          <button onclick="deleteOrder(${order.id})" style="background:#da3633; color:white; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; font-family: inherit; font-weight: bold;">حذف</button>
         </div>
       </div>
     `).join('');
   }
 
   // ======================
-  // 🔄 دریافت اطلاعات از سرور (مستقیم)
+  // 🔄 دریافت اطلاعات
   // ======================
   async function fetchData() {
-    userCountEl.textContent = "در حال دریافت اطلاعات...";
-
-    // صبر برای بیدار شدن سرور رایگان
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // ۱. گرفتن کاربران
+    userCountEl.textContent = "در حال دریافت...";
+    await new Promise(resolve => setTimeout(resolve, 2000)); 
+    
     try {
-      const usersRes = await fetch(`${SERVER_URL}/api/admin/users`);
+      const usersRes = await fetch(`${API_URL}/admin/users`);
       const usersData = await usersRes.json();
-      if (usersData.ok) {
-        allUsers = usersData.users;
-        renderUsers(allUsers);
-      }
-    } catch (err) { 
-      userCountEl.textContent = "❌ خطا در دریافت کاربران"; 
-      console.error(err); 
-    }
+      if (usersData.ok) { allUsers = usersData.users; renderUsers(allUsers); }
+    } catch (err) { userCountEl.textContent = "❌ خطا در کاربران"; }
 
-    // ۲. گرفتن سفارشات
     try {
-      const ordersRes = await fetch(`${SERVER_URL}/api/admin/orders`);
+      const ordersRes = await fetch(`${API_URL}/admin/orders`);
       const ordersData = await ordersRes.json();
-      if (ordersData.ok) {
-        allOrders = ordersData.orders;
-        renderOrders(allOrders);
-      }
-    } catch (err) { 
-      console.error("خطا در سفارشات", err); 
-    }
+      if (ordersData.ok) { renderOrders(ordersData.orders); }
+    } catch (err) { console.error("خطا در سفارشات", err); }
   }
 
   // ======================
@@ -134,26 +109,48 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ✅ تایید سفارش
   // ======================
   window.approveOrder = async function(orderId) {
-    if (!confirm('آیا از تایید این سفارش و اضافه کردن سکه مطمئن هستید؟')) return;
-    
+    if (!confirm('آیا از تایید این سفارش مطمئن هستید؟')) return;
     try {
-      const res = await fetch(`${SERVER_URL}/api/admin/approve`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch(`${API_URL}/admin/approve`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId })
       });
       const data = await res.json();
-      
-      if (data.ok) {
-        alert('✅ سفارش تایید شد و سکه‌ها به کاربر اضافه شد.');
-        fetchData(); // بروزرسانی لیست
-      } else {
-        alert('❌ خطا در تایید: ' + data.error);
-      }
-    } catch (err) {
-      alert('❌ خطا در ارتباط با سرور');
-      console.error(err);
-    }
+      if (data.ok) { alert('✅ سفارش تایید شد.'); fetchData(); }
+      else { alert('❌ خطا: ' + data.error); }
+    } catch (err) { alert('❌ خطا در ارتباط'); }
+  };
+
+  // ======================
+  // 🗑️ حذف سفارش
+  // ======================
+  window.deleteOrder = async function(orderId) {
+    if (!confirm('آیا از حذف این سفارش مطمئن هستید؟')) return;
+    try {
+      const res = await fetch(`${API_URL}/admin/orders/delete`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId })
+      });
+      const data = await res.json();
+      if (data.ok) { alert('🗑️ سفارش حذف شد.'); fetchData(); }
+      else { alert('❌ خطا: ' + data.error); }
+    } catch (err) { alert('❌ خطا در ارتباط'); }
+  };
+
+  // ======================
+  // 🗑️ حذف کاربر
+  // ======================
+  window.deleteUser = async function(userId) {
+    if (!confirm('آیا از حذف این کاربر مطمئن هستید؟ تمام سفارشات و پروژه‌های او هم حذف می‌شوند.')) return;
+    try {
+      const res = await fetch(`${API_URL}/admin/users/delete`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId })
+      });
+      const data = await res.json();
+      if (data.ok) { alert('🗑️ کاربر حذف شد.'); fetchData(); }
+      else { alert('❌ خطا: ' + data.error); }
+    } catch (err) { alert('❌ خطا در ارتباط'); }
   };
 
   // ======================
@@ -165,6 +162,5 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.location.href = "login.html";
   });
 
-  // اجرای اولیه
   fetchData();
 });

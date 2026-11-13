@@ -2931,3 +2931,7 @@ textarea {
 .badges-grid { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
 .badge-item { background: rgba(255,255,255,0.06); padding: 10px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 8px; font-size: 14px; }
 .badge-item .icon { font-size: 24px; }
+
+.like.liked { color: #f85149 !important; }
+.like { cursor: pointer; transition: 0.2s; }
+.like:hover { transform: scale(1.1); }

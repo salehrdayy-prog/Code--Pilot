@@ -83,6 +83,7 @@ app.use(express.json({ limit: "10mb" }));
 // ================== API ها ==================
 app.get("/health", (_req, res) => res.json({ ok: true, status: "Live" }));
 
+// ۱. ثبت نام
 app.post("/api/register", async (req, res) => {
   try {
     const { name, phone, email, password } = req.body;
@@ -99,6 +100,7 @@ app.post("/api/register", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
+// ۲. ورود
 app.post("/api/login", async (req, res) => {
   try {
     const { loginValue, password } = req.body;
@@ -111,6 +113,7 @@ app.post("/api/login", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
+// ۳. اطلاعات کاربر
 app.get("/api/user/:id", async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM users WHERE id = $1', [req.params.id]);
@@ -118,6 +121,7 @@ app.get("/api/user/:id", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "کاربر پیدا نشد" }); }
 });
 
+// ۴. ثبت سفارش سکه
 app.post("/api/orders", async (req, res) => {
   try {
     const { buyerId, buyerName, amount, label } = req.body;
@@ -130,6 +134,7 @@ app.post("/api/orders", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطا در ثبت سفارش" }); }
 });
 
+// ۵. دریافت سفارشات (ادمین)
 app.get("/api/admin/orders", async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM orders ORDER BY id DESC');
@@ -137,6 +142,7 @@ app.get("/api/admin/orders", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
+// ۶. تایید سفارش
 app.post("/api/admin/approve", async (req, res) => {
   try {
     const { orderId } = req.body;
@@ -151,11 +157,35 @@ app.post("/api/admin/approve", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
+// ۷. حذف سفارش (ادمین)
+app.post("/api/admin/orders/delete", async (req, res) => {
+  try {
+    const { orderId } = req.body;
+    await pool.query('DELETE FROM orders WHERE id = $1', [orderId]);
+    res.json({ ok: true });
+  } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
+});
+
+// ۸. دریافت کاربران (ادمین)
 app.get("/api/admin/users", async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM users ORDER BY id DESC');
     res.json({ ok: true, users: result.rows });
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
+});
+
+// ۹. حذف کاربر (ادمین)
+app.post("/api/admin/users/delete", async (req, res) => {
+  try {
+    const { userId } = req.body;
+    // حذف وابستگی‌ها
+    await pool.query('DELETE FROM orders WHERE buyer_id = $1', [userId]);
+    await pool.query('DELETE FROM projects WHERE user_id = $1', [userId]);
+    await pool.query('DELETE FROM reviews WHERE user_id = $1', [userId]);
+    // حذف کاربر
+    await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+    res.json({ ok: true });
+  } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
 // ================== پروژه‌ها ==================
@@ -199,29 +229,22 @@ app.get("/api/reviews", async (req, res) => {
 app.post("/api/reviews/delete", async (req, res) => {
   try {
     const { reviewId, userId, userRole } = req.body;
-    
     const reviewResult = await pool.query('SELECT * FROM reviews WHERE id = $1', [reviewId]);
     if (reviewResult.rows.length === 0) return res.status(404).json({ error: "نظر پیدا نشد" });
     
     const review = reviewResult.rows[0];
-
     if (userRole !== 'admin' && review.user_id !== userId) {
       return res.status(403).json({ error: "شما فقط می‌توانید نظر خودتان را حذف کنید" });
     }
 
     await pool.query('DELETE FROM reviews WHERE id = $1', [reviewId]);
     res.json({ ok: true });
-  } catch (e) { 
-    console.error(e); 
-    res.status(500).json({ error: "خطای سرور" }); 
-  }
+  } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// لایک یا آنلایک
 app.post("/api/reviews/like", async (req, res) => {
   try {
     const { reviewId, action } = req.body; 
-    
     const reviewResult = await pool.query('SELECT * FROM reviews WHERE id = $1', [reviewId]);
     if (reviewResult.rows.length === 0) return res.status(404).json({ error: "نظر پیدا نشد" });
     
@@ -229,12 +252,8 @@ app.post("/api/reviews/like", async (req, res) => {
     const newLikes = action === 'like' ? currentLikes + 1 : Math.max(0, currentLikes - 1);
 
     await pool.query('UPDATE reviews SET likes = $1 WHERE id = $2', [newLikes, reviewId]);
-    
     res.json({ ok: true, likes: newLikes });
-  } catch (e) { 
-    console.error(e); 
-    res.status(500).json({ error: "خطای سرور" }); 
-  }
+  } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
 // ================== هوش مصنوعی ==================
