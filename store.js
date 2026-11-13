@@ -1,5 +1,5 @@
 // ============================================================
-//  store.js - سیستم کامل فروشگاه (اتصال به دیتابیس و اعمال خریدها)
+//  store.js - سیستم کامل فروشگاه (نسخه ضد کرش)
 // ============================================================
 
 const storeData = {
@@ -42,18 +42,25 @@ function updateHeaderCoins() {
     if (el) el.innerHTML = `<i class="fas fa-coins"></i> ${getCoins()}`;
 }
 
-// ===== 🚀 همگام‌سازی سکه‌ها با دیتابیس =====
+// ===== همگام‌سازی سکه‌ها (با چک کردن امن) =====
 async function syncUserData() {
+    // اگه api.js لود نشده بود، بی‌خیال شو که کرش نکنه
+    if (typeof apiRequest !== 'function') {
+        console.warn("api.js لود نشده است. از سکه‌های محلی استفاده می‌شود.");
+        return;
+    }
     const session = JSON.parse(localStorage.getItem('session'));
     if (!session || !session.id) return;
 
-    // گرفتن اطلاعات جدید از سرور
-    const res = await apiRequest(`/user/${session.id}`);
-    if (res.ok && res.data.user) {
-        const user = res.data.user;
-        localStorage.setItem('userCoins', user.coins || 0);
-        localStorage.setItem('userXP', user.xp || 0);
-        updateHeaderCoins();
+    try {
+        const res = await apiRequest(`/user/${session.id}`);
+        if (res.ok && res.data.user) {
+            localStorage.setItem('userCoins', res.data.user.coins || 0);
+            localStorage.setItem('userXP', res.data.user.xp || 0);
+            updateHeaderCoins();
+        }
+    } catch (e) {
+        console.warn("خطا در دریافت از دیتابیس:", e);
     }
 }
 
@@ -81,18 +88,16 @@ function buyItem(category, itemId) {
     renderStore();
 }
 
-// ===== اعمال تم (تغییر کل سایت) =====
+// ===== اعمال تم =====
 function applyTheme(themeId) {
     const owned = getOwnedItems();
     if (!owned.includes(themeId)) return alert("❌ این قالب را نخریده‌اید!");
-    
     const theme = storeData.themes.find(t => t.id === themeId);
     if (!theme) return;
 
     localStorage.setItem('active_theme', themeId);
     document.documentElement.style.setProperty('--bg', theme.color);
     document.documentElement.style.setProperty('--primary', theme.primary);
-    
     alert(`🎨 قالب "${theme.name}" روی کل سایت اعمال شد!`);
     renderStore();
 }
@@ -116,7 +121,7 @@ function activateBooster(boosterId) {
     alert(`✅ تقویت‌کننده فعال شد! (۱ ساعت)`);
 }
 
-// ===== رندر کامل فروشگاه (همه تب‌ها) =====
+// ===== رندر کامل فروشگاه =====
 function renderStore() {
     updateHeaderCoins();
     const owned = getOwnedItems();
@@ -225,12 +230,11 @@ function renderStore() {
 
 // ===== بارگذاری اولیه =====
 document.addEventListener('DOMContentLoaded', async () => {
-    // ۱. اول سکه‌ها رو از دیتابیس بگیر
-    await syncUserData();
+    await syncUserData(); // اول تلاش میکنه سکه رو آپدیت کنه
 
     if (!localStorage.getItem('userCoins')) localStorage.setItem('userCoins', '0');
     
-    // ۲. اعمال تم
+    // اعمال تم
     const activeThemeId = localStorage.getItem('active_theme');
     if (activeThemeId) {
         const theme = storeData.themes.find(t => t.id === activeThemeId);
@@ -240,6 +244,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    // ۳. رندر لیست
-    renderStore();
+    renderStore(); // در هر صورت لیست رو نشون بده
 });
