@@ -38,9 +38,8 @@ const initDB = async () => {
         plan VARCHAR(50) DEFAULT 'free'
       );
     `);
-    await pool.query(`
-      ALTER TABLE users ADD COLUMN IF NOT EXISTS plan VARCHAR(50) DEFAULT 'free';
-    `);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS plan VARCHAR(50) DEFAULT 'free';`);
+    
     await pool.query(`
       CREATE TABLE IF NOT EXISTS orders (
         id SERIAL PRIMARY KEY,
@@ -53,9 +52,8 @@ const initDB = async () => {
         date VARCHAR(255)
       );
     `);
-    await pool.query(`
-      ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_code VARCHAR(255);
-    `);
+    await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_code VARCHAR(255);`);
+    
     await pool.query(`
       CREATE TABLE IF NOT EXISTS projects (
         id SERIAL PRIMARY KEY,
@@ -67,6 +65,7 @@ const initDB = async () => {
         date VARCHAR(255)
       );
     `);
+    
     await pool.query(`
       CREATE TABLE IF NOT EXISTS reviews (
         id SERIAL PRIMARY KEY,
@@ -78,6 +77,20 @@ const initDB = async () => {
         date VARCHAR(255)
       );
     `);
+
+    // 👈 جدول پیام‌ها (با قابلیت پاسخ)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS messages (
+        id SERIAL PRIMARY KEY,
+        user_id INT REFERENCES users(id),
+        sender VARCHAR(50) DEFAULT 'admin', 
+        text TEXT,
+        is_read BOOLEAN DEFAULT false,
+        date VARCHAR(255)
+      );
+    `);
+    await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS sender VARCHAR(50) DEFAULT 'admin';`);
+
     console.log("✅ Tables ready");
   } catch (e) {
     console.error("❌ Error creating tables:", e);
@@ -95,10 +108,8 @@ app.post("/api/register", async (req, res) => {
   try {
     const { name, phone, email, password } = req.body;
     const role = req.body.role || 'user'; 
-    
     const existing = await pool.query('SELECT * FROM users WHERE phone = $1 OR email = $2', [phone, email]);
     if (existing.rows.length > 0) return res.status(400).json({ error: "شماره یا ایمیل تکراری است" });
-    
     const newUser = await pool.query(
       'INSERT INTO users (name, phone, email, password, role) VALUES ($1, $2, $3, $4, $5) RETURNING *',
       [name, phone, email, password, role]
@@ -126,36 +137,23 @@ app.get("/api/user/:id", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "کاربر پیدا نشد" }); }
 });
 
-// ================== اشتراک (با کسر ۱۰۰۰ سکه) ==================
+// ================== اشتراک ==================
 app.post("/api/subscribe", async (req, res) => {
   try {
     const { userId, plan } = req.body;
-    if (!userId || !plan) return res.status(400).json({ error: "اطلاعات ناقص است" });
-
     const PLAN_COST = 1000; 
-
     const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
     if (userResult.rows.length === 0) return res.status(404).json({ error: "کاربر پیدا نشد" });
     const user = userResult.rows[0];
-
-    if (user.plan === 'pro') {
-      return res.status(400).json({ error: "شما از قبل کاربر ویژه هستید" });
-    }
-
-    if (user.coins < PLAN_COST) {
-      return res.status(400).json({ error: "سکه کافی نیست! برای خرید اشتراک به ۱۰۰۰ سکه نیاز دارید." });
-    }
+    if (user.plan === 'pro') return res.status(400).json({ error: "شما از قبل کاربر ویژه هستید" });
+    if (user.coins < PLAN_COST) return res.status(400).json({ error: "سکه کافی نیست!" });
 
     const updatedUserResult = await pool.query(
       'UPDATE users SET coins = coins - $1, plan = $2 WHERE id = $3 RETURNING *',
       [PLAN_COST, plan, userId]
     );
-
-    res.json({ ok: true, user: updatedUserResult.rows[0], message: "اشتراک با موفقیت فعال شد" });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "خطای سرور در فعال‌سازی اشتراک" });
-  }
+    res.json({ ok: true, user: updatedUserResult.rows[0] });
+  } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
 // ================== سفارشات ==================
@@ -183,11 +181,9 @@ app.post("/api/admin/approve", async (req, res) => {
     const { orderId } = req.body;
     const orderResult = await pool.query('SELECT * FROM orders WHERE id = $1 AND status = $2', [orderId, 'pending']);
     if (orderResult.rows.length === 0) return res.status(400).json({ error: "سفارش نامعتبر" });
-    
     const order = orderResult.rows[0];
     await pool.query('UPDATE orders SET status = $1 WHERE id = $2', ['approved', orderId]);
     await pool.query('UPDATE users SET coins = coins + $1 WHERE id = $2', [order.amount, order.buyer_id]);
-    
     res.json({ ok: true });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
@@ -214,9 +210,58 @@ app.post("/api/admin/users/delete", async (req, res) => {
     await pool.query('DELETE FROM orders WHERE buyer_id = $1', [userId]);
     await pool.query('DELETE FROM projects WHERE user_id = $1', [userId]);
     await pool.query('DELETE FROM reviews WHERE user_id = $1', [userId]);
+    await pool.query('DELETE FROM messages WHERE user_id = $1', [userId]);
     await pool.query('DELETE FROM users WHERE id = $1', [userId]);
     res.json({ ok: true });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
+});
+
+// ================== پیام‌ها ==================
+app.post("/api/admin/send-message", async (req, res) => {
+  try {
+    const { userId, text } = req.body;
+    const date = new Date().toLocaleString("fa-IR");
+    await pool.query(
+      'INSERT INTO messages (user_id, sender, text, date) VALUES ($1, $2, $3, $4)',
+      [userId, 'admin', text, date]
+    );
+    res.json({ ok: true });
+  } catch (e) { console.error(e); res.status(500).json({ error: "خطا در ارسال پیام" }); }
+});
+
+app.get("/api/messages/:userId", async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM messages WHERE user_id = $1 ORDER BY id DESC', [req.params.userId]);
+    res.json({ ok: true, messages: result.rows });
+  } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
+});
+
+app.post("/api/messages/read", async (req, res) => {
+  try {
+    const { messageId } = req.body;
+    await pool.query('UPDATE messages SET is_read = true WHERE id = $1', [messageId]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
+});
+
+app.post("/api/messages/reply", async (req, res) => {
+  try {
+    const { userId, text } = req.body;
+    const date = new Date().toLocaleString("fa-IR");
+    await pool.query(
+      'INSERT INTO messages (user_id, sender, text, date) VALUES ($1, $2, $3, $4)',
+      [userId, 'user', text, date]
+    );
+    res.json({ ok: true });
+  } catch (e) { console.error(e); res.status(500).json({ error: "خطا در ارسال پاسخ" }); }
+});
+
+app.post("/api/messages/delete", async (req, res) => {
+  try {
+    const { messageId } = req.body;
+    await pool.query('DELETE FROM messages WHERE id = $1', [messageId]);
+    res.json({ ok: true });
+  } catch (e) { console.error(e); res.status(500).json({ error: "خطا در حذف پیام" }); }
 });
 
 // ================== پروژه‌ها ==================
@@ -262,12 +307,10 @@ app.post("/api/reviews/delete", async (req, res) => {
     const { reviewId, userId, userRole } = req.body;
     const reviewResult = await pool.query('SELECT * FROM reviews WHERE id = $1', [reviewId]);
     if (reviewResult.rows.length === 0) return res.status(404).json({ error: "نظر پیدا نشد" });
-    
     const review = reviewResult.rows[0];
     if (userRole !== 'admin' && review.user_id !== userId) {
       return res.status(403).json({ error: "شما فقط می‌توانید نظر خودتان را حذف کنید" });
     }
-
     await pool.query('DELETE FROM reviews WHERE id = $1', [reviewId]);
     res.json({ ok: true });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
@@ -278,10 +321,8 @@ app.post("/api/reviews/like", async (req, res) => {
     const { reviewId, action } = req.body; 
     const reviewResult = await pool.query('SELECT * FROM reviews WHERE id = $1', [reviewId]);
     if (reviewResult.rows.length === 0) return res.status(404).json({ error: "نظر پیدا نشد" });
-    
     const currentLikes = reviewResult.rows[0].likes || 0;
     const newLikes = action === 'like' ? currentLikes + 1 : Math.max(0, currentLikes - 1);
-
     await pool.query('UPDATE reviews SET likes = $1 WHERE id = $2', [newLikes, reviewId]);
     res.json({ ok: true, likes: newLikes });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
@@ -296,7 +337,6 @@ app.post("/api/chat", async (req, res) => {
   const safeHistory = Array.isArray(history) ? history.slice(-6) : [];
   let userContent = message;
   if (codeContext) userContent = `${message}\n\n[اطلاعات محیط]\n${codeContext}`;
-
   const messages = [{ role: "system", content: SYSTEM_PROMPT }, ...safeHistory, { role: "user", content: userContent }];
 
   try {

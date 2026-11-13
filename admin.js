@@ -11,6 +11,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   const userCountEl = document.getElementById('userCount');
   const ordersList = document.getElementById('ordersList');
   
+  // مودال پیام
+  const msgModal = document.getElementById('messageModal');
+  const msgText = document.getElementById('messageText');
+  const msgUserName = document.getElementById('messageUserName');
+  let currentMsgUserId = null;
+
   const API_URL = "https://code-pilot-5.onrender.com/api";
   let allUsers = [];
 
@@ -36,6 +42,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         <td class="action-btns">
           ${user.role !== 'admin' ? `
             <button class="delete" onclick="deleteUser(${user.id})" style="background:#da3633; color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">حذف</button>
+            <button onclick="openMessageModal(${user.id}, '${user.name}')" style="background:#8b5cf6; color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">✉️ پیام</button>
           ` : `<span style="color:#8aa3c9">-</span>`}
         </td>
       `;
@@ -44,7 +51,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // ======================
-  // 📦 رندر سفارشات (با شماره پیگیری)
+  // 📦 رندر سفارشات
   // ======================
   function renderOrders(orders) {
     if (!ordersList) return;
@@ -75,6 +82,42 @@ document.addEventListener("DOMContentLoaded", async () => {
       </div>
     `).join('');
   }
+
+  // ======================
+  // ✉️ مودال ارسال پیام
+  // ======================
+  window.openMessageModal = function(userId, userName) {
+    currentMsgUserId = userId;
+    msgUserName.innerText = userName;
+    msgText.value = '';
+    msgModal.classList.add('show');
+  };
+
+  window.closeMessageModal = function() {
+    msgModal.classList.remove('show');
+    currentMsgUserId = null;
+  };
+
+  window.sendMessage = async function() {
+    const text = msgText.value.trim();
+    if (!text) return alert('لطفاً متن پیام را بنویسید.');
+    if (!currentMsgUserId) return;
+
+    const btn = document.querySelector('#messageModal .btn-send');
+    btn.innerText = 'در حال ارسال...';
+    btn.disabled = true;
+
+    const res = await sendMessageToUser(currentMsgUserId, text);
+
+    if (res.ok) {
+      alert('✅ پیام با موفقیت برای کاربر ارسال شد.');
+      closeMessageModal();
+    } else {
+      alert('❌ خطا در ارسال پیام: ' + res.error);
+    }
+    btn.innerText = 'ارسال پیام';
+    btn.disabled = false;
+  };
 
   // ======================
   // 🔄 دریافت اطلاعات
@@ -146,7 +189,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // 🗑️ حذف کاربر
   // ======================
   window.deleteUser = async function(userId) {
-    if (!confirm('آیا از حذف این کاربر مطمئن هستید؟ تمام سفارشات و پروژه‌های او هم حذف می‌شوند.')) return;
+    if (!confirm('آیا از حذف این کاربر مطمئن هستید؟')) return;
     try {
       const res = await fetch(`${API_URL}/admin/users/delete`, {
         method: "POST", headers: { "Content-Type": "application/json" },

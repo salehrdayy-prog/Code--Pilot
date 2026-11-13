@@ -28,3 +28,10 @@ async function getAllReviews() { return await apiRequest("/reviews"); }
 async function deleteReview(reviewId, userId, userRole) { return await apiRequest("/reviews/delete", "POST", { reviewId, userId, userRole }); }
 async function likeReviewAPI(reviewId, action) { return await apiRequest("/reviews/like", "POST", { reviewId, action }); }
 async function upgradeSubscription(userId, plan) { return await apiRequest("/subscribe", "POST", { userId, plan }); }
+
+// 👈 توابع جدید پیام‌ها
+async function sendMessageToUser(userId, text) { return await apiRequest("/admin/send-message", "POST", { userId, text }); }
+async function getUserMessages(userId) { return await apiRequest(`/messages/${userId}`); }
+async function markMessageAsRead(messageId) { return await apiRequest("/messages/read", "POST", { messageId }); }
+async function replyToAdmin(userId, text) { return await apiRequest("/messages/reply", "POST", { userId, text }); }
+async function deleteUserMessage(messageId) { return await apiRequest("/messages/delete", "POST", { messageId }); }

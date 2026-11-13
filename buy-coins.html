@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -74,44 +75,44 @@
             <div class="coin-card">
                 <span class="coin-icon">🪙</span>
                 <div class="amount">۱۰۰</div>
-                <div class="price">۱۰,۰۰۰ تومان</div>
-                <button class="btn-buy" onclick="openPaymentModal(100, '۱۰۰ سکه', 10000)">خرید</button>
+                <div class="price">۱۵,۰۰۰ تومان</div>
+                <button class="btn-buy" onclick="openPaymentModal(100, '۱۰۰ سکه', 15000)">خرید</button>
             </div>
 
             <div class="coin-card">
                 <span class="coin-icon">🪙</span>
                 <div class="amount">۳۰۰</div>
-                <div class="price">۲۵,۰۰۰ تومان</div>
-                <button class="btn-buy" onclick="openPaymentModal(300, '۳۰۰ سکه', 25000)">خرید</button>
+                <div class="price">۴۰,۰۰۰ تومان</div>
+                <button class="btn-buy" onclick="openPaymentModal(300, '۳۰۰ سکه', 40000)">خرید</button>
             </div>
 
             <div class="coin-card">
                 <span class="coin-icon">🪙</span>
                 <div class="amount">۵۰۰</div>
-                <div class="price">۴۰,۰۰۰ تومان</div>
-                <button class="btn-buy" onclick="openPaymentModal(500, '۵۰۰ سکه', 40000)">خرید</button>
+                <div class="price">۶۵,۰۰۰ تومان</div>
+                <button class="btn-buy" onclick="openPaymentModal(500, '۵۰۰ سکه', 65000)">خرید</button>
             </div>
 
             <div class="coin-card">
                 <span class="coin-icon">🪙</span>
                 <div class="amount">۱۰۰۰</div>
-                <div class="price">۷۰,۰۰۰ تومان</div>
-                <button class="btn-buy" onclick="openPaymentModal(1000, '۱۰۰۰ سکه', 70000)">خرید</button>
+                <div class="price">۱۲۰,۰۰۰ تومان</div>
+                <button class="btn-buy" onclick="openPaymentModal(1000, '۱۰۰۰ سکه', 120000)">خرید</button>
             </div>
         </div>
 
         <a href="store.html" class="back-link"><i class="fas fa-arrow-left"></i> بازگشت به فروشگاه</a>
     </div>
 
-    <!-- ===== مودال پرداخت کارت به کارت ===== -->
+    <!-- ===== مودال پرداخت ===== -->
     <div class="modal-overlay" id="paymentModal">
         <div class="modal-box">
             <h3>💳 پرداخت کارت به کارت</h3>
             
             <div class="card-info-box">
-                <div class="bank-name">بانک ملی (به نام صالح)</div>
-                <div class="card-number">6037-9977-XXXX-XXXX</div> <!-- 👈 شماره کارت خودت رو اینجا بذار -->
-                <div class="amount-pay" id="payAmount">مبلغ: ۱۰,۰۰۰ تومان</div>
+                <div class="bank-name">بانک ملی (به نام صالح محمد رضایی)</div>
+                <div class="card-number">6037-7012-1463-5101</div>
+                <div class="amount-pay" id="payAmount">مبلغ: ۱۵,۰۰۰ تومان</div>
             </div>
 
             <p style="font-size:12px; color:#8aa3c9; text-align:center; margin-bottom:15px;">
@@ -132,7 +133,6 @@
     <script>
         let currentOrder = { amount: 0, label: '', price: 0 };
 
-        // نمایش سکه در هدر
         function updateHeaderCoins() {
             const coins = parseInt(localStorage.getItem('userCoins')) || 0;
             const el = document.getElementById('headerCoins');
@@ -140,7 +140,6 @@
         }
         updateHeaderCoins();
 
-        // هدیه رایگان
         function claimFreeGift() {
             const giftUsed = localStorage.getItem('free_gift_used') === 'true';
             if (giftUsed) { alert('⛔ شما قبلاً هدیه خود را دریافت کرده‌اید!'); return; }
@@ -154,7 +153,6 @@
             alert(`🎁 ۵۰ سکه هدیه دریافت کردید!`);
         }
 
-        // باز کردن مودال
         function openPaymentModal(amount, label, price) {
             const session = JSON.parse(localStorage.getItem('session'));
             if (!session || !session.id) {
@@ -172,7 +170,6 @@
             document.getElementById('paymentModal').classList.remove('show');
         }
 
-        // تایید و ثبت سفارش
         async function confirmPayment() {
             const trackingCode = document.getElementById('trackingCode').value.trim();
             if (!trackingCode) {
@@ -188,7 +185,6 @@
             btn.innerText = 'در حال ارسال...';
             btn.disabled = true;
 
-            // ارسال به سرور (با شماره پیگیری)
             const result = await createCoinOrder(session.id, buyerName, currentOrder.amount, currentOrder.label, trackingCode);
 
             if (result.ok) {

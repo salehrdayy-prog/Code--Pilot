@@ -216,19 +216,121 @@
             margin-top: 16px;
             flex-wrap: wrap;
         }
-        .stat {
-            text-align: center;
-        }
+        .stat { text-align: center; }
         .stat-value {
             font-size: 22px;
             font-weight: 700;
             color: #c4b5fd;
             display: block;
         }
-        .stat-label {
-            font-size: 13px;
-            color: #8aa3c9;
+        .stat-label { font-size: 13px; color: #8aa3c9; }
+
+        /* ===== MESSAGES SECTION ===== */
+        .messages-section {
+            margin-bottom: 28px;
         }
+        .messages-section h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #facc15;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #messagesList {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .msg-box {
+            background: rgba(250, 204, 21, 0.08);
+            border: 1px solid rgba(250, 204, 21, 0.2);
+            padding: 15px;
+            border-radius: 16px;
+            position: relative;
+            transition: 0.3s;
+        }
+        .msg-box.user-reply {
+            background: rgba(139, 92, 246, 0.08);
+            border-color: rgba(139, 92, 246, 0.2);
+        }
+        .msg-sender {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            display: block;
+        }
+        .msg-box:not(.user-reply) .msg-sender { color: #facc15; }
+        .msg-box.user-reply .msg-sender { color: #8b5cf6; }
+        
+        .msg-text {
+            color: #fff;
+            margin: 8px 0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .msg-date {
+            color: #8aa3c9;
+            font-size: 11px;
+        }
+        
+        .msg-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .msg-actions button {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .msg-actions button:hover { transform: scale(0.95); }
+        .btn-read { background: #4ade80 !important; color: #000 !important; }
+        .btn-reply { background: #3b82f6 !important; }
+        .btn-delete { background: #ef4444 !important; }
+
+        .reply-form {
+            display: none;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed rgba(255,255,255,0.1);
+        }
+        .reply-form textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-family: inherit;
+            font-size: 13px;
+            resize: none;
+            margin-bottom: 8px;
+        }
+        .reply-form textarea:focus { outline: none; border-color: #8b5cf6; }
+        .reply-actions { display: flex; gap: 8px; }
+        .reply-actions button {
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: none;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-send-reply { background: #10b981; color: #fff; }
+        .btn-cancel-reply { background: #555; color: #fff; }
+
 
         /* ===== PROJECTS SECTION ===== */
         .projects-section h3 {
@@ -306,14 +408,26 @@
             justify-content: center;
             font-size: 14px;
         }
+        .project-actions .open-btn {
+            background: rgba(139, 92, 246, 0.15);
+            color: #B157FD;
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            transition: 0.2s;
+        }
         .project-actions .open-btn:hover {
-            background: rgba(139, 92, 246, 0.2);
-            color: #c4b5fd;
+            background: rgba(139, 92, 246, 0.3);
+            color: #fff;
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
         }
-        .project-actions .delete-btn:hover {
-            background: rgba(239, 68, 68, 0.2);
-            color: #f87171;
-        }
+
+        /* ===== BADGES ===== */
+        .badges-section { margin-top: 20px; text-align: center; margin-bottom: 28px; }
+        .badges-section h3 { font-size: 18px; font-weight: 600; margin-bottom: 16px; color: #d4dcec; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .badges-section h3 i { color: #8b5cf6; }
+        .badges-grid { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+        .badge-item { background: rgba(255,255,255,0.06); padding: 10px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 8px; font-size: 14px; }
+        .badge-item .icon { font-size: 24px; }
 
         /* ===== RESPONSIVE ===== */
         @media (max-width: 480px) {
@@ -325,34 +439,6 @@
             .project-actions { align-self: flex-end; }
             .profile-stats { gap: 16px; }
         }
-        /* ===== استایل دکمه‌های پروژه ===== */
-.project-actions .open-btn {
-    background: rgba(139, 92, 246, 0.15);
-    color: #B157FD;
-    border: 1px solid rgba(139, 92, 246, 0.2);
-    transition: 0.2s;
-}
-
-.project-actions .open-btn:hover {
-    background: rgba(139, 92, 246, 0.3);
-    color: #fff;
-    transform: scale(1.05);
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
-}
-
-.project-actions .delete-btn {
-    background: rgba(239, 68, 68, 0.1);
-    color: #C80021;
-    border: 1px solid rgba(239, 68, 68, 0.15);
-    transition: 0.2s;
-}
-
-.project-actions .delete-btn:hover {
-    background: rgba(239, 68, 68, 0.25);
-    color: #fff;
-    transform: scale(1.05);
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
-}
     </style>
 </head>
 
@@ -366,7 +452,7 @@
         <span class="nav-title">
             <i class="fas fa-chart-pie"></i> داشبورد
         </span>
-        <div></div> <!-- برای متعادل کردن فضای نوار -->
+        <div></div>
     </nav>
 
     <!-- ===== اوورلی ===== -->
@@ -423,24 +509,25 @@
                 </div>
             </div>
         </div>
-<!-- ===== نشان‌های افتخار ===== -->
-<div class="badges-section">
-    <h3><i class="fas fa-medal"></i> نشان‌های من</h3>
-    <div id="badgesDisplay" class="badges-grid"></div>
-</div>
+
+        <!-- ===== نشان‌های افتخار ===== -->
+        <div class="badges-section">
+            <h3><i class="fas fa-medal"></i> نشان‌های من</h3>
+            <div id="badgesDisplay" class="badges-grid"></div>
+        </div>
+
+        <!-- 👈 ===== بخش پیام‌های ادمین ===== -->
+        <div class="messages-section" id="adminMessages" style="display: none;">
+            <h3><i class="fas fa-bell"></i> پیام‌های شما</h3>
+            <div id="messagesList"></div>
+        </div>
+
         <!-- ===== پروژه‌ها ===== -->
         <div class="projects-section">
             <h3><i class="fas fa-folder-open"></i> پروژه‌های من</h3>
 
             <div id="projects-list">
                 <!-- پروژه‌ها توسط جاوااسکریپت در اینجا قرار می‌گیرند -->
-                <div class="empty-state">
-                    <span>📭</span>
-                    <p>هنوز پروژه‌ای نساختی!</p>
-                    <a href="ideas.html" class="btn btn-primary" style="display:inline-block; padding: 10px 24px; border-radius: 12px; text-decoration:none;">
-                        <i class="fas fa-plus"></i> ساخت اولین پروژه
-                    </a>
-                </div>
             </div>
         </div>
 
@@ -450,137 +537,8 @@
     <script src="storage.js"></script>
     <script src="utils.js"></script>
     <script src="app.js"></script>
+    <script src="api.js"></script> <!-- 👈 اضافه شدن api.js -->
     <script src="dashboard.js"></script>
 
-    <script>
-        // ======================== منو ========================
-        function toggleMenu() {
-            const menu = document.getElementById('side-menu');
-            const overlay = document.getElementById('menu-overlay');
-            menu.classList.toggle('open');
-            overlay.classList.toggle('show');
-        }
-
-        // ======================== اطلاعات کاربر ========================
-        function loadUserInfo() {
-            const username = localStorage.getItem('username') || 'کاربر';
-            const level = localStorage.getItem('userLevel') || '🟢 مبتدی';
-
-            document.getElementById('menu-username').textContent = username;
-            document.getElementById('menu-level').textContent = level;
-            document.getElementById('profile-name').textContent = username;
-            document.getElementById('profile-level').textContent = level;
-        }
-        loadUserInfo();
-
-        // ======================== آمار ========================
-        // ======================== آمار ========================
-function loadStats() {
-    const projects = JSON.parse(localStorage.getItem('projects') || '[]');
-    
-    // اگر مقدار XP وجود نداشت یا خالی بود، ۰ رو نشون بده
-    let xp = localStorage.getItem('userXP');
-    if (xp === null || xp === undefined || xp === '') xp = '۰';
-    
-    // اگر مقدار سکه وجود نداشت یا خالی بود، ۰ رو نشون بده
-    let coins = localStorage.getItem('userCoins');
-    if (coins === null || coins === undefined || coins === '') coins = '۰';
-
-    document.getElementById('profile-projects').textContent = projects.length;
-    document.getElementById('profile-xp').textContent = xp;
-    document.getElementById('profile-coins').textContent = coins;
-}
-        // ======================== خروج ========================
-        function logout() {
-            localStorage.removeItem('username');
-            localStorage.removeItem('userAvatar');
-            localStorage.removeItem('userLevel');
-            localStorage.removeItem('projects');
-            window.location.href = 'index.html';
-        }
-
-        // ======================== آواتار ========================
-        (function() {
-            const avatarInput = document.getElementById('avatar-input');
-            const dashboardAvatar = document.getElementById('dashboard-avatar');
-
-            function setAvatarImage(imageData) {
-                if (imageData) {
-                    dashboardAvatar.style.backgroundImage = `url(${imageData})`;
-                    dashboardAvatar.style.backgroundSize = 'cover';
-                    dashboardAvatar.style.backgroundPosition = 'center';
-                    dashboardAvatar.style.backgroundColor = 'transparent';
-                    dashboardAvatar.innerText = '';
-                } else {
-                    dashboardAvatar.style.backgroundImage = '';
-                    dashboardAvatar.style.backgroundColor = '#1a1a2e';
-                    dashboardAvatar.innerText = '👤';
-                }
-            }
-
-            const savedAvatar = localStorage.getItem('userAvatar');
-            if (savedAvatar) {
-                setAvatarImage(savedAvatar);
-            } else {
-                setAvatarImage(null);
-            }
-
-            avatarInput.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (!file) return;
-
-                if (!file.type.startsWith('image/')) {
-                    alert('لطفاً یک فایل تصویری انتخاب کنید.');
-                    return;
-                }
-
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const imageData = event.target.result;
-                    localStorage.setItem('userAvatar', imageData);
-                    setAvatarImage(imageData);
-                };
-                reader.onerror = function() {
-                    alert('خطا در خواندن فایل. دوباره تلاش کنید.');
-                };
-                reader.readAsDataURL(file);
-            });
-
-            dashboardAvatar.addEventListener('click', function() {
-                avatarInput.click();
-            });
-        })();
-    </script>
-<script>// ===== نمایش نشان‌های خریداری شده =====
-function renderBadges() {
-    const owned = JSON.parse(localStorage.getItem('owned_items')) || [];
-    const container = document.getElementById('badgesDisplay');
-    if (!container) return;
-
-    const badges = [
-        { id: "badge-novice", icon: "🌱", name: "تازه‌کار" },
-        { id: "badge-pro", icon: "🔥", name: "سازنده حرفه‌ای" },
-        { id: "badge-genius", icon: "🧠", name: "نابغه کد" }
-    ];
-
-    const ownedBadges = badges.filter(b => owned.includes(b.id));
-    
-    if (ownedBadges.length === 0) {
-        container.innerHTML = `<p style="color:#8aa3c9; font-size:14px;">هنوز نشانی ندارید 🏅</p>`;
-        return;
-    }
-
-    container.innerHTML = ownedBadges.map(b => `
-        <div class="badge-item">
-            <span class="icon">${b.icon}</span>
-            <span>${b.name}</span>
-        </div>
-    `).join('');
-}
-
-// صدا زدن در زمان لود
-document.addEventListener('DOMContentLoaded', renderBadges);
-</script> 
-<script src="api.js"></script>
 </body>
 </html>
