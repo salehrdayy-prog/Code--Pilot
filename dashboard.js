@@ -1,5 +1,5 @@
 // ============================================================
-// dashboard.js - متصل به دیتابیس ابری
+// dashboard.js - متصل به دیتابیس ابری (با همگام‌سازی سکه‌ها)
 // ============================================================
 
 // ===== ۱. منوی کناری =====
@@ -12,8 +12,26 @@ function toggleMenu() {
     }
 }
 
-// ===== ۲. اطلاعات کاربر =====
-function loadUserData() {
+// ===== ۲. اطلاعات کاربر (با دریافت از دیتابیس) =====
+async function loadUserData() {
+    // 👈 اول از دیتابیس اطلاعات جدید رو بگیر
+    const session = JSON.parse(localStorage.getItem('session'));
+    if (session && session.id) {
+        try {
+            const res = await apiRequest(`/user/${session.id}`);
+            if (res.ok && res.data.user) {
+                const user = res.data.user;
+                // آپدیت حافظه مرورگر با اطلاعات جدید
+                localStorage.setItem('userCoins', user.coins || 0);
+                localStorage.setItem('userXP', user.xp || 0);
+                localStorage.setItem('username', user.name || 'کاربر');
+            }
+        } catch (err) {
+            console.warn("خطا در همگام‌سازی اطلاعات کاربر:", err);
+        }
+    }
+
+    // 👈 حالا اطلاعات رو از حافظه بخون و نمایش بده
     const name = localStorage.getItem('username') || 'کاربر';
     const level = localStorage.getItem('userLevel') || '🟢 مبتدی';
     const xp = localStorage.getItem('userXP') || '۰';
@@ -74,7 +92,6 @@ async function loadDashboardProjects() {
         renderProjectsList(result.data.projects);
     } else {
         console.warn('خطا در دریافت پروژه‌ها از دیتابیس:', result.error);
-        // در صورت خطا، از حافظه محلی استفاده می‌کنیم
         const localProjects = JSON.parse(localStorage.getItem('projects') || '[]');
         renderProjectsList(localProjects);
     }
@@ -145,16 +162,21 @@ window.openProjectFromDB = async function(index) {
 
 // ===== ۸. اجرا پس از بارگذاری =====
 document.addEventListener('DOMContentLoaded', function() {
+    // اجرای توابع
     loadUserData();
     loadAvatar();
     loadDashboardProjects();
 
+    // مدیریت آپلود عکس پروفایل
     const avatarInput = document.getElementById('avatar-input');
     if (avatarInput) {
         avatarInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
-            if (!file.type.startsWith('image/')) { alert('لطفاً یک تصویر انتخاب کنید.'); return; }
+            if (!file.type.startsWith('image/')) { 
+                alert('لطفاً یک تصویر انتخاب کنید.'); 
+                return; 
+            }
 
             const reader = new FileReader();
             reader.onload = function(event) {

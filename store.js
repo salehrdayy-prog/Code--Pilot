@@ -1,5 +1,5 @@
 // ============================================================
-//  store.js - سیستم فروشگاه (با اعمال واقعی خریدها و تم)
+//  store.js - سیستم کامل فروشگاه (اتصال به دیتابیس و اعمال خریدها)
 // ============================================================
 
 const storeData = {
@@ -42,6 +42,21 @@ function updateHeaderCoins() {
     if (el) el.innerHTML = `<i class="fas fa-coins"></i> ${getCoins()}`;
 }
 
+// ===== 🚀 همگام‌سازی سکه‌ها با دیتابیس =====
+async function syncUserData() {
+    const session = JSON.parse(localStorage.getItem('session'));
+    if (!session || !session.id) return;
+
+    // گرفتن اطلاعات جدید از سرور
+    const res = await apiRequest(`/user/${session.id}`);
+    if (res.ok && res.data.user) {
+        const user = res.data.user;
+        localStorage.setItem('userCoins', user.coins || 0);
+        localStorage.setItem('userXP', user.xp || 0);
+        updateHeaderCoins();
+    }
+}
+
 // ===== خرید کالا =====
 function buyItem(category, itemId) {
     const item = storeData[category]?.find(i => i.id === itemId);
@@ -75,8 +90,6 @@ function applyTheme(themeId) {
     if (!theme) return;
 
     localStorage.setItem('active_theme', themeId);
-    
-    // 👈 تغییر کل متغیرهای CSS برای اعمال روی تمام صفحات
     document.documentElement.style.setProperty('--bg', theme.color);
     document.documentElement.style.setProperty('--primary', theme.primary);
     
@@ -84,7 +97,7 @@ function applyTheme(themeId) {
     renderStore();
 }
 
-// ===== غیرفعال کردن تم (برگشت به حالت تاریک) =====
+// ===== غیرفعال کردن تم =====
 function removeTheme() {
     localStorage.removeItem('active_theme');
     document.documentElement.style.setProperty('--bg', '#02030a');
@@ -103,11 +116,12 @@ function activateBooster(boosterId) {
     alert(`✅ تقویت‌کننده فعال شد! (۱ ساعت)`);
 }
 
-// ===== رندر فروشگاه =====
+// ===== رندر کامل فروشگاه (همه تب‌ها) =====
 function renderStore() {
     updateHeaderCoins();
     const owned = getOwnedItems();
 
+    // ۱. قالب‌ها
     const themesGrid = document.getElementById('themesGrid');
     if (themesGrid) {
         themesGrid.innerHTML = '';
@@ -130,22 +144,93 @@ function renderStore() {
         });
     }
 
-    // ... (رندر نشان‌ها، تقویت‌کننده‌ها، تمرین‌ها و هوش مصنوعی هم مثل قبل)
+    // ۲. نشان‌ها
     const badgesGrid = document.getElementById('badgesGrid');
-    if (badgesGrid) { /* همون کد قبلی */ }
+    if (badgesGrid) {
+        badgesGrid.innerHTML = '';
+        storeData.badges.forEach(item => {
+            const isOwned = owned.includes(item.id);
+            badgesGrid.innerHTML += `
+                <div class="card">
+                    <span class="icon">${item.icon}</span>
+                    <h4>${item.name}</h4>
+                    <p>${item.desc}</p>
+                    <span class="price">${isOwned ? '✔️ خریداری شده' : `${item.price} 🪙`}</span>
+                    <button class="btn-buy ${isOwned ? 'owned' : ''}" onclick="${isOwned ? '' : `buyItem('badges','${item.id}')`}">${isOwned ? '✅ دارید' : 'خرید'}</button>
+                </div>
+            `;
+        });
+    }
+
+    // ۳. تقویت‌کننده‌ها
     const boostersGrid = document.getElementById('boostersGrid');
-    if (boostersGrid) { /* همون کد قبلی */ }
+    if (boostersGrid) {
+        boostersGrid.innerHTML = '';
+        const activeBoosters = getActiveBoosters();
+        const now = Date.now();
+        storeData.boosters.forEach(item => {
+            const isActive = activeBoosters[item.id] && activeBoosters[item.id] > now;
+            const isOwned = owned.includes(item.id);
+            boostersGrid.innerHTML += `
+                <div class="card">
+                    <span class="icon">${item.icon}</span>
+                    <h4>${item.name}</h4>
+                    <p>${item.desc}</p>
+                    <span class="price">${isOwned ? '✔️ خریداری شده' : `${item.price} 🪙`}</span>
+                    ${isOwned 
+                        ? `<button class="btn-buy ${isActive ? 'owned' : ''}" onclick="activateBooster('${item.id}')">${isActive ? '✅ فعال' : 'فعال‌سازی'}</button>`
+                        : `<button class="btn-buy" onclick="buyItem('boosters','${item.id}')">خرید</button>`
+                    }
+                </div>
+            `;
+        });
+    }
+
+    // ۴. تمرین‌ها
     const exercisesGrid = document.getElementById('exercisesGrid');
-    if (exercisesGrid) { /* همون کد قبلی */ }
+    if (exercisesGrid) {
+        exercisesGrid.innerHTML = '';
+        storeData.exercises.forEach(item => {
+            const isOwned = owned.includes(item.id);
+            exercisesGrid.innerHTML += `
+                <div class="card">
+                    <span class="icon">${item.icon}</span>
+                    <h4>${item.name}</h4>
+                    <p>${item.desc}</p>
+                    <span class="price">${isOwned ? '✔️ باز شده' : `${item.price} 🪙`}</span>
+                    <button class="btn-buy ${isOwned ? 'owned' : ''}" onclick="${isOwned ? '' : `buyItem('exercises','${item.id}')`}">${isOwned ? '✅ باز است' : 'باز کردن'}</button>
+                </div>
+            `;
+        });
+    }
+
+    // ۵. هوش مصنوعی
     const aiGrid = document.getElementById('aiGrid');
-    if (aiGrid) { /* همون کد قبلی */ }
+    if (aiGrid) {
+        aiGrid.innerHTML = '';
+        storeData.ai.forEach(item => {
+            const isOwned = owned.includes(item.id);
+            aiGrid.innerHTML += `
+                <div class="card">
+                    <span class="icon">${item.icon}</span>
+                    <h4>${item.name}</h4>
+                    <p>${item.desc}</p>
+                    <span class="price">${isOwned ? '✔️ خریداری شده' : `${item.price} 🪙`}</span>
+                    <button class="btn-buy ${isOwned ? 'owned' : ''}" onclick="${isOwned ? '' : `buyItem('ai','${item.id}')`}">${isOwned ? '✅ دارید' : 'خرید'}</button>
+                </div>
+            `;
+        });
+    }
 }
 
 // ===== بارگذاری اولیه =====
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // ۱. اول سکه‌ها رو از دیتابیس بگیر
+    await syncUserData();
+
     if (!localStorage.getItem('userCoins')) localStorage.setItem('userCoins', '0');
     
-    // اعمال تم ذخیره‌شده
+    // ۲. اعمال تم
     const activeThemeId = localStorage.getItem('active_theme');
     if (activeThemeId) {
         const theme = storeData.themes.find(t => t.id === activeThemeId);
@@ -154,5 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.documentElement.style.setProperty('--primary', theme.primary);
         }
     }
+    
+    // ۳. رندر لیست
     renderStore();
 });
