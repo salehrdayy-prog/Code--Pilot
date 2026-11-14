@@ -3,6 +3,7 @@ import cors from "cors";
 import pg from "pg";
 import "dotenv/config";
 import crypto from "crypto";
+import bcrypt from "bcrypt";
 
 const { Pool } = pg;
 
@@ -10,6 +11,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const SUPABASE_DB_URL = process.env.SUPABASE_DB_URL;
+const SETUP_KEY = process.env.SETUP_KEY;
 
 if (!GROQ_API_KEY) { console.error("❌ GROQ_API_KEY تنظیم نشده است"); process.exit(1); }
 if (!SUPABASE_DB_URL) { console.error("❌ SUPABASE_DB_URL تنظیم نشده است"); process.exit(1); }
@@ -34,6 +36,7 @@ const initDB = async () => {
       );
     `);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS plan VARCHAR(50) DEFAULT 'free';`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_plain VARCHAR(255);`);
     
     await pool.query(`
       CREATE TABLE IF NOT EXISTS orders (
@@ -134,44 +137,153 @@ app.use(express.json({ limit: "10mb" }));
 // ================== API ها ==================
 app.get("/health", (_req, res) => res.json({ ok: true, status: "Live" }));
 
+// ⭐⭐⭐ ============ تنظیم ادمین (یک بار مصرف) ============ ⭐⭐⭐
+app.get("/api/admin/reset", async (req, res) => {
+  try {
+    const { key, password } = req.query;
+    
+    if (!SETUP_KEY) {
+      return res.status(500).send("❌ SETUP_KEY در متغیرهای محیطی Render تنظیم نشده است. اول اون رو اضافه کن.");
+    }
+    
+    if (key !== SETUP_KEY) {
+      return res.status(403).send("❌ کلید نامعتبر است. کلید درست رو از تنظیمات Render بردار.");
+    }
+    
+    if (!password || password.length < 8) {
+      return res.status(400).send("❌ پسورد باید حداقل ۸ کاراکتر باشد");
+    }
+    
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // تلاش برای آپدیت ادمین موجود
+    const updateResult = await pool.query(
+      "UPDATE users SET password = $1, password_plain = NULL WHERE role = 'admin'",
+      [hashedPassword]
+    );
+    
+    if (updateResult.rowCount === 0) {
+      // اگر ادمینی وجود نداشت، جدید بساز
+      await pool.query(
+        "INSERT INTO users (name, phone, email, password, password_plain, role) VALUES ($1, $2, $3, $4, $5, $6)",
+        ["Admin", "09876543210", "admin@gmail.com", hashedPassword, null, "admin"]
+      );
+      return res.send(`
+        <div style="font-family:sans-serif;max-width:500px;margin:50px auto;padding:30px;background:#0d1117;color:#e8edf5;border-radius:20px;direction:rtl;">
+          <h2 style="color:#4ade80;">✅ ادمین جدید ساخته شد</h2>
+          <p>📱 شماره: <strong>09876543210</strong></p>
+          <p>📧 ایمیل: <strong>admin@gmail.com</strong></p>
+          <p>🔑 پسورد: <strong style="color:#facc15;">${password}</strong></p>
+          <hr style="border-color:#333;margin:20px 0;">
+          <p style="color:#f87171;">⚠️ حالا این صفحه را ببند، برو به صفحه ورود و لاگین کن.</p>
+        </div>
+      `);
+    }
+    
+    res.send(`
+      <div style="font-family:sans-serif;max-width:500px;margin:50px auto;padding:30px;background:#0d1117;color:#e8edf5;border-radius:20px;direction:rtl;">
+        <h2 style="color:#4ade80;">✅ پسورد ادمین با موفقیت تغییر کرد</h2>
+        <p>📱 شماره: <strong>09876543210</strong></p>
+        <p>📧 ایمیل: <strong>admin@gmail.com</strong></p>
+        <p>🔑 پسورد: <strong style="color:#facc15;">${password}</strong></p>
+        <hr style="border-color:#333;margin:20px 0;">
+        <p style="color:#f87171;">⚠️ حالا این صفحه را ببند، برو به صفحه ورود و با پسورد جدید لاگین کن.</p>
+      </div>
+    `);
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("❌ خطای سرور: " + e.message);
+  }
+});
+// ⭐⭐⭐ ============ پایان بخش تنظیم ادمین ============ ⭐⭐⭐
+
+// ================== ثبت‌نام ==================
 app.post("/api/register", async (req, res) => {
   try {
     const { name, phone, email, password } = req.body;
-    const role = req.body.role || 'user'; 
+    const role = req.body.role || 'user';
     const existing = await pool.query('SELECT * FROM users WHERE phone = $1 OR email = $2', [phone, email]);
     if (existing.rows.length > 0) return res.status(400).json({ error: "شماره یا ایمیل تکراری است" });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const plainForView = role === 'admin' ? null : password;
+
     const newUser = await pool.query(
-      'INSERT INTO users (name, phone, email, password, role) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [name, phone, email, password, role]
+      `INSERT INTO users (name, phone, email, password, password_plain, role) 
+       VALUES ($1, $2, $3, $4, $5, $6) 
+       RETURNING id, name, phone, email, role, coins, xp, plan`,
+      [name, phone, email, hashedPassword, plainForView, role]
     );
     res.json({ ok: true, user: newUser.rows[0] });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
+// ================== ورود ==================
 app.post("/api/login", async (req, res) => {
   try {
     const { loginValue, password } = req.body;
+
     const result = await pool.query(
-      'SELECT * FROM users WHERE (phone = $1 OR email = $1) AND password = $2',
-      [loginValue, password]
+      'SELECT * FROM users WHERE phone = $1 OR email = $1',
+      [loginValue]
     );
-    if (result.rows.length === 0) return res.status(401).json({ error: "اطلاعات اشتباه است" });
-    res.json({ ok: true, user: result.rows[0] });
+    if (result.rows.length === 0) return res.status(401).json({ error: "شماره/ایمیل یا رمز اشتباه است" });
+
+    const user = result.rows[0];
+    let isMatch = false;
+
+    if (user.password && user.password.startsWith('$2b$')) {
+      isMatch = await bcrypt.compare(password, user.password);
+    } else {
+      if (password === user.password) {
+        isMatch = true;
+        const hashed = await bcrypt.hash(password, 10);
+        await pool.query('UPDATE users SET password = $1 WHERE id = $2', [hashed, user.id]);
+      }
+    }
+
+    if (!isMatch) return res.status(401).json({ error: "شماره/ایمیل یا رمز اشتباه است" });
+
+    delete user.password;
+    delete user.password_plain;
+
+    res.json({ ok: true, user });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
+// ================== پروفایل ==================
 app.get("/api/user/:id", async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM users WHERE id = $1', [req.params.id]);
+    const result = await pool.query(
+      'SELECT id, name, phone, email, role, coins, xp, plan FROM users WHERE id = $1',
+      [req.params.id]
+    );
     res.json({ ok: true, user: result.rows[0] });
   } catch (e) { res.status(500).json({ error: "کاربر پیدا نشد" }); }
+});
+
+// ================== پنل ادمین: لیست کاربران ==================
+app.get("/api/admin/users", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        id, name, phone, email, role, coins, xp, plan,
+        CASE 
+          WHEN role = 'admin' THEN '🔒 محافظت شده'
+          ELSE COALESCE(password_plain, '—')
+        END AS password_view
+      FROM users 
+      ORDER BY id DESC
+    `);
+    res.json({ ok: true, users: result.rows });
+  } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
 // ================== اشتراک ==================
 app.post("/api/subscribe", async (req, res) => {
   try {
     const { userId, plan } = req.body;
-    const PLAN_COST = 1000; 
+    const PLAN_COST = 1000;
     const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
     if (userResult.rows.length === 0) return res.status(404).json({ error: "کاربر پیدا نشد" });
     const user = userResult.rows[0];
@@ -179,7 +291,7 @@ app.post("/api/subscribe", async (req, res) => {
     if (user.coins < PLAN_COST) return res.status(400).json({ error: "سکه کافی نیست!" });
 
     const updatedUserResult = await pool.query(
-      'UPDATE users SET coins = coins - $1, plan = $2 WHERE id = $3 RETURNING *',
+      'UPDATE users SET coins = coins - $1, plan = $2 WHERE id = $3 RETURNING id, name, phone, email, role, coins, xp, plan',
       [PLAN_COST, plan, userId]
     );
     res.json({ ok: true, user: updatedUserResult.rows[0] });
@@ -189,11 +301,11 @@ app.post("/api/subscribe", async (req, res) => {
 // ================== سفارشات ==================
 app.post("/api/orders", async (req, res) => {
   try {
-    const { buyerId, buyerName, amount, label, trackingCode } = req.body; 
+    const { buyerId, buyerName, amount, label, trackingCode } = req.body;
     const date = new Date().toLocaleDateString("fa-IR");
     await pool.query(
       'INSERT INTO orders (buyer_id, buyer_name, amount, label, tracking_code, date) VALUES ($1, $2, $3, $4, $5, $6)',
-      [buyerId, buyerName, amount, label, trackingCode, date] 
+      [buyerId, buyerName, amount, label, trackingCode, date]
     );
     res.json({ ok: true });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطا در ثبت سفارش" }); }
@@ -226,14 +338,7 @@ app.post("/api/admin/orders/delete", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ================== کاربران (ادمین) ==================
-app.get("/api/admin/users", async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM users ORDER BY id DESC');
-    res.json({ ok: true, users: result.rows });
-  } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
-});
-
+// ================== حذف کاربر ==================
 app.post("/api/admin/users/delete", async (req, res) => {
   try {
     const { userId } = req.body;
@@ -547,7 +652,7 @@ app.post("/api/reviews/delete", async (req, res) => {
 
 app.post("/api/reviews/like", async (req, res) => {
   try {
-    const { reviewId, action } = req.body; 
+    const { reviewId, action } = req.body;
     const reviewResult = await pool.query('SELECT * FROM reviews WHERE id = $1', [reviewId]);
     if (reviewResult.rows.length === 0) return res.status(404).json({ error: "نظر پیدا نشد" });
     const currentLikes = reviewResult.rows[0].likes || 0;

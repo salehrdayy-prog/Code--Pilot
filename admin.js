@@ -10,9 +10,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const searchInput = document.getElementById('search');
   const userCountEl = document.getElementById('userCount');
   const ordersList = document.getElementById('ordersList');
-  const userMessagesList = document.getElementById('userMessagesList'); // 👈 بخش پیام‌های کاربران
-  
-  // مودال پیام
+  const userMessagesList = document.getElementById('userMessagesList');
+
   const msgModal = document.getElementById('messageModal');
   const msgText = document.getElementById('messageText');
   const msgUserName = document.getElementById('messageUserName');
@@ -22,28 +21,35 @@ document.addEventListener("DOMContentLoaded", async () => {
   let allUsers = [];
 
   // ======================
-  // 🎨 رندر کاربران
+  // 🎨 رندر کاربران (با ستون‌های کامل)
   // ======================
   function renderUsers(usersToRender) {
     table.innerHTML = "";
     userCountEl.textContent = `👥 تعداد کل کاربران: ${allUsers.length} نفر (نمایش ${usersToRender.length} نتیجه)`;
 
     if (usersToRender.length === 0) {
-      table.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#8aa3c9;">کاربری پیدا نشد</td></tr>';
+      table.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#8aa3c9;">کاربری پیدا نشد</td></tr>';
       return;
     }
 
     usersToRender.forEach(user => {
       const tr = document.createElement('tr');
+      const isAdmin = user.role === 'admin';
       tr.innerHTML = `
         <td>${user.name || 'نامشخص'}</td>
-        <td>${user.phone || user.email || '-'}</td>
-        <td>${new Date().toLocaleDateString('fa-IR')}</td> 
-        <td>${user.role === 'admin' ? '<span style="color:#8b5cf6">ادمین</span>' : '<span style="color:#4ade80">کاربر</span>'}</td>
+        <td>${user.phone || '-'}</td>
+        <td>${user.email || '-'}</td>
+        <td>
+          <span class="password-cell ${isAdmin ? 'admin-protected' : ''}" 
+                title="${isAdmin ? 'پسورد ادمین محافظت شده است' : 'برای کپی کلیک کنید'}">
+            ${user.password_view || '—'}
+          </span>
+        </td>
+        <td>${isAdmin ? '<span style="color:#8b5cf6">👑 ادمین</span>' : '<span style="color:#4ade80">👤 کاربر</span>'}</td>
         <td class="action-btns">
-          ${user.role !== 'admin' ? `
-            <button class="delete" onclick="deleteUser(${user.id})" style="background:#da3633; color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">حذف</button>
-            <button onclick="openMessageModal(${user.id}, '${user.name}')" style="background:#8b5cf6; color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">✉️ پیام</button>
+          ${!isAdmin ? `
+            <button class="delete" onclick="deleteUser(${user.id})">حذف</button>
+            <button onclick="openMessageModal(${user.id}, '${user.name}')" style="background:#8b5cf6; color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">✉️</button>
           ` : `<span style="color:#8aa3c9">-</span>`}
         </td>
       `;
@@ -62,23 +68,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     ordersList.innerHTML = orders.map((order) => `
-      <div class="order-item" style="border: 1px solid rgba(139, 92, 246, 0.2); padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <div class="order-item" style="border: 1px solid rgba(139, 92, 246, 0.2);">
         <div>
           <strong style="color:#c4b5fd; font-size: 16px;">${order.label}</strong>
           <br><small style="color:#8aa3c9;">خریدار: ${order.buyer_name || 'نامشخص'}</small>
           <br><small style="color:#8aa3c9;">تاریخ: ${order.date}</small>
-          <br><small style="color:#facc15; font-weight: bold;">شماره پیگیری: ${order.tracking_code || 'ثبت نشده'}</small>
-          
+          <br><small style="color:#facc15; font-weight: bold;">کد پیگیری: ${order.tracking_code || 'ثبت نشده'}</small>
           <br><span style="color:${order.status === 'pending' ? '#facc15' : order.status === 'approved' ? '#4ade80' : '#f85149'}; font-weight: bold;">
             ${order.status === 'pending' ? '⏳ در انتظار' : order.status === 'approved' ? '✅ تأیید شده' : '❌ رد شده'}
           </span>
         </div>
         <div style="display:flex; gap:5px;">
           <button onclick="approveOrder(${order.id})" ${order.status !== 'pending' ? 'disabled' : ''} 
-            style="background:${order.status === 'pending' ? '#238636' : '#333'}; color:white; border:none; padding:10px 16px; border-radius:8px; cursor:${order.status === 'pending' ? 'pointer' : 'not-allowed'}; font-family: inherit; font-weight: bold;">
+            style="background:${order.status === 'pending' ? '#238636' : '#333'}; color:white; font-family: inherit; font-weight: bold;">
             ${order.status === 'pending' ? 'تأیید' : 'تأیید شده'}
           </button>
-          <button onclick="deleteOrder(${order.id})" style="background:#da3633; color:white; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; font-family: inherit; font-weight: bold;">حذف</button>
+          <button onclick="deleteOrder(${order.id})" style="background:#da3633; color:white; font-family: inherit; font-weight: bold;">حذف</button>
         </div>
       </div>
     `).join('');
@@ -95,7 +100,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     userMessagesList.innerHTML = messages.map(msg => `
-      <div class="order-item" style="border: 1px solid rgba(59, 130, 246, 0.2); padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <div class="order-item" style="border: 1px solid rgba(59, 130, 246, 0.2);">
         <div>
           <strong style="color:#60a5fa; font-size: 16px;">${msg.user_name || 'کاربر'}</strong>
           <br><small style="color:#8aa3c9;">تاریخ: ${msg.date}</small>
@@ -110,14 +115,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     `).join('');
   }
 
-  // علامت‌گذاری پیام به عنوان خوانده شده توسط ادمین
   window.markAdminMsgRead = async function(msgId) {
     try {
       await fetch(`${API_URL}/messages/read`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messageId: msgId })
       });
-      fetchData(); // رفرش لیست‌ها
+      fetchData();
     } catch (err) {}
   };
 
@@ -150,7 +154,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (res.ok) {
           alert('✅ پیام با موفقیت برای کاربر ارسال شد.');
           closeMessageModal();
-          fetchData(); // رفرش لیست‌ها
+          fetchData();
         } else {
           alert('❌ خطا در ارسال پیام: ' + res.error);
         }
@@ -163,27 +167,23 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
 
   // ======================
-  // 🔄 دریافت اطلاعات (کاربران + سفارشات + پیام‌ها)
+  // 🔄 دریافت اطلاعات
   // ======================
   async function fetchData() {
     userCountEl.textContent = "در حال دریافت...";
-    await new Promise(resolve => setTimeout(resolve, 2000)); 
     
-    // ۱. کاربران
     try {
       const usersRes = await fetch(`${API_URL}/admin/users`);
       const usersData = await usersRes.json();
       if (usersData.ok) { allUsers = usersData.users; renderUsers(allUsers); }
     } catch (err) { userCountEl.textContent = "❌ خطا در کاربران"; }
 
-    // ۲. سفارشات
     try {
       const ordersRes = await fetch(`${API_URL}/admin/orders`);
       const ordersData = await ordersRes.json();
       if (ordersData.ok) { renderOrders(ordersData.orders); }
     } catch (err) { console.error("خطا در سفارشات", err); }
 
-    // ۳. پیام‌های کاربران
     try {
       const msgsRes = await fetch(`${API_URL}/admin/messages`);
       const msgsData = await msgsRes.json();
@@ -257,8 +257,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // 🚪 خروج
   // ======================
   logoutBtn.addEventListener('click', () => {
-    localStorage.removeItem('session');
-    localStorage.removeItem('loggedInUser');
+    ['session', 'loggedInUser', 'username', 'userXP', 'userCoins', 'userPlan', 'userLevel', 'loggedIn'].forEach(k => localStorage.removeItem(k));
     window.location.href = "login.html";
   });
 
