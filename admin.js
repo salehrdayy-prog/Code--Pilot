@@ -99,25 +99,31 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
 
   window.sendMessage = async function() {
-    const text = msgText.value.trim();
-    if (!text) return alert('لطفاً متن پیام را بنویسید.');
-    if (!currentMsgUserId) return;
+  const text = msgText.value.trim();
+  if (!text) return alert('لطفاً متن پیام را بنویسید.');
+  if (!currentMsgUserId) return;
 
-    const btn = document.querySelector('#messageModal .btn-send');
-    btn.innerText = 'در حال ارسال...';
-    btn.disabled = true;
+  const btn = document.querySelector('#messageModal .btn-send');
+  btn.innerText = 'در حال ارسال...';
+  btn.disabled = true;
 
-    const res = await sendMessageToUser(currentMsgUserId, text);
+  try {
+      const res = await sendMessageToUser(currentMsgUserId, text);
 
-    if (res.ok) {
-      alert('✅ پیام با موفقیت برای کاربر ارسال شد.');
-      closeMessageModal();
-    } else {
-      alert('❌ خطا در ارسال پیام: ' + res.error);
-    }
-    btn.innerText = 'ارسال پیام';
-    btn.disabled = false;
-  };
+      if (res.ok) {
+        alert('✅ پیام با موفقیت برای کاربر ارسال شد.');
+        closeMessageModal();
+      } else {
+        alert('❌ خطا در ارسال پیام: ' + res.error);
+      }
+  } catch (err) {
+      alert('❌ خطای شبکه: ' + err.message);
+  } finally {
+      // در هر شرایطی دکمه رو به حالت اول برگردون
+      btn.innerText = 'ارسال پیام';
+      btn.disabled = false;
+  }
+};
 
   // ======================
   // 🔄 دریافت اطلاعات
