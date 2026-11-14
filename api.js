@@ -1,6 +1,6 @@
 const API_BASE_URL = "https://code-pilot-5.onrender.com/api";
 
-// 👈 اضافه کردن Timeout برای جلوگیری از گیر کردن دکمه‌ها
+// 👈 اضافه کردن Timeout و مدیریت خطای HTML
 async function apiRequest(endpoint, method = "GET", body = null) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 60000); // ۶۰ ثانیه صبر برای بیدار شدن سرور
@@ -16,9 +16,23 @@ async function apiRequest(endpoint, method = "GET", body = null) {
     const res = await fetch(`${API_BASE_URL}${endpoint}`, options);
     clearTimeout(timeoutId);
     
-    const data = await res.json();
+    // اول پاسخ رو به صورت متن می‌گیریم تا اگه HTML بود کرش نکنه
+    const text = await res.text();
+    let data;
+    try {
+        data = JSON.parse(text);
+    } catch (parseError) {
+        // اگر پاسخ HTML بود (مثل خطای 502 رندر)
+        console.error(`API Error on ${endpoint}:`, text.substring(0, 100));
+        if (res.status === 502 || res.status === 503) {
+            return { ok: false, error: "سرور در دسترس نیست (احتمالاً در حال بیدار شدن است). لطفاً کمی بعد تلاش کنید." };
+        }
+        return { ok: false, error: "پاسخ نامعتبر از سرور دریافت شد." };
+    }
+
     if (!res.ok) return { ok: false, error: data.error || "خطا در ارتباط با سرور" };
     return { ok: true, data };
+
   } catch (err) {
     clearTimeout(timeoutId);
     if (err.name === 'AbortError') {
