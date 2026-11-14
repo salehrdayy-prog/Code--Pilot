@@ -13,6 +13,7 @@ async function apiRequest(endpoint, method = "GET", body = null) {
   }
 }
 
+// ... (توابع قبلی مثل registerUser, loginUser و ... اینجا هستن)
 async function registerUser(name, phone, email, password) { return await apiRequest("/register", "POST", { name, phone, email, password }); }
 async function loginUser(loginValue, password) { return await apiRequest("/login", "POST", { loginValue, password }); }
 async function getAllUsers() { return await apiRequest("/admin/users"); }
@@ -37,9 +38,17 @@ async function replyToAdmin(userId, text) { return await apiRequest("/messages/r
 async function deleteUserMessage(messageId) { return await apiRequest("/messages/delete", "POST", { messageId }); }
 async function getAllUserMessages() { return await apiRequest("/admin/messages"); }
 
-// 👈 پیام‌رسان اجتماعی
+// 👈 پیام‌رسان اجتماعی (آپدیت شده)
 async function getSocialUsers(currentUserId) { return await apiRequest(`/social/users/${currentUserId}`); }
 async function getSocialChats(userId) { return await apiRequest(`/social/chats/${userId}`); }
 async function getSocialHistory(user1Id, user2Id) { return await apiRequest(`/social/history/${user1Id}/${user2Id}`); }
 async function sendSocialMessage(senderId, receiverId, text) { return await apiRequest("/social/send", "POST", { senderId, receiverId, text }); }
 async function markSocialAsRead(userId, otherUserId) { return await apiRequest("/social/read", "POST", { userId, otherUserId }); }
+
+// 👈 قابلیت‌های جدید
+async function blockSocialUser(userId, targetId) { return await apiRequest("/social/block", "POST", { userId, targetId }); }
+async function reportSocialUser(userId, targetId, reason) { return await apiRequest("/social/report", "POST", { userId, targetId, reason }); }
+async function pinSocialUser(userId, targetId) { return await apiRequest("/social/pin", "POST", { userId, targetId }); }
+async function createSocialRoom(ownerId, name, type, memberIds) { return await apiRequest("/social/create-room", "POST", { ownerId, name, type, memberIds }); }
+async function getRoomMessages(roomId) { return await apiRequest(`/social/room-messages/${roomId}`); }
+async function sendRoomMessage(senderId, roomId, text) { return await apiRequest("/social/send-room", "POST", { senderId, roomId, text }); }
