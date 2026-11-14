@@ -75,7 +75,6 @@ const initDB = async () => {
       );
     `);
 
-    // 👈 جدول بلاک
     await pool.query(`
       CREATE TABLE IF NOT EXISTS blocks (
         id SERIAL PRIMARY KEY, blocker_id INT REFERENCES users(id) ON DELETE CASCADE,
@@ -84,7 +83,6 @@ const initDB = async () => {
       );
     `);
 
-    // 👈 جدول گزارش
     await pool.query(`
       CREATE TABLE IF NOT EXISTS reports (
         id SERIAL PRIMARY KEY, reporter_id INT REFERENCES users(id) ON DELETE CASCADE,
@@ -92,7 +90,6 @@ const initDB = async () => {
       );
     `);
 
-    // 👈 جدول سنجاق
     await pool.query(`
       CREATE TABLE IF NOT EXISTS pinned_users (
         id SERIAL PRIMARY KEY, user_id INT REFERENCES users(id) ON DELETE CASCADE,
@@ -100,7 +97,6 @@ const initDB = async () => {
       );
     `);
 
-    // 👈 جدول گروه‌ها و کانال‌ها (با link_code)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS chat_rooms (
         id SERIAL PRIMARY KEY, name VARCHAR(255), type VARCHAR(50) DEFAULT 'group',
@@ -310,8 +306,6 @@ app.get("/api/admin/messages", async (req, res) => {
 });
 
 // ================== پیام‌رسان اجتماعی ==================
-
-// لیست کاربران (با چک کردن بلاک)
 app.get("/api/social/users/:currentUserId", async (req, res) => {
   try {
     const { currentUserId } = req.params;
@@ -325,13 +319,11 @@ app.get("/api/social/users/:currentUserId", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// دریافت لیست چت‌ها (با چک کردن سنجاق و بلاک)
 app.get("/api/social/chats/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
     const uid = parseInt(userId);
     
-    // ۱. چت‌های مستقیم
     const dms = await pool.query(`
       SELECT 
         u.id, u.name, u.role, 'direct' as chat_type,
@@ -359,7 +351,6 @@ app.get("/api/social/chats/:userId", async (req, res) => {
         )
     `, [uid]);
 
-    // ۲. گروه‌ها و کانال‌ها
     const rooms = await pool.query(`
       SELECT r.id, r.name, r.type as role, 'room' as chat_type,
         (SELECT text FROM room_messages WHERE room_id = r.id ORDER BY id DESC LIMIT 1) as last_message,
@@ -373,7 +364,6 @@ app.get("/api/social/chats/:userId", async (req, res) => {
 
     let allChats = [...dms.rows, ...rooms.rows];
     
-    // مرتب‌سازی: سنجاق شده‌ها بالا، بقیه بر اساس آخرین پیام
     allChats.sort((a, b) => {
       if (a.is_pinned !== b.is_pinned) return b.is_pinned - a.is_pinned;
       if (!a.last_time) return 1;
@@ -385,7 +375,6 @@ app.get("/api/social/chats/:userId", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ارسال پیام مستقیم (چک بلاک)
 app.post("/api/social/send", async (req, res) => {
   try {
     const { senderId, receiverId, text } = req.body;
@@ -405,7 +394,6 @@ app.post("/api/social/send", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "خطا در ارسال پیام" }); }
 });
 
-// بلاک کردن
 app.post("/api/social/block", async (req, res) => {
   try {
     const { userId, targetId } = req.body;
@@ -417,7 +405,6 @@ app.post("/api/social/block", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// 👈 لغو بلاک
 app.post("/api/social/unblock", async (req, res) => {
   try {
     const { userId, targetId } = req.body;
@@ -426,7 +413,6 @@ app.post("/api/social/unblock", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// گزارش تخلف
 app.post("/api/social/report", async (req, res) => {
   try {
     const { userId, targetId, reason } = req.body;
@@ -438,7 +424,6 @@ app.post("/api/social/report", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// سنجاق کردن
 app.post("/api/social/pin", async (req, res) => {
   try {
     const { userId, targetId } = req.body;
@@ -453,7 +438,6 @@ app.post("/api/social/pin", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ساخت گروه / کانال (با لینک اختصاصی)
 app.post("/api/social/create-room", async (req, res) => {
   try {
     const { ownerId, name, type } = req.body;
@@ -470,7 +454,6 @@ app.post("/api/social/create-room", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// 👈 پیوستن به گروه از طریق لینک
 app.post("/api/social/join-room", async (req, res) => {
   try {
     const { userId, linkCode } = req.body;
@@ -486,7 +469,6 @@ app.post("/api/social/join-room", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// 👈 دریافت لیست اعضای گروه
 app.get("/api/social/room-members/:roomId", async (req, res) => {
   try {
     const result = await pool.query(`
@@ -499,7 +481,6 @@ app.get("/api/social/room-members/:roomId", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// 👈 حذف گروه (فقط ادمین)
 app.delete("/api/social/room/:roomId", async (req, res) => {
   try {
     const { roomId } = req.params;
