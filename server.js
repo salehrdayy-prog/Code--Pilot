@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import pg from "pg";
 import "dotenv/config";
+import crypto from "crypto";
 
 const { Pool } = pg;
 
@@ -25,150 +26,102 @@ pool.connect()
 // ================== ساخت جدول‌ها ==================
 const initDB = async () => {
   try {
-    // جدول کاربران
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(255),
-        phone VARCHAR(255) UNIQUE,
-        email VARCHAR(255) UNIQUE,
-        password VARCHAR(255),
-        role VARCHAR(50) DEFAULT 'user',
-        coins INT DEFAULT 0,
-        xp INT DEFAULT 0,
-        plan VARCHAR(50) DEFAULT 'free'
+        id SERIAL PRIMARY KEY, name VARCHAR(255), phone VARCHAR(255) UNIQUE,
+        email VARCHAR(255) UNIQUE, password VARCHAR(255), role VARCHAR(50) DEFAULT 'user',
+        coins INT DEFAULT 0, xp INT DEFAULT 0, plan VARCHAR(50) DEFAULT 'free'
       );
     `);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS plan VARCHAR(50) DEFAULT 'free';`);
     
-    // سفارشات
     await pool.query(`
       CREATE TABLE IF NOT EXISTS orders (
-        id SERIAL PRIMARY KEY,
-        buyer_id INT REFERENCES users(id),
-        buyer_name VARCHAR(255),
-        amount INT,
-        label VARCHAR(255),
-        status VARCHAR(50) DEFAULT 'pending',
-        tracking_code VARCHAR(255),
-        date VARCHAR(255)
+        id SERIAL PRIMARY KEY, buyer_id INT REFERENCES users(id), buyer_name VARCHAR(255),
+        amount INT, label VARCHAR(255), status VARCHAR(50) DEFAULT 'pending',
+        tracking_code VARCHAR(255), date VARCHAR(255)
       );
     `);
     await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_code VARCHAR(255);`);
     
-    // پروژه‌ها
     await pool.query(`
       CREATE TABLE IF NOT EXISTS projects (
-        id SERIAL PRIMARY KEY,
-        user_id INT REFERENCES users(id),
-        name VARCHAR(255),
-        html TEXT,
-        css TEXT,
-        js TEXT,
-        date VARCHAR(255)
+        id SERIAL PRIMARY KEY, user_id INT REFERENCES users(id), name VARCHAR(255),
+        html TEXT, css TEXT, js TEXT, date VARCHAR(255)
       );
     `);
     
-    // نظرات
     await pool.query(`
       CREATE TABLE IF NOT EXISTS reviews (
-        id SERIAL PRIMARY KEY,
-        user_id INT REFERENCES users(id),
-        user_name VARCHAR(255),
-        text TEXT,
-        rating INT,
-        likes INT DEFAULT 0,
-        date VARCHAR(255)
+        id SERIAL PRIMARY KEY, user_id INT REFERENCES users(id), user_name VARCHAR(255),
+        text TEXT, rating INT, likes INT DEFAULT 0, date VARCHAR(255)
       );
     `);
 
-    // پیام‌های پشتیبانی
     await pool.query(`
       CREATE TABLE IF NOT EXISTS messages (
-        id SERIAL PRIMARY KEY,
-        user_id INT REFERENCES users(id),
-        sender VARCHAR(50) DEFAULT 'admin', 
-        text TEXT,
-        is_read BOOLEAN DEFAULT false,
-        date VARCHAR(255)
+        id SERIAL PRIMARY KEY, user_id INT REFERENCES users(id),
+        sender VARCHAR(50) DEFAULT 'admin', text TEXT,
+        is_read BOOLEAN DEFAULT false, date VARCHAR(255)
       );
     `);
     await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS sender VARCHAR(50) DEFAULT 'admin';`);
 
-    // 👈 پیام‌های مستقیم (چت ۱ به ۱)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS direct_messages (
-        id SERIAL PRIMARY KEY,
-        sender_id INT REFERENCES users(id) ON DELETE CASCADE,
+        id SERIAL PRIMARY KEY, sender_id INT REFERENCES users(id) ON DELETE CASCADE,
         receiver_id INT REFERENCES users(id) ON DELETE CASCADE,
-        text TEXT,
-        is_read BOOLEAN DEFAULT false,
-        created_at TIMESTAMP DEFAULT NOW()
+        text TEXT, is_read BOOLEAN DEFAULT false, created_at TIMESTAMP DEFAULT NOW()
       );
     `);
 
-    // 👈 جدول بلاک کردن
+    // 👈 جدول بلاک
     await pool.query(`
       CREATE TABLE IF NOT EXISTS blocks (
-        id SERIAL PRIMARY KEY,
-        blocker_id INT REFERENCES users(id) ON DELETE CASCADE,
-        blocked_id INT REFERENCES users(id) ON DELETE CASCADE,
-        created_at TIMESTAMP DEFAULT NOW(),
+        id SERIAL PRIMARY KEY, blocker_id INT REFERENCES users(id) ON DELETE CASCADE,
+        blocked_id INT REFERENCES users(id) ON DELETE CASCADE, created_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(blocker_id, blocked_id)
       );
     `);
 
-    // 👈 جدول گزارش تخلف
+    // 👈 جدول گزارش
     await pool.query(`
       CREATE TABLE IF NOT EXISTS reports (
-        id SERIAL PRIMARY KEY,
-        reporter_id INT REFERENCES users(id) ON DELETE CASCADE,
-        reported_id INT REFERENCES users(id) ON DELETE CASCADE,
-        reason TEXT,
-        created_at TIMESTAMP DEFAULT NOW()
+        id SERIAL PRIMARY KEY, reporter_id INT REFERENCES users(id) ON DELETE CASCADE,
+        reported_id INT REFERENCES users(id) ON DELETE CASCADE, reason TEXT, created_at TIMESTAMP DEFAULT NOW()
       );
     `);
 
-    // 👈 جدول سنجاق کردن (کاربران ویژه)
+    // 👈 جدول سنجاق
     await pool.query(`
       CREATE TABLE IF NOT EXISTS pinned_users (
-        id SERIAL PRIMARY KEY,
-        user_id INT REFERENCES users(id) ON DELETE CASCADE,
-        pinned_user_id INT REFERENCES users(id) ON DELETE CASCADE,
-        UNIQUE(user_id, pinned_user_id)
+        id SERIAL PRIMARY KEY, user_id INT REFERENCES users(id) ON DELETE CASCADE,
+        pinned_user_id INT REFERENCES users(id) ON DELETE CASCADE, UNIQUE(user_id, pinned_user_id)
       );
     `);
 
-    // 👈 جدول گروه‌ها و کانال‌ها
+    // 👈 جدول گروه‌ها و کانال‌ها (با link_code)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS chat_rooms (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(255),
-        type VARCHAR(50) DEFAULT 'group', -- 'group' یا 'channel'
-        owner_id INT REFERENCES users(id) ON DELETE CASCADE,
+        id SERIAL PRIMARY KEY, name VARCHAR(255), type VARCHAR(50) DEFAULT 'group',
+        owner_id INT REFERENCES users(id) ON DELETE CASCADE, link_code VARCHAR(50) UNIQUE,
         created_at TIMESTAMP DEFAULT NOW()
       );
     `);
+    await pool.query(`ALTER TABLE chat_rooms ADD COLUMN IF NOT EXISTS link_code VARCHAR(50) UNIQUE;`);
 
-    // 👈 اعضای گروه/کانال
     await pool.query(`
       CREATE TABLE IF NOT EXISTS room_members (
-        id SERIAL PRIMARY KEY,
-        room_id INT REFERENCES chat_rooms(id) ON DELETE CASCADE,
-        user_id INT REFERENCES users(id) ON DELETE CASCADE,
-        role VARCHAR(50) DEFAULT 'member', -- 'admin' یا 'member'
+        id SERIAL PRIMARY KEY, room_id INT REFERENCES chat_rooms(id) ON DELETE CASCADE,
+        user_id INT REFERENCES users(id) ON DELETE CASCADE, role VARCHAR(50) DEFAULT 'member',
         UNIQUE(room_id, user_id)
       );
     `);
 
-    // 👈 پیام‌های داخل گروه/کانال
     await pool.query(`
       CREATE TABLE IF NOT EXISTS room_messages (
-        id SERIAL PRIMARY KEY,
-        room_id INT REFERENCES chat_rooms(id) ON DELETE CASCADE,
-        sender_id INT REFERENCES users(id) ON DELETE CASCADE,
-        text TEXT,
-        created_at TIMESTAMP DEFAULT NOW()
+        id SERIAL PRIMARY KEY, room_id INT REFERENCES chat_rooms(id) ON DELETE CASCADE,
+        sender_id INT REFERENCES users(id) ON DELETE CASCADE, text TEXT, created_at TIMESTAMP DEFAULT NOW()
       );
     `);
 
@@ -349,16 +302,11 @@ app.get("/api/admin/messages", async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT m.*, u.name as user_name
-      FROM messages m
-      JOIN users u ON m.user_id = u.id
-      WHERE m.sender = 'user'
-      ORDER BY m.id DESC
+      FROM messages m JOIN users u ON m.user_id = u.id
+      WHERE m.sender = 'user' ORDER BY m.id DESC
     `);
     res.json({ ok: true, messages: result.rows });
-  } catch (e) { 
-    console.error(e); 
-    res.status(500).json({ error: "خطای سرور" }); 
-  }
+  } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
 // ================== پیام‌رسان اجتماعی ==================
@@ -377,17 +325,16 @@ app.get("/api/social/users/:currentUserId", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// دریافت لیست چت‌ها و گروه‌ها
+// دریافت لیست چت‌ها (با چک کردن سنجاق و بلاک)
 app.get("/api/social/chats/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
     const uid = parseInt(userId);
     
-    // ۱. دریافت چت‌های مستقیم
+    // ۱. چت‌های مستقیم
     const dms = await pool.query(`
       SELECT 
-        u.id, u.name, u.role,
-        'direct' as chat_type,
+        u.id, u.name, u.role, 'direct' as chat_type,
         (
           SELECT text FROM direct_messages 
           WHERE (sender_id = $1 AND receiver_id = u.id) OR (sender_id = u.id AND receiver_id = $1)
@@ -402,29 +349,31 @@ app.get("/api/social/chats/:userId", async (req, res) => {
           SELECT COUNT(*) FROM direct_messages 
           WHERE sender_id = u.id AND receiver_id = $1 AND is_read = false
         ) as unread_count,
-        (SELECT COUNT(*) FROM pinned_users WHERE user_id = $1 AND pinned_user_id = u.id) as is_pinned
+        (SELECT COUNT(*) FROM pinned_users WHERE user_id = $1 AND pinned_user_id = u.id) > 0 as is_pinned,
+        (SELECT COUNT(*) FROM blocks WHERE blocker_id = u.id AND blocked_id = $1) > 0 as is_blocked
       FROM users u
       WHERE u.id != $1 
-        AND u.id NOT IN (SELECT blocked_id FROM blocks WHERE blocker_id = $1)
         AND EXISTS (
           SELECT 1 FROM direct_messages 
           WHERE (sender_id = $1 AND receiver_id = u.id) OR (sender_id = u.id AND receiver_id = $1)
         )
     `, [uid]);
 
-    // ۲. دریافت گروه‌ها و کانال‌ها
+    // ۲. گروه‌ها و کانال‌ها
     const rooms = await pool.query(`
       SELECT r.id, r.name, r.type as role, 'room' as chat_type,
         (SELECT text FROM room_messages WHERE room_id = r.id ORDER BY id DESC LIMIT 1) as last_message,
         (SELECT created_at FROM room_messages WHERE room_id = r.id ORDER BY id DESC LIMIT 1) as last_time,
-        0 as unread_count, 0 as is_pinned
+        0 as unread_count, false as is_pinned, false as is_blocked,
+        r.link_code
       FROM chat_rooms r
       JOIN room_members rm ON r.id = rm.room_id
       WHERE rm.user_id = $1
     `, [uid]);
 
-    // ترکیب و مرتب‌سازی (سنجاق شده‌ها اول)
     let allChats = [...dms.rows, ...rooms.rows];
+    
+    // مرتب‌سازی: سنجاق شده‌ها بالا، بقیه بر اساس آخرین پیام
     allChats.sort((a, b) => {
       if (a.is_pinned !== b.is_pinned) return b.is_pinned - a.is_pinned;
       if (!a.last_time) return 1;
@@ -433,24 +382,7 @@ app.get("/api/social/chats/:userId", async (req, res) => {
     });
 
     res.json({ ok: true, chats: allChats });
-  } catch (e) { 
-    console.error(e); 
-    res.status(500).json({ error: "خطای سرور" }); 
-  }
-});
-
-// تاریخچه چت مستقیم
-app.get("/api/social/history/:user1Id/:user2Id", async (req, res) => {
-  try {
-    const { user1Id, user2Id } = req.params;
-    const result = await pool.query(`
-      SELECT * FROM direct_messages 
-      WHERE (sender_id = $1 AND receiver_id = $2) 
-         OR (sender_id = $2 AND receiver_id = $1)
-      ORDER BY id ASC
-    `, [user1Id, user2Id]);
-    res.json({ ok: true, messages: result.rows });
-  } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
 // ارسال پیام مستقیم (چک بلاک)
@@ -459,7 +391,6 @@ app.post("/api/social/send", async (req, res) => {
     const { senderId, receiverId, text } = req.body;
     if (!senderId || !receiverId || !text) return res.status(400).json({ error: "اطلاعات ناقص" });
     
-    // چک بلاک
     const blockCheck = await pool.query(
       'SELECT * FROM blocks WHERE (blocker_id = $1 AND blocked_id = $2) OR (blocker_id = $2 AND blocked_id = $1)',
       [senderId, receiverId]
@@ -474,18 +405,6 @@ app.post("/api/social/send", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "خطا در ارسال پیام" }); }
 });
 
-// علامت‌گذاری خوانده شده
-app.post("/api/social/read", async (req, res) => {
-  try {
-    const { userId, otherUserId } = req.body;
-    await pool.query(
-      'UPDATE direct_messages SET is_read = true WHERE sender_id = $1 AND receiver_id = $2',
-      [otherUserId, userId]
-    );
-    res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
-});
-
 // بلاک کردن
 app.post("/api/social/block", async (req, res) => {
   try {
@@ -494,6 +413,15 @@ app.post("/api/social/block", async (req, res) => {
       'INSERT INTO blocks (blocker_id, blocked_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
       [userId, targetId]
     );
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
+});
+
+// 👈 لغو بلاک
+app.post("/api/social/unblock", async (req, res) => {
+  try {
+    const { userId, targetId } = req.body;
+    await pool.query('DELETE FROM blocks WHERE blocker_id = $1 AND blocked_id = $2', [userId, targetId]);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
@@ -515,7 +443,6 @@ app.post("/api/social/pin", async (req, res) => {
   try {
     const { userId, targetId } = req.body;
     const check = await pool.query('SELECT * FROM pinned_users WHERE user_id = $1 AND pinned_user_id = $2', [userId, targetId]);
-    
     if (check.rows.length > 0) {
       await pool.query('DELETE FROM pinned_users WHERE user_id = $1 AND pinned_user_id = $2', [userId, targetId]);
       res.json({ ok: true, action: 'unpinned' });
@@ -526,62 +453,62 @@ app.post("/api/social/pin", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ساخت گروه / کانال
+// ساخت گروه / کانال (با لینک اختصاصی)
 app.post("/api/social/create-room", async (req, res) => {
   try {
-    const { ownerId, name, type, memberIds } = req.body;
+    const { ownerId, name, type } = req.body;
+    const linkCode = crypto.randomBytes(4).toString('hex');
+    
     const roomResult = await pool.query(
-      'INSERT INTO chat_rooms (name, type, owner_id) VALUES ($1, $2, $3) RETURNING *',
-      [name, type, ownerId]
+      'INSERT INTO chat_rooms (name, type, owner_id, link_code) VALUES ($1, $2, $3, $4) RETURNING *',
+      [name, type, ownerId, linkCode]
     );
     const room = roomResult.rows[0];
 
-    // اضافه کردن سازنده به عنوان ادمین
     await pool.query('INSERT INTO room_members (room_id, user_id, role) VALUES ($1, $2, $3)', [room.id, ownerId, 'admin']);
-
-    // اضافه کردن بقیه اعضا
-    if (memberIds && memberIds.length > 0) {
-      for (const mid of memberIds) {
-        await pool.query('INSERT INTO room_members (room_id, user_id, role) VALUES ($1, $2, $3)', [room.id, mid, 'member']);
-      }
-    }
     res.json({ ok: true, room });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// دریافت تاریخچه گروه/کانال
-app.get("/api/social/room-messages/:roomId", async (req, res) => {
+// 👈 پیوستن به گروه از طریق لینک
+app.post("/api/social/join-room", async (req, res) => {
+  try {
+    const { userId, linkCode } = req.body;
+    const roomResult = await pool.query('SELECT * FROM chat_rooms WHERE link_code = $1', [linkCode]);
+    if (roomResult.rows.length === 0) return res.status(404).json({ error: "گروه پیدا نشد" });
+    
+    const room = roomResult.rows[0];
+    const check = await pool.query('SELECT * FROM room_members WHERE room_id = $1 AND user_id = $2', [room.id, userId]);
+    if (check.rows.length > 0) return res.status(400).json({ error: "شما قبلاً عضو این گروه هستید" });
+
+    await pool.query('INSERT INTO room_members (room_id, user_id, role) VALUES ($1, $2, $3)', [room.id, userId, 'member']);
+    res.json({ ok: true, room });
+  } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
+});
+
+// 👈 دریافت لیست اعضای گروه
+app.get("/api/social/room-members/:roomId", async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT m.*, u.name as sender_name 
-      FROM room_messages m 
-      JOIN users u ON m.sender_id = u.id 
-      WHERE m.room_id = $1 
-      ORDER BY m.id ASC
+      SELECT u.id, u.name, u.role, rm.role as group_role
+      FROM room_members rm
+      JOIN users u ON rm.user_id = u.id
+      WHERE rm.room_id = $1
     `, [req.params.roomId]);
-    res.json({ ok: true, messages: result.rows });
+    res.json({ ok: true, members: result.rows });
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ارسال پیام به گروه/کانال
-app.post("/api/social/send-room", async (req, res) => {
+// 👈 حذف گروه (فقط ادمین)
+app.delete("/api/social/room/:roomId", async (req, res) => {
   try {
-    const { senderId, roomId, text } = req.body;
+    const { roomId } = req.params;
+    const { userId } = req.body;
+    const check = await pool.query('SELECT * FROM chat_rooms WHERE id = $1 AND owner_id = $2', [roomId, userId]);
+    if (check.rows.length === 0) return res.status(403).json({ error: "فقط سازنده می‌تواند گروه را حذف کند" });
     
-    // چک کردن اینکه اگر کانال است، فقط ادمین بتونه بفرسته
-    const roomCheck = await pool.query('SELECT type FROM chat_rooms WHERE id = $1', [roomId]);
-    if (roomCheck.rows[0].type === 'channel') {
-      const memberCheck = await pool.query('SELECT role FROM room_members WHERE room_id = $1 AND user_id = $2', [roomId, senderId]);
-      if (memberCheck.rows.length === 0 || memberCheck.rows[0].role !== 'admin') {
-        return res.status(403).json({ error: "فقط ادمین کانال می‌تواند پیام بفرستد" });
-      }
-    }
-
-    const result = await pool.query(
-      'INSERT INTO room_messages (room_id, sender_id, text) VALUES ($1, $2, $3) RETURNING *',
-      [roomId, senderId, text]
-    );
-    res.json({ ok: true, message: result.rows[0] });
+    await pool.query('DELETE FROM chat_rooms WHERE id = $1', [roomId]);
+    res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
