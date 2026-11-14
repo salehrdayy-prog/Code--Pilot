@@ -1,0 +1,173 @@
+        /* تنظیمات کلی */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Vazirmatn', sans-serif;
+        }
+
+        body {
+            background-color: #000000; /* پس زمینه مشکی */
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* کانتینر اصلی چت */
+        .chat-container {
+            width: 100%;
+            max-width: 450px; /* سایز موبایل */
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: #0b0b0b;
+            position: relative;
+        }
+
+        /* هدر بالای صفحه */
+        .chat-header {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #121212;
+            border-bottom: 1px solid #1f1f1f;
+        }
+
+        .back-btn {
+            font-size: 20px;
+            cursor: pointer;
+            margin-left: 15px;
+        }
+
+        .profile-pic {
+            width: 45px;
+            height: 45px;
+            background-color: #4c5c92;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-left: 15px;
+        }
+
+        .profile-pic svg {
+            fill: white;
+            width: 25px;
+            height: 25px;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .user-status {
+            font-size: 12px;
+            color: #4ade80; /* رنگ سبز آنلاین */
+            margin-top: 2px;
+        }
+
+        /* بخش پیام ها */
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+        }
+
+        /* استایل کلی حباب پیام */
+        .message {
+            max-width: 75%;
+            padding: 10px 15px;
+            border-radius: 16px;
+            font-size: 14px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* پیام ارسالی (من) - سمت چپ */
+        .message.sent {
+            background-color: #8b5cf6; /* رنگ بنفش */
+            color: white;
+            align-self: flex-start; /* در RTL یعنی سمت چپ */
+            border-bottom-left-radius: 4px; /* گوشه تیز */
+        }
+
+        /* پیام دریافتی (مخاطب) - سمت راست */
+        .message.received {
+            background-color: #1e1e1e; /* رنگ خاکستری تیره */
+            color: white;
+            align-self: flex-end; /* در RTL یعنی سمت راست */
+            border-bottom-right-radius: 4px; /* گوشه تیز */
+        }
+
+        /* زمان پیام */
+        .message-time {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 5px;
+            align-self: flex-end;
+        }
+
+        /* نوار پایین (ورودی پیام) */
+        .chat-input-area {
+            padding: 15px;
+            background-color: #121212;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-top: 1px solid #1f1f1f;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            background-color: #1a1a1a;
+            border-radius: 25px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: white;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .input-wrapper input::placeholder {
+            color: #777;
+            font-size: 13px;
+        }
+
+        /* دکمه ارسال */
+        .send-btn {
+            width: 45px;
+            height: 45px;
+            background-color: #8b5cf6; /* رنگ بنفش */
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            border: none;
+        }
+
+        .send-btn svg {
+            fill: white;
+            width: 20px;
+            height: 20px;
+            transform: translateX(-2px); /* تنظیم آیکون */
+        }
