@@ -68,14 +68,17 @@ function toggleMenu() {
   if (overlay) overlay.classList.toggle("active");
 }
 
-// ==================== LOGOUT (اصلاح شده) ====================
+// ==================== LOGOUT (اصلاح شده - پاک کردن کامل) ====================
 function logout() {
-  // پاک کردن اطلاعات ورود
-  localStorage.removeItem('session');
-  localStorage.removeItem('loggedInUser');
-  localStorage.removeItem('username');
-  localStorage.removeItem('userXP');
-  localStorage.removeItem('userCoins');
+  // لیست تمام کلیدهایی که موقع ورود ساخته می‌شن
+  const keysToRemove = [
+    'session', 'loggedInUser', 'username', 'userXP', 'userCoins',
+    'userPlan', 'userLevel', 'userAvatar', 'loggedIn', 'ai_coder_user',
+    'currentProject', 'assessment', 'auth'
+  ];
+
+  // پاک کردن تک تک آن‌ها
+  keysToRemove.forEach(key => localStorage.removeItem(key));
 
   // انتقال به صفحه اصلی
   window.location.href = "index.html";
