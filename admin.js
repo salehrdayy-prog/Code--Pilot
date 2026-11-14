@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const searchInput = document.getElementById('search');
   const userCountEl = document.getElementById('userCount');
   const ordersList = document.getElementById('ordersList');
+  const userMessagesList = document.getElementById('userMessagesList'); // 👈 بخش پیام‌های کاربران
   
   // مودال پیام
   const msgModal = document.getElementById('messageModal');
@@ -84,6 +85,43 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // ======================
+  // 💬 رندر پیام‌های کاربران
+  // ======================
+  function renderUserMessages(messages) {
+    if (!userMessagesList) return;
+    if (messages.length === 0) {
+      userMessagesList.innerHTML = `<p style="color: #8aa3c9; text-align: center; padding: 20px;">هنوز پیامی از کاربران دریافت نشده است.</p>`;
+      return;
+    }
+
+    userMessagesList.innerHTML = messages.map(msg => `
+      <div class="order-item" style="border: 1px solid rgba(59, 130, 246, 0.2); padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <strong style="color:#60a5fa; font-size: 16px;">${msg.user_name || 'کاربر'}</strong>
+          <br><small style="color:#8aa3c9;">تاریخ: ${msg.date}</small>
+          <br><small style="color:#c4b5fd;">وضعیت: ${msg.is_read ? 'خوانده شده' : 'جدید'}</small>
+          <p style="color:#fff; margin-top: 8px; font-size: 14px;">${msg.text}</p>
+        </div>
+        <div style="display:flex; gap:5px;">
+          <button onclick="openMessageModal(${msg.user_id}, '${msg.user_name}')" style="background:#8b5cf6; color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-family: inherit;">پاسخ</button>
+          ${!msg.is_read ? `<button onclick="markAdminMsgRead(${msg.id})" style="background:#4ade80; color:#000; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-family: inherit;">خواندم</button>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // علامت‌گذاری پیام به عنوان خوانده شده توسط ادمین
+  window.markAdminMsgRead = async function(msgId) {
+    try {
+      await fetch(`${API_URL}/messages/read`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messageId: msgId })
+      });
+      fetchData(); // رفرش لیست‌ها
+    } catch (err) {}
+  };
+
+  // ======================
   // ✉️ مودال ارسال پیام
   // ======================
   window.openMessageModal = function(userId, userName) {
@@ -99,50 +137,58 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
 
   window.sendMessage = async function() {
-  const text = msgText.value.trim();
-  if (!text) return alert('لطفاً متن پیام را بنویسید.');
-  if (!currentMsgUserId) return;
+    const text = msgText.value.trim();
+    if (!text) return alert('لطفاً متن پیام را بنویسید.');
+    if (!currentMsgUserId) return;
 
-  const btn = document.querySelector('#messageModal .btn-send');
-  btn.innerText = 'در حال ارسال...';
-  btn.disabled = true;
+    const btn = document.querySelector('#messageModal .btn-send');
+    btn.innerText = 'در حال ارسال...';
+    btn.disabled = true;
 
-  try {
-      const res = await sendMessageToUser(currentMsgUserId, text);
-
-      if (res.ok) {
-        alert('✅ پیام با موفقیت برای کاربر ارسال شد.');
-        closeMessageModal();
-      } else {
-        alert('❌ خطا در ارسال پیام: ' + res.error);
-      }
-  } catch (err) {
-      alert('❌ خطای شبکه: ' + err.message);
-  } finally {
-      // در هر شرایطی دکمه رو به حالت اول برگردون
-      btn.innerText = 'ارسال پیام';
-      btn.disabled = false;
-  }
-};
+    try {
+        const res = await sendMessageToUser(currentMsgUserId, text);
+        if (res.ok) {
+          alert('✅ پیام با موفقیت برای کاربر ارسال شد.');
+          closeMessageModal();
+          fetchData(); // رفرش لیست‌ها
+        } else {
+          alert('❌ خطا در ارسال پیام: ' + res.error);
+        }
+    } catch (err) {
+        alert('❌ خطای شبکه: ' + err.message);
+    } finally {
+        btn.innerText = 'ارسال پیام';
+        btn.disabled = false;
+    }
+  };
 
   // ======================
-  // 🔄 دریافت اطلاعات
+  // 🔄 دریافت اطلاعات (کاربران + سفارشات + پیام‌ها)
   // ======================
   async function fetchData() {
     userCountEl.textContent = "در حال دریافت...";
     await new Promise(resolve => setTimeout(resolve, 2000)); 
     
+    // ۱. کاربران
     try {
       const usersRes = await fetch(`${API_URL}/admin/users`);
       const usersData = await usersRes.json();
       if (usersData.ok) { allUsers = usersData.users; renderUsers(allUsers); }
     } catch (err) { userCountEl.textContent = "❌ خطا در کاربران"; }
 
+    // ۲. سفارشات
     try {
       const ordersRes = await fetch(`${API_URL}/admin/orders`);
       const ordersData = await ordersRes.json();
       if (ordersData.ok) { renderOrders(ordersData.orders); }
     } catch (err) { console.error("خطا در سفارشات", err); }
+
+    // ۳. پیام‌های کاربران
+    try {
+      const msgsRes = await fetch(`${API_URL}/admin/messages`);
+      const msgsData = await msgsRes.json();
+      if (msgsData.ok) { renderUserMessages(msgsData.messages); }
+    } catch (err) { console.error("خطا در پیام‌ها", err); }
   }
 
   // ======================

@@ -328,6 +328,22 @@ app.post("/api/reviews/like", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
+// دریافت همه پیام‌های کاربران (برای ادمین)
+app.get("/api/admin/messages", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT m.*, u.name as user_name
+      FROM messages m
+      JOIN users u ON m.user_id = u.id
+      WHERE m.sender = 'user'
+      ORDER BY m.id DESC
+    `);
+    res.json({ ok: true, messages: result.rows });
+  } catch (e) { 
+    console.error(e); 
+    res.status(500).json({ error: "خطای سرور" }); 
+  }
+});
 // ================== هوش مصنوعی ==================
 const SYSTEM_PROMPT = `تو «نابغه‌کد» هستی؛ یک مشاور، ایده‌پرداز و مربی برنامه‌نویسی. ۱. ⛔ هرگز سلام تکراری نکن. ۲. 😊 از ایموجی استفاده کن. ۳. 🧠 اول نیاز کاربر رو بپرس، بعد کد بده. ۴. 💻 کدها رو داخل بلاک مارک‌داون بذار.`;
 

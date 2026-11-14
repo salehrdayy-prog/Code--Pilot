@@ -35,3 +35,4 @@ async function getUserMessages(userId) { return await apiRequest(`/messages/${us
 async function markMessageAsRead(messageId) { return await apiRequest("/messages/read", "POST", { messageId }); }
 async function replyToAdmin(userId, text) { return await apiRequest("/messages/reply", "POST", { userId, text }); }
 async function deleteUserMessage(messageId) { return await apiRequest("/messages/delete", "POST", { messageId }); }
+async function getAllUserMessages() { return await apiRequest("/admin/messages"); }
