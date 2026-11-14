@@ -29,10 +29,17 @@ async function deleteReview(reviewId, userId, userRole) { return await apiReques
 async function likeReviewAPI(reviewId, action) { return await apiRequest("/reviews/like", "POST", { reviewId, action }); }
 async function upgradeSubscription(userId, plan) { return await apiRequest("/subscribe", "POST", { userId, plan }); }
 
-// 👈 توابع جدید پیام‌ها
+// پیام‌های پشتیبانی
 async function sendMessageToUser(userId, text) { return await apiRequest("/admin/send-message", "POST", { userId, text }); }
 async function getUserMessages(userId) { return await apiRequest(`/messages/${userId}`); }
 async function markMessageAsRead(messageId) { return await apiRequest("/messages/read", "POST", { messageId }); }
 async function replyToAdmin(userId, text) { return await apiRequest("/messages/reply", "POST", { userId, text }); }
 async function deleteUserMessage(messageId) { return await apiRequest("/messages/delete", "POST", { messageId }); }
 async function getAllUserMessages() { return await apiRequest("/admin/messages"); }
+
+// 👈 پیام‌رسان اجتماعی
+async function getSocialUsers(currentUserId) { return await apiRequest(`/social/users/${currentUserId}`); }
+async function getSocialChats(userId) { return await apiRequest(`/social/chats/${userId}`); }
+async function getSocialHistory(user1Id, user2Id) { return await apiRequest(`/social/history/${user1Id}/${user2Id}`); }
+async function sendSocialMessage(senderId, receiverId, text) { return await apiRequest("/social/send", "POST", { senderId, receiverId, text }); }
+async function markSocialAsRead(userId, otherUserId) { return await apiRequest("/social/read", "POST", { userId, otherUserId }); }

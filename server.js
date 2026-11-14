@@ -78,7 +78,7 @@ const initDB = async () => {
       );
     `);
 
-    // 👈 جدول پیام‌ها (با قابلیت پاسخ)
+    // 👈 جدول پیام‌های پشتیبانی (ادمین با کاربر)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS messages (
         id SERIAL PRIMARY KEY,
@@ -90,6 +90,18 @@ const initDB = async () => {
       );
     `);
     await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS sender VARCHAR(50) DEFAULT 'admin';`);
+
+    // 👈 جدول جدید: پیام‌های مستقیم بین کاربران (شبکه اجتماعی)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS direct_messages (
+        id SERIAL PRIMARY KEY,
+        sender_id INT REFERENCES users(id) ON DELETE CASCADE,
+        receiver_id INT REFERENCES users(id) ON DELETE CASCADE,
+        text TEXT,
+        is_read BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
 
     console.log("✅ Tables ready");
   } catch (e) {
@@ -216,7 +228,7 @@ app.post("/api/admin/users/delete", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ================== پیام‌ها ==================
+// ================== پیام‌های پشتیبانی ==================
 app.post("/api/admin/send-message", async (req, res) => {
   try {
     const { userId, text } = req.body;
@@ -262,6 +274,129 @@ app.post("/api/messages/delete", async (req, res) => {
     await pool.query('DELETE FROM messages WHERE id = $1', [messageId]);
     res.json({ ok: true });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطا در حذف پیام" }); }
+});
+
+app.get("/api/admin/messages", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT m.*, u.name as user_name
+      FROM messages m
+      JOIN users u ON m.user_id = u.id
+      WHERE m.sender = 'user'
+      ORDER BY m.id DESC
+    `);
+    res.json({ ok: true, messages: result.rows });
+  } catch (e) { 
+    console.error(e); 
+    res.status(500).json({ error: "خطای سرور" }); 
+  }
+});
+
+// ================== پیام‌رسان اجتماعی (بین کاربران) ==================
+
+// دریافت لیست همه کاربران (به جز خود کاربر) برای جستجو
+app.get("/api/social/users/:currentUserId", async (req, res) => {
+  try {
+    const { currentUserId } = req.params;
+    const result = await pool.query(
+      'SELECT id, name, role, xp, plan FROM users WHERE id != $1 ORDER BY name ASC',
+      [currentUserId]
+    );
+    res.json({ ok: true, users: result.rows });
+  } catch (e) { 
+    console.error(e); 
+    res.status(500).json({ error: "خطای سرور" }); 
+  }
+});
+
+// دریافت لیست چت‌های کاربر (با آخرین پیام و تعداد خوانده نشده)
+app.get("/api/social/chats/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const uid = parseInt(userId);
+    
+    const result = await pool.query(`
+      SELECT 
+        u.id, u.name, u.role,
+        (
+          SELECT text FROM direct_messages 
+          WHERE (sender_id = $1 AND receiver_id = u.id) OR (sender_id = u.id AND receiver_id = $1)
+          ORDER BY id DESC LIMIT 1
+        ) as last_message,
+        (
+          SELECT created_at FROM direct_messages 
+          WHERE (sender_id = $1 AND receiver_id = u.id) OR (sender_id = u.id AND receiver_id = $1)
+          ORDER BY id DESC LIMIT 1
+        ) as last_time,
+        (
+          SELECT COUNT(*) FROM direct_messages 
+          WHERE sender_id = u.id AND receiver_id = $1 AND is_read = false
+        ) as unread_count
+      FROM users u
+      WHERE u.id != $1 
+        AND EXISTS (
+          SELECT 1 FROM direct_messages 
+          WHERE (sender_id = $1 AND receiver_id = u.id) OR (sender_id = u.id AND receiver_id = $1)
+        )
+      ORDER BY last_time DESC NULLS LAST
+    `, [uid]);
+
+    res.json({ ok: true, chats: result.rows });
+  } catch (e) { 
+    console.error(e); 
+    res.status(500).json({ error: "خطای سرور" }); 
+  }
+});
+
+// دریافت تاریخچه پیام بین دو کاربر
+app.get("/api/social/history/:user1Id/:user2Id", async (req, res) => {
+  try {
+    const { user1Id, user2Id } = req.params;
+    const result = await pool.query(`
+      SELECT * FROM direct_messages 
+      WHERE (sender_id = $1 AND receiver_id = $2) 
+         OR (sender_id = $2 AND receiver_id = $1)
+      ORDER BY id ASC
+    `, [user1Id, user2Id]);
+    res.json({ ok: true, messages: result.rows });
+  } catch (e) { 
+    console.error(e); 
+    res.status(500).json({ error: "خطای سرور" }); 
+  }
+});
+
+// ارسال پیام مستقیم
+app.post("/api/social/send", async (req, res) => {
+  try {
+    const { senderId, receiverId, text } = req.body;
+    if (!senderId || !receiverId || !text) {
+      return res.status(400).json({ error: "اطلاعات ناقص است" });
+    }
+    
+    const result = await pool.query(
+      'INSERT INTO direct_messages (sender_id, receiver_id, text) VALUES ($1, $2, $3) RETURNING *',
+      [senderId, receiverId, text]
+    );
+    res.json({ ok: true, message: result.rows[0] });
+  } catch (e) { 
+    console.error(e); 
+    res.status(500).json({ error: "خطا در ارسال پیام" }); 
+  }
+});
+
+// علامت‌گذاری پیام‌های یک چت به عنوان خوانده شده
+app.post("/api/social/read", async (req, res) => {
+  try {
+    const { userId, otherUserId } = req.body;
+    await pool.query(
+      'UPDATE direct_messages SET is_read = true WHERE sender_id = $1 AND receiver_id = $2',
+      [otherUserId, userId]
+    );
+    res.json({ ok: true });
+  } catch (e) { 
+    console.error(e); 
+    res.status(500).json({ error: "خطای سرور" }); 
+  }
 });
 
 // ================== پروژه‌ها ==================
@@ -328,22 +463,6 @@ app.post("/api/reviews/like", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// دریافت همه پیام‌های کاربران (برای ادمین)
-app.get("/api/admin/messages", async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT m.*, u.name as user_name
-      FROM messages m
-      JOIN users u ON m.user_id = u.id
-      WHERE m.sender = 'user'
-      ORDER BY m.id DESC
-    `);
-    res.json({ ok: true, messages: result.rows });
-  } catch (e) { 
-    console.error(e); 
-    res.status(500).json({ error: "خطای سرور" }); 
-  }
-});
 // ================== هوش مصنوعی ==================
 const SYSTEM_PROMPT = `تو «نابغه‌کد» هستی؛ یک مشاور، ایده‌پرداز و مربی برنامه‌نویسی. ۱. ⛔ هرگز سلام تکراری نکن. ۲. 😊 از ایموجی استفاده کن. ۳. 🧠 اول نیاز کاربر رو بپرس، بعد کد بده. ۴. 💻 کدها رو داخل بلاک مارک‌داون بذار.`;
 
