@@ -154,12 +154,25 @@
         .member-name { font-size: 14px; flex: 1; }
         .member-role { font-size: 11px; color: #facc15; }
 
+        /* 👈 اصلاح نهایی برای چسبیدن ورودی به پایین در موبایل */
         @media (max-width: 768px) {
-            .sidebar { width: 100%; max-width: 100%; position: absolute; height: 100%; height: 100dvh; right: 0; }
+            .sidebar { width: 100%; max-width: 100%; position: absolute; height: 100%; height: 100dvh; right: 0; z-index: 100; }
             .sidebar.hidden { right: -100%; }
+            
+            .chat-area {
+                position: fixed; /* قفل کردن چت‌آریا روی کل صفحه */
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                width: 100vw;
+                height: 100vh;
+                height: 100dvh;
+                z-index: 10;
+            }
+            
             .chat-header .back-btn { display: block; }
             .msg-bubble { max-width: 85%; }
-            .chat-area { width: 100vw; }
         }
     </style>
 </head>

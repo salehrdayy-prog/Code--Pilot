@@ -137,66 +137,6 @@ app.use(express.json({ limit: "10mb" }));
 // ================== API ها ==================
 app.get("/health", (_req, res) => res.json({ ok: true, status: "Live" }));
 
-// ⭐⭐⭐ ============ تنظیم ادمین (یک بار مصرف) ============ ⭐⭐⭐
-app.get("/api/admin/reset", async (req, res) => {
-  try {
-    const { key, password } = req.query;
-    
-    if (!SETUP_KEY) {
-      return res.status(500).send("❌ SETUP_KEY در متغیرهای محیطی Render تنظیم نشده است. اول اون رو اضافه کن.");
-    }
-    
-    if (key !== SETUP_KEY) {
-      return res.status(403).send("❌ کلید نامعتبر است. کلید درست رو از تنظیمات Render بردار.");
-    }
-    
-    if (!password || password.length < 8) {
-      return res.status(400).send("❌ پسورد باید حداقل ۸ کاراکتر باشد");
-    }
-    
-    const hashedPassword = await bcrypt.hash(password, 10);
-    
-    // تلاش برای آپدیت ادمین موجود
-    const updateResult = await pool.query(
-      "UPDATE users SET password = $1, password_plain = NULL WHERE role = 'admin'",
-      [hashedPassword]
-    );
-    
-    if (updateResult.rowCount === 0) {
-      // اگر ادمینی وجود نداشت، جدید بساز
-      await pool.query(
-        "INSERT INTO users (name, phone, email, password, password_plain, role) VALUES ($1, $2, $3, $4, $5, $6)",
-        ["Admin", "09876543210", "admin@gmail.com", hashedPassword, null, "admin"]
-      );
-      return res.send(`
-        <div style="font-family:sans-serif;max-width:500px;margin:50px auto;padding:30px;background:#0d1117;color:#e8edf5;border-radius:20px;direction:rtl;">
-          <h2 style="color:#4ade80;">✅ ادمین جدید ساخته شد</h2>
-          <p>📱 شماره: <strong>09876543210</strong></p>
-          <p>📧 ایمیل: <strong>admin@gmail.com</strong></p>
-          <p>🔑 پسورد: <strong style="color:#facc15;">${password}</strong></p>
-          <hr style="border-color:#333;margin:20px 0;">
-          <p style="color:#f87171;">⚠️ حالا این صفحه را ببند، برو به صفحه ورود و لاگین کن.</p>
-        </div>
-      `);
-    }
-    
-    res.send(`
-      <div style="font-family:sans-serif;max-width:500px;margin:50px auto;padding:30px;background:#0d1117;color:#e8edf5;border-radius:20px;direction:rtl;">
-        <h2 style="color:#4ade80;">✅ پسورد ادمین با موفقیت تغییر کرد</h2>
-        <p>📱 شماره: <strong>09876543210</strong></p>
-        <p>📧 ایمیل: <strong>admin@gmail.com</strong></p>
-        <p>🔑 پسورد: <strong style="color:#facc15;">${password}</strong></p>
-        <hr style="border-color:#333;margin:20px 0;">
-        <p style="color:#f87171;">⚠️ حالا این صفحه را ببند، برو به صفحه ورود و با پسورد جدید لاگین کن.</p>
-      </div>
-    `);
-  } catch (e) {
-    console.error(e);
-    res.status(500).send("❌ خطای سرور: " + e.message);
-  }
-});
-// ⭐⭐⭐ ============ پایان بخش تنظیم ادمین ============ ⭐⭐⭐
-
 // ================== ثبت‌نام ==================
 app.post("/api/register", async (req, res) => {
   try {
@@ -262,7 +202,7 @@ app.get("/api/user/:id", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "کاربر پیدا نشد" }); }
 });
 
-// ================== پنل ادمین: لیست کاربران ==================
+// ================== پنل ادمین ==================
 app.get("/api/admin/users", async (req, res) => {
   try {
     const result = await pool.query(`
@@ -396,7 +336,7 @@ app.post("/api/messages/delete", async (req, res) => {
     const { messageId } = req.body;
     await pool.query('DELETE FROM messages WHERE id = $1', [messageId]);
     res.json({ ok: true });
-  } catch (e) { console.error(e); res.status(500).json({ error: "خطا در حذف پیام" }); }
+  } catch (e) { res.status(500).json({ error: "خطا در حذف پیام" }); }
 });
 
 app.get("/api/admin/messages", async (req, res) => {
@@ -597,6 +537,56 @@ app.delete("/api/social/room/:roomId", async (req, res) => {
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
+
+// 👈👈👈 مسیرهای جا افتاده (اضافه شده) 👈👈👈
+app.get("/api/social/history/:user1Id/:user2Id", async (req, res) => {
+  try {
+    const { user1Id, user2Id } = req.params;
+    const result = await pool.query(`
+      SELECT * FROM direct_messages 
+      WHERE (sender_id = $1 AND receiver_id = $2) OR (sender_id = $2 AND receiver_id = $1)
+      ORDER BY created_at ASC
+    `, [user1Id, user2Id]);
+    res.json({ ok: true, messages: result.rows });
+  } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
+});
+
+app.post("/api/social/read", async (req, res) => {
+  try {
+    const { userId, otherUserId } = req.body;
+    await pool.query(
+      'UPDATE direct_messages SET is_read = true WHERE sender_id = $1 AND receiver_id = $2',
+      [otherUserId, userId]
+    );
+    res.json({ ok: true });
+  } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
+});
+
+app.get("/api/social/room-messages/:roomId", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT rm.*, u.name as sender_name 
+      FROM room_messages rm 
+      JOIN users u ON rm.sender_id = u.id 
+      WHERE rm.room_id = $1 
+      ORDER BY rm.created_at ASC
+    `, [req.params.roomId]);
+    res.json({ ok: true, messages: result.rows });
+  } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
+});
+
+app.post("/api/social/send-room", async (req, res) => {
+  try {
+    const { senderId, roomId, text } = req.body;
+    if (!senderId || !roomId || !text) return res.status(400).json({ error: "اطلاعات ناقص" });
+    const result = await pool.query(
+      'INSERT INTO room_messages (sender_id, room_id, text) VALUES ($1, $2, $3) RETURNING *',
+      [senderId, roomId, text]
+    );
+    res.json({ ok: true, message: result.rows[0] });
+  } catch (e) { console.error(e); res.status(500).json({ error: "خطا در ارسال پیام" }); }
+});
+// 👆👆👆 پایان مسیرهای اضافه شده 👆👆👆
 
 // ================== پروژه‌ها ==================
 app.post("/api/projects", async (req, res) => {
