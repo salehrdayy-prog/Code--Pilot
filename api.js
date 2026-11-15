@@ -42,6 +42,13 @@ async function deleteReview(reviewId, userId, userRole) { return await apiReques
 async function likeReviewAPI(reviewId, action) { return await apiRequest("/reviews/like", "POST", { reviewId, action }); }
 async function upgradeSubscription(userId, plan) { return await apiRequest("/subscribe", "POST", { userId, plan }); }
 
+// 👈 توابع آپدیت پروفایل و تبلیغات
+async function updateUserProfile(userId, name, bio, avatar) { return await apiRequest("/user/update-profile", "POST", { userId, name, bio, avatar }); }
+async function requestAdvertisement(userId, userName, phone, content, price) { return await apiRequest("/ads/request", "POST", { userId, userName, phone, content, price }); }
+async function getAdRequests() { return await apiRequest("/admin/ad-requests"); }
+async function handleAdRequest(requestId, action) { return await apiRequest("/admin/ad-requests/action", "POST", { requestId, action }); }
+async function deleteAdRequest(requestId) { return await apiRequest("/admin/ad-requests/delete", "POST", { requestId }); }
+
 async function sendMessageToUser(userId, text) { return await apiRequest("/admin/send-message", "POST", { userId, text }); }
 async function getUserMessages(userId) { return await apiRequest(`/messages/${userId}`); }
 async function markMessageAsRead(messageId) { return await apiRequest("/messages/read", "POST", { messageId }); }
@@ -49,13 +56,12 @@ async function replyToAdmin(userId, text) { return await apiRequest("/messages/r
 async function deleteUserMessage(messageId) { return await apiRequest("/messages/delete", "POST", { messageId }); }
 async function getAllUserMessages() { return await apiRequest("/admin/messages"); }
 
-// 👈 تابع جدید برای دریافت تبلیغات
 async function getAdvertisements() { return await apiRequest("/ads"); }
 
 async function getSocialUsers(currentUserId) { return await apiRequest(`/social/users/${currentUserId}`); }
 async function getSocialChats(userId) { return await apiRequest(`/social/chats/${userId}`); }
 async function getSocialHistory(user1Id, user2Id) { return await apiRequest(`/social/history/${user1Id}/${user2Id}`); }
-async function sendSocialMessage(senderId, receiverId, text, replyToId = null) { return await apiRequest("/social/send", "POST", { senderId, receiverId, text, replyToId }); }
+async function sendSocialMessage(senderId, receiverId, text, replyToId = null, imageUrl = null) { return await apiRequest("/social/send", "POST", { senderId, receiverId, text, replyToId, imageUrl }); }
 async function markSocialAsRead(userId, otherUserId) { return await apiRequest("/social/read", "POST", { userId, otherUserId }); }
 
 async function blockSocialUser(userId, targetId) { return await apiRequest("/social/block", "POST", { userId, targetId }); }
@@ -72,7 +78,7 @@ async function getRoomMessages(roomId, userId) {
   const query = userId ? `?userId=${userId}` : '';
   return await apiRequest(`/social/room-messages/${roomId}${query}`); 
 }
-async function sendRoomMessage(senderId, roomId, text, replyToId = null) { return await apiRequest("/social/send-room", "POST", { senderId, roomId, text, replyToId }); }
+async function sendRoomMessage(senderId, roomId, text, replyToId = null, imageUrl = null) { return await apiRequest("/social/send-room", "POST", { senderId, roomId, text, replyToId, imageUrl }); }
 
 async function deleteMessageForMe(messageId, messageType, userId) { return await apiRequest("/social/delete-for-me", "POST", { messageId, messageType, userId }); }
 async function deleteMessageForEveryone(messageId, messageType, userId) { return await apiRequest("/social/delete-for-everyone", "POST", { messageId, messageType, userId }); }
