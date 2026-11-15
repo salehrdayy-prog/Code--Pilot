@@ -1,43 +1,27 @@
 const API_BASE_URL = "https://code-pilot-5.onrender.com/api";
 
-// 👈 اضافه کردن Timeout و مدیریت خطای HTML
 async function apiRequest(endpoint, method = "GET", body = null) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 60000); // ۶۰ ثانیه صبر برای بیدار شدن سرور
+  const timeoutId = setTimeout(() => controller.abort(), 60000);
 
   try {
-    const options = { 
-        method, 
-        headers: { "Content-Type": "application/json" },
-        signal: controller.signal 
-    };
+    const options = { method, headers: { "Content-Type": "application/json" }, signal: controller.signal };
     if (body) options.body = JSON.stringify(body);
     
     const res = await fetch(`${API_BASE_URL}${endpoint}`, options);
     clearTimeout(timeoutId);
     
-    // اول پاسخ رو به صورت متن می‌گیریم تا اگه HTML بود کرش نکنه
     const text = await res.text();
     let data;
-    try {
-        data = JSON.parse(text);
-    } catch (parseError) {
-        // اگر پاسخ HTML بود (مثل خطای 502 رندر)
-        console.error(`API Error on ${endpoint}:`, text.substring(0, 100));
-        if (res.status === 502 || res.status === 503) {
-            return { ok: false, error: "سرور در دسترس نیست (احتمالاً در حال بیدار شدن است). لطفاً کمی بعد تلاش کنید." };
-        }
-        return { ok: false, error: "پاسخ نامعتبر از سرور دریافت شد." };
+    try { data = JSON.parse(text); } catch (parseError) {
+        if (res.status === 502 || res.status === 503) return { ok: false, error: "سرور در حال بیدار شدن است." };
+        return { ok: false, error: "پاسخ نامعتبر از سرور." };
     }
-
     if (!res.ok) return { ok: false, error: data.error || "خطا در ارتباط با سرور" };
     return { ok: true, data };
-
   } catch (err) {
     clearTimeout(timeoutId);
-    if (err.name === 'AbortError') {
-        return { ok: false, error: "سرور پاسخ نداد (احتمالاً در حال بیدار شدن است). لطفاً دوباره تلاش کنید." };
-    }
+    if (err.name === 'AbortError') return { ok: false, error: "سرور پاسخ نداد." };
     return { ok: false, error: "خطا در شبکه: " + err.message };
   }
 }
@@ -65,10 +49,13 @@ async function replyToAdmin(userId, text) { return await apiRequest("/messages/r
 async function deleteUserMessage(messageId) { return await apiRequest("/messages/delete", "POST", { messageId }); }
 async function getAllUserMessages() { return await apiRequest("/admin/messages"); }
 
+// 👈 تابع جدید برای دریافت تبلیغات
+async function getAdvertisements() { return await apiRequest("/ads"); }
+
 async function getSocialUsers(currentUserId) { return await apiRequest(`/social/users/${currentUserId}`); }
 async function getSocialChats(userId) { return await apiRequest(`/social/chats/${userId}`); }
 async function getSocialHistory(user1Id, user2Id) { return await apiRequest(`/social/history/${user1Id}/${user2Id}`); }
-async function sendSocialMessage(senderId, receiverId, text) { return await apiRequest("/social/send", "POST", { senderId, receiverId, text }); }
+async function sendSocialMessage(senderId, receiverId, text, replyToId = null) { return await apiRequest("/social/send", "POST", { senderId, receiverId, text, replyToId }); }
 async function markSocialAsRead(userId, otherUserId) { return await apiRequest("/social/read", "POST", { userId, otherUserId }); }
 
 async function blockSocialUser(userId, targetId) { return await apiRequest("/social/block", "POST", { userId, targetId }); }
@@ -81,5 +68,12 @@ async function joinSocialRoom(userId, linkCode) { return await apiRequest("/soci
 async function getRoomMembers(roomId) { return await apiRequest(`/social/room-members/${roomId}`); }
 async function deleteSocialRoom(roomId, userId) { return await apiRequest(`/social/room/${roomId}`, "DELETE", { userId }); }
 
-async function getRoomMessages(roomId) { return await apiRequest(`/social/room-messages/${roomId}`); }
-async function sendRoomMessage(senderId, roomId, text) { return await apiRequest("/social/send-room", "POST", { senderId, roomId, text }); }
+async function getRoomMessages(roomId, userId) { 
+  const query = userId ? `?userId=${userId}` : '';
+  return await apiRequest(`/social/room-messages/${roomId}${query}`); 
+}
+async function sendRoomMessage(senderId, roomId, text, replyToId = null) { return await apiRequest("/social/send-room", "POST", { senderId, roomId, text, replyToId }); }
+
+async function deleteMessageForMe(messageId, messageType, userId) { return await apiRequest("/social/delete-for-me", "POST", { messageId, messageType, userId }); }
+async function deleteMessageForEveryone(messageId, messageType, userId) { return await apiRequest("/social/delete-for-everyone", "POST", { messageId, messageType, userId }); }
+async function reactToMessage(messageId, messageType, userId, emoji) { return await apiRequest("/social/react", "POST", { messageId, messageType, userId, emoji }); }

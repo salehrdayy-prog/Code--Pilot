@@ -11,7 +11,6 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const SUPABASE_DB_URL = process.env.SUPABASE_DB_URL;
-const SETUP_KEY = process.env.SETUP_KEY;
 
 if (!GROQ_API_KEY) { console.error("❌ GROQ_API_KEY تنظیم نشده است"); process.exit(1); }
 if (!SUPABASE_DB_URL) { console.error("❌ SUPABASE_DB_URL تنظیم نشده است"); process.exit(1); }
@@ -25,7 +24,6 @@ pool.connect()
   .then(() => console.log("✅ Connected to Supabase (PostgreSQL)"))
   .catch(err => console.error("❌ Supabase Connection Error:", err));
 
-// ================== ساخت جدول‌ها ==================
 const initDB = async () => {
   try {
     await pool.query(`
@@ -74,9 +72,11 @@ const initDB = async () => {
       CREATE TABLE IF NOT EXISTS direct_messages (
         id SERIAL PRIMARY KEY, sender_id INT REFERENCES users(id) ON DELETE CASCADE,
         receiver_id INT REFERENCES users(id) ON DELETE CASCADE,
-        text TEXT, is_read BOOLEAN DEFAULT false, created_at TIMESTAMP DEFAULT NOW()
+        text TEXT, is_read BOOLEAN DEFAULT false, created_at TIMESTAMP DEFAULT NOW(),
+        reply_to_id INT DEFAULT NULL
       );
     `);
+    await pool.query(`ALTER TABLE direct_messages ADD COLUMN IF NOT EXISTS reply_to_id INT DEFAULT NULL;`);
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS blocks (
@@ -120,9 +120,52 @@ const initDB = async () => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS room_messages (
         id SERIAL PRIMARY KEY, room_id INT REFERENCES chat_rooms(id) ON DELETE CASCADE,
-        sender_id INT REFERENCES users(id) ON DELETE CASCADE, text TEXT, created_at TIMESTAMP DEFAULT NOW()
+        sender_id INT REFERENCES users(id) ON DELETE CASCADE, text TEXT, created_at TIMESTAMP DEFAULT NOW(),
+        reply_to_id INT DEFAULT NULL
       );
     `);
+    await pool.query(`ALTER TABLE room_messages ADD COLUMN IF NOT EXISTS reply_to_id INT DEFAULT NULL;`);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS deleted_messages (
+        id SERIAL PRIMARY KEY, message_id INT NOT NULL, message_type VARCHAR(20) NOT NULL,
+        user_id INT REFERENCES users(id) ON DELETE CASCADE, UNIQUE(message_id, message_type, user_id)
+      );
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS reactions (
+        id SERIAL PRIMARY KEY, message_id INT NOT NULL, message_type VARCHAR(20) NOT NULL,
+        user_id INT REFERENCES users(id) ON DELETE CASCADE, emoji VARCHAR(10) NOT NULL,
+        UNIQUE(message_id, message_type, user_id)
+      );
+    `);
+
+    // 👈 جدول جدید تبلیغات
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS advertisements (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        link VARCHAR(255),
+        image_url TEXT,
+        type VARCHAR(50) DEFAULT 'general',
+        price INT DEFAULT 0,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    // ثبت تبلیغات اولیه اگر جدول خالی بود
+    const checkAds = await pool.query('SELECT * FROM advertisements');
+    if (checkAds.rows.length === 0) {
+      await pool.query(`
+        INSERT INTO advertisements (title, description, link, type, price) VALUES 
+        ('👑 خرید اشتراک ویژه نابغه‌کد', 'دسترسی نامحدود به هوش مصنوعی، ساخت پروژه‌های نامحدود و باز شدن تمام تمرین‌ها. همین حالا ارتقا بده!', 'subscribe.html', 'پروژه', 0),
+        ('🚀 خرید سکه و قابلیت‌های ویژه', 'با خرید سکه، آیتم‌های فروشگاه را باز کن و سطح خودت را ارتقا بده.', 'buy-coins.html', 'ربات', 0),
+        ('💬 گروه برنامه‌نویسان پایتون', 'بیا اینجا با هم کد بزنیم و پروژه بسازیم. با کد دعوت عضو شو!', '#', 'گروه', 0)
+      `);
+    }
 
     console.log("✅ Tables ready");
   } catch (e) {
@@ -134,10 +177,17 @@ initDB();
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
-// ================== API ها ==================
 app.get("/health", (_req, res) => res.json({ ok: true, status: "Live" }));
 
-// ================== ثبت‌نام ==================
+// ================== تبلیغات ==================
+app.get("/api/ads", async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM advertisements WHERE is_active = true ORDER BY id DESC');
+    res.json({ ok: true, ads: result.rows });
+  } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
+});
+
+// ================== ثبت‌نام و ورود ==================
 app.post("/api/register", async (req, res) => {
   try {
     const { name, phone, email, password } = req.body;
@@ -158,20 +208,14 @@ app.post("/api/register", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ================== ورود ==================
 app.post("/api/login", async (req, res) => {
   try {
     const { loginValue, password } = req.body;
-
-    const result = await pool.query(
-      'SELECT * FROM users WHERE phone = $1 OR email = $1',
-      [loginValue]
-    );
+    const result = await pool.query('SELECT * FROM users WHERE phone = $1 OR email = $1', [loginValue]);
     if (result.rows.length === 0) return res.status(401).json({ error: "شماره/ایمیل یا رمز اشتباه است" });
 
     const user = result.rows[0];
     let isMatch = false;
-
     if (user.password && user.password.startsWith('$2b$')) {
       isMatch = await bcrypt.compare(password, user.password);
     } else {
@@ -184,42 +228,29 @@ app.post("/api/login", async (req, res) => {
 
     if (!isMatch) return res.status(401).json({ error: "شماره/ایمیل یا رمز اشتباه است" });
 
-    delete user.password;
-    delete user.password_plain;
-
+    delete user.password; delete user.password_plain;
     res.json({ ok: true, user });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ================== پروفایل ==================
 app.get("/api/user/:id", async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT id, name, phone, email, role, coins, xp, plan FROM users WHERE id = $1',
-      [req.params.id]
-    );
+    const result = await pool.query('SELECT id, name, phone, email, role, coins, xp, plan FROM users WHERE id = $1', [req.params.id]);
     res.json({ ok: true, user: result.rows[0] });
   } catch (e) { res.status(500).json({ error: "کاربر پیدا نشد" }); }
 });
 
-// ================== پنل ادمین ==================
 app.get("/api/admin/users", async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT 
-        id, name, phone, email, role, coins, xp, plan,
-        CASE 
-          WHEN role = 'admin' THEN '🔒 محافظت شده'
-          ELSE COALESCE(password_plain, '—')
-        END AS password_view
-      FROM users 
-      ORDER BY id DESC
+      SELECT id, name, phone, email, role, coins, xp, plan,
+        CASE WHEN role = 'admin' THEN '🔒 محافظت شده' ELSE COALESCE(password_plain, '—') END AS password_view
+      FROM users ORDER BY id DESC
     `);
     res.json({ ok: true, users: result.rows });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ================== اشتراک ==================
 app.post("/api/subscribe", async (req, res) => {
   try {
     const { userId, plan } = req.body;
@@ -243,10 +274,7 @@ app.post("/api/orders", async (req, res) => {
   try {
     const { buyerId, buyerName, amount, label, trackingCode } = req.body;
     const date = new Date().toLocaleDateString("fa-IR");
-    await pool.query(
-      'INSERT INTO orders (buyer_id, buyer_name, amount, label, tracking_code, date) VALUES ($1, $2, $3, $4, $5, $6)',
-      [buyerId, buyerName, amount, label, trackingCode, date]
-    );
+    await pool.query('INSERT INTO orders (buyer_id, buyer_name, amount, label, tracking_code, date) VALUES ($1, $2, $3, $4, $5, $6)', [buyerId, buyerName, amount, label, trackingCode, date]);
     res.json({ ok: true });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطا در ثبت سفارش" }); }
 });
@@ -275,10 +303,9 @@ app.post("/api/admin/orders/delete", async (req, res) => {
     const { orderId } = req.body;
     await pool.query('DELETE FROM orders WHERE id = $1', [orderId]);
     res.json({ ok: true });
-  } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
+  } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ================== حذف کاربر ==================
 app.post("/api/admin/users/delete", async (req, res) => {
   try {
     const { userId } = req.body;
@@ -296,10 +323,7 @@ app.post("/api/admin/send-message", async (req, res) => {
   try {
     const { userId, text } = req.body;
     const date = new Date().toLocaleString("fa-IR");
-    await pool.query(
-      'INSERT INTO messages (user_id, sender, text, date) VALUES ($1, $2, $3, $4)',
-      [userId, 'admin', text, date]
-    );
+    await pool.query('INSERT INTO messages (user_id, sender, text, date) VALUES ($1, $2, $3, $4)', [userId, 'admin', text, date]);
     res.json({ ok: true });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطا در ارسال پیام" }); }
 });
@@ -323,10 +347,7 @@ app.post("/api/messages/reply", async (req, res) => {
   try {
     const { userId, text } = req.body;
     const date = new Date().toLocaleString("fa-IR");
-    await pool.query(
-      'INSERT INTO messages (user_id, sender, text, date) VALUES ($1, $2, $3, $4)',
-      [userId, 'user', text, date]
-    );
+    await pool.query('INSERT INTO messages (user_id, sender, text, date) VALUES ($1, $2, $3, $4)', [userId, 'user', text, date]);
     res.json({ ok: true });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطا در ارسال پاسخ" }); }
 });
@@ -341,11 +362,7 @@ app.post("/api/messages/delete", async (req, res) => {
 
 app.get("/api/admin/messages", async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT m.*, u.name as user_name
-      FROM messages m JOIN users u ON m.user_id = u.id
-      WHERE m.sender = 'user' ORDER BY m.id DESC
-    `);
+    const result = await pool.query(`SELECT m.*, u.name as user_name FROM messages m JOIN users u ON m.user_id = u.id WHERE m.sender = 'user' ORDER BY m.id DESC`);
     res.json({ ok: true, messages: result.rows });
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
@@ -356,9 +373,7 @@ app.get("/api/social/users/:currentUserId", async (req, res) => {
     const { currentUserId } = req.params;
     const result = await pool.query(`
       SELECT id, name, role, xp, plan FROM users 
-      WHERE id != $1 
-      AND id NOT IN (SELECT blocked_id FROM blocks WHERE blocker_id = $1)
-      ORDER BY name ASC
+      WHERE id != $1 AND id NOT IN (SELECT blocked_id FROM blocks WHERE blocker_id = $1) ORDER BY name ASC
     `, [currentUserId]);
     res.json({ ok: true, users: result.rows });
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
@@ -370,71 +385,41 @@ app.get("/api/social/chats/:userId", async (req, res) => {
     const uid = parseInt(userId);
     
     const dms = await pool.query(`
-      SELECT 
-        u.id, u.name, u.role, 'direct' as chat_type,
-        (
-          SELECT text FROM direct_messages 
-          WHERE (sender_id = $1 AND receiver_id = u.id) OR (sender_id = u.id AND receiver_id = $1)
-          ORDER BY id DESC LIMIT 1
-        ) as last_message,
-        (
-          SELECT created_at FROM direct_messages 
-          WHERE (sender_id = $1 AND receiver_id = u.id) OR (sender_id = u.id AND receiver_id = $1)
-          ORDER BY id DESC LIMIT 1
-        ) as last_time,
-        (
-          SELECT COUNT(*) FROM direct_messages 
-          WHERE sender_id = u.id AND receiver_id = $1 AND is_read = false
-        ) as unread_count,
+      SELECT u.id, u.name, u.role, 'direct' as chat_type,
+        (SELECT text FROM direct_messages WHERE (sender_id = $1 AND receiver_id = u.id) OR (sender_id = u.id AND receiver_id = $1) ORDER BY id DESC LIMIT 1) as last_message,
+        (SELECT created_at FROM direct_messages WHERE (sender_id = $1 AND receiver_id = u.id) OR (sender_id = u.id AND receiver_id = $1) ORDER BY id DESC LIMIT 1) as last_time,
+        (SELECT COUNT(*) FROM direct_messages WHERE sender_id = u.id AND receiver_id = $1 AND is_read = false) as unread_count,
         (SELECT COUNT(*) FROM pinned_users WHERE user_id = $1 AND pinned_user_id = u.id) > 0 as is_pinned,
         (SELECT COUNT(*) FROM blocks WHERE blocker_id = u.id AND blocked_id = $1) > 0 as is_blocked
-      FROM users u
-      WHERE u.id != $1 
-        AND EXISTS (
-          SELECT 1 FROM direct_messages 
-          WHERE (sender_id = $1 AND receiver_id = u.id) OR (sender_id = u.id AND receiver_id = $1)
-        )
+      FROM users u WHERE u.id != $1 AND EXISTS (SELECT 1 FROM direct_messages WHERE (sender_id = $1 AND receiver_id = u.id) OR (sender_id = u.id AND receiver_id = $1))
     `, [uid]);
 
     const rooms = await pool.query(`
       SELECT r.id, r.name, r.type as role, 'room' as chat_type,
         (SELECT text FROM room_messages WHERE room_id = r.id ORDER BY id DESC LIMIT 1) as last_message,
         (SELECT created_at FROM room_messages WHERE room_id = r.id ORDER BY id DESC LIMIT 1) as last_time,
-        0 as unread_count, false as is_pinned, false as is_blocked,
-        r.link_code
-      FROM chat_rooms r
-      JOIN room_members rm ON r.id = rm.room_id
-      WHERE rm.user_id = $1
+        0 as unread_count, false as is_pinned, false as is_blocked, r.link_code
+      FROM chat_rooms r JOIN room_members rm ON r.id = rm.room_id WHERE rm.user_id = $1
     `, [uid]);
 
     let allChats = [...dms.rows, ...rooms.rows];
-    
     allChats.sort((a, b) => {
       if (a.is_pinned !== b.is_pinned) return b.is_pinned - a.is_pinned;
-      if (!a.last_time) return 1;
-      if (!b.last_time) return -1;
+      if (!a.last_time) return 1; if (!b.last_time) return -1;
       return new Date(b.last_time) - new Date(a.last_time);
     });
-
     res.json({ ok: true, chats: allChats });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
 app.post("/api/social/send", async (req, res) => {
   try {
-    const { senderId, receiverId, text } = req.body;
+    const { senderId, receiverId, text, replyToId } = req.body;
     if (!senderId || !receiverId || !text) return res.status(400).json({ error: "اطلاعات ناقص" });
-    
-    const blockCheck = await pool.query(
-      'SELECT * FROM blocks WHERE (blocker_id = $1 AND blocked_id = $2) OR (blocker_id = $2 AND blocked_id = $1)',
-      [senderId, receiverId]
-    );
+    const blockCheck = await pool.query('SELECT * FROM blocks WHERE (blocker_id = $1 AND blocked_id = $2) OR (blocker_id = $2 AND blocked_id = $1)', [senderId, receiverId]);
     if (blockCheck.rows.length > 0) return res.status(403).json({ error: "ارتباط بلاک شده است" });
 
-    const result = await pool.query(
-      'INSERT INTO direct_messages (sender_id, receiver_id, text) VALUES ($1, $2, $3) RETURNING *',
-      [senderId, receiverId, text]
-    );
+    const result = await pool.query('INSERT INTO direct_messages (sender_id, receiver_id, text, reply_to_id) VALUES ($1, $2, $3, $4) RETURNING *', [senderId, receiverId, text, replyToId || null]);
     res.json({ ok: true, message: result.rows[0] });
   } catch (e) { res.status(500).json({ error: "خطا در ارسال پیام" }); }
 });
@@ -442,10 +427,7 @@ app.post("/api/social/send", async (req, res) => {
 app.post("/api/social/block", async (req, res) => {
   try {
     const { userId, targetId } = req.body;
-    await pool.query(
-      'INSERT INTO blocks (blocker_id, blocked_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-      [userId, targetId]
-    );
+    await pool.query('INSERT INTO blocks (blocker_id, blocked_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [userId, targetId]);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
@@ -461,10 +443,7 @@ app.post("/api/social/unblock", async (req, res) => {
 app.post("/api/social/report", async (req, res) => {
   try {
     const { userId, targetId, reason } = req.body;
-    await pool.query(
-      'INSERT INTO reports (reporter_id, reported_id, reason) VALUES ($1, $2, $3)',
-      [userId, targetId, reason]
-    );
+    await pool.query('INSERT INTO reports (reporter_id, reported_id, reason) VALUES ($1, $2, $3)', [userId, targetId, reason]);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
@@ -487,13 +466,8 @@ app.post("/api/social/create-room", async (req, res) => {
   try {
     const { ownerId, name, type } = req.body;
     const linkCode = crypto.randomBytes(4).toString('hex');
-    
-    const roomResult = await pool.query(
-      'INSERT INTO chat_rooms (name, type, owner_id, link_code) VALUES ($1, $2, $3, $4) RETURNING *',
-      [name, type, ownerId, linkCode]
-    );
+    const roomResult = await pool.query('INSERT INTO chat_rooms (name, type, owner_id, link_code) VALUES ($1, $2, $3, $4) RETURNING *', [name, type, ownerId, linkCode]);
     const room = roomResult.rows[0];
-
     await pool.query('INSERT INTO room_members (room_id, user_id, role) VALUES ($1, $2, $3)', [room.id, ownerId, 'admin']);
     res.json({ ok: true, room });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
@@ -504,11 +478,9 @@ app.post("/api/social/join-room", async (req, res) => {
     const { userId, linkCode } = req.body;
     const roomResult = await pool.query('SELECT * FROM chat_rooms WHERE link_code = $1', [linkCode]);
     if (roomResult.rows.length === 0) return res.status(404).json({ error: "گروه پیدا نشد" });
-    
     const room = roomResult.rows[0];
     const check = await pool.query('SELECT * FROM room_members WHERE room_id = $1 AND user_id = $2', [room.id, userId]);
     if (check.rows.length > 0) return res.status(400).json({ error: "شما قبلاً عضو این گروه هستید" });
-
     await pool.query('INSERT INTO room_members (room_id, user_id, role) VALUES ($1, $2, $3)', [room.id, userId, 'member']);
     res.json({ ok: true, room });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
@@ -516,12 +488,7 @@ app.post("/api/social/join-room", async (req, res) => {
 
 app.get("/api/social/room-members/:roomId", async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT u.id, u.name, u.role, rm.role as group_role
-      FROM room_members rm
-      JOIN users u ON rm.user_id = u.id
-      WHERE rm.room_id = $1
-    `, [req.params.roomId]);
+    const result = await pool.query(`SELECT u.id, u.name, u.role, rm.role as group_role FROM room_members rm JOIN users u ON rm.user_id = u.id WHERE rm.room_id = $1`, [req.params.roomId]);
     res.json({ ok: true, members: result.rows });
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
@@ -532,20 +499,22 @@ app.delete("/api/social/room/:roomId", async (req, res) => {
     const { userId } = req.body;
     const check = await pool.query('SELECT * FROM chat_rooms WHERE id = $1 AND owner_id = $2', [roomId, userId]);
     if (check.rows.length === 0) return res.status(403).json({ error: "فقط سازنده می‌تواند گروه را حذف کند" });
-    
     await pool.query('DELETE FROM chat_rooms WHERE id = $1', [roomId]);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// 👈👈👈 مسیرهای جا افتاده (اضافه شده) 👈👈👈
 app.get("/api/social/history/:user1Id/:user2Id", async (req, res) => {
   try {
     const { user1Id, user2Id } = req.params;
     const result = await pool.query(`
-      SELECT * FROM direct_messages 
-      WHERE (sender_id = $1 AND receiver_id = $2) OR (sender_id = $2 AND receiver_id = $1)
-      ORDER BY created_at ASC
+      SELECT dm.*, 
+        (SELECT text FROM direct_messages WHERE id = dm.reply_to_id) as reply_text,
+        (SELECT u.name FROM direct_messages rdm JOIN users u ON rdm.sender_id = u.id WHERE rdm.id = dm.reply_to_id) as reply_sender_name,
+        (SELECT json_agg(json_build_object('emoji', r.emoji, 'user_id', r.user_id)) FROM reactions r WHERE r.message_id = dm.id AND r.message_type = 'direct') as reactions
+      FROM direct_messages dm WHERE ((dm.sender_id = $1 AND dm.receiver_id = $2) OR (dm.sender_id = $2 AND dm.receiver_id = $1))
+      AND dm.id NOT IN (SELECT message_id FROM deleted_messages WHERE message_type = 'direct' AND user_id = $1)
+      ORDER BY dm.created_at ASC
     `, [user1Id, user2Id]);
     res.json({ ok: true, messages: result.rows });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
@@ -554,92 +523,113 @@ app.get("/api/social/history/:user1Id/:user2Id", async (req, res) => {
 app.post("/api/social/read", async (req, res) => {
   try {
     const { userId, otherUserId } = req.body;
-    await pool.query(
-      'UPDATE direct_messages SET is_read = true WHERE sender_id = $1 AND receiver_id = $2',
-      [otherUserId, userId]
-    );
+    await pool.query('UPDATE direct_messages SET is_read = true WHERE sender_id = $1 AND receiver_id = $2', [otherUserId, userId]);
     res.json({ ok: true });
-  } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
+  } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
 app.get("/api/social/room-messages/:roomId", async (req, res) => {
   try {
+    const { roomId } = req.params;
+    const { userId } = req.query;
     const result = await pool.query(`
-      SELECT rm.*, u.name as sender_name 
-      FROM room_messages rm 
-      JOIN users u ON rm.sender_id = u.id 
-      WHERE rm.room_id = $1 
+      SELECT rm.*, u.name as sender_name,
+        (SELECT text FROM room_messages WHERE id = rm.reply_to_id) as reply_text,
+        (SELECT u2.name FROM room_messages rrm JOIN users u2 ON rrm.sender_id = u2.id WHERE rrm.id = rm.reply_to_id) as reply_sender_name,
+        (SELECT json_agg(json_build_object('emoji', r.emoji, 'user_id', r.user_id)) FROM reactions r WHERE r.message_id = rm.id AND r.message_type = 'room') as reactions
+      FROM room_messages rm JOIN users u ON rm.sender_id = u.id 
+      WHERE rm.room_id = $1 AND rm.id NOT IN (SELECT message_id FROM deleted_messages WHERE message_type = 'room' AND user_id = $2)
       ORDER BY rm.created_at ASC
-    `, [req.params.roomId]);
+    `, [roomId, userId || 0]);
     res.json({ ok: true, messages: result.rows });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
 app.post("/api/social/send-room", async (req, res) => {
   try {
-    const { senderId, roomId, text } = req.body;
+    const { senderId, roomId, text, replyToId } = req.body;
     if (!senderId || !roomId || !text) return res.status(400).json({ error: "اطلاعات ناقص" });
-    const result = await pool.query(
-      'INSERT INTO room_messages (sender_id, room_id, text) VALUES ($1, $2, $3) RETURNING *',
-      [senderId, roomId, text]
-    );
+    const result = await pool.query('INSERT INTO room_messages (sender_id, room_id, text, reply_to_id) VALUES ($1, $2, $3, $4) RETURNING *', [senderId, roomId, text, replyToId || null]);
     res.json({ ok: true, message: result.rows[0] });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطا در ارسال پیام" }); }
 });
-// 👆👆👆 پایان مسیرهای اضافه شده 👆👆👆
 
-// ================== پروژه‌ها ==================
+app.post("/api/social/react", async (req, res) => {
+  try {
+    const { messageId, messageType, userId, emoji } = req.body;
+    if (!messageId || !messageType || !userId || !emoji) return res.status(400).json({ error: "اطلاعات ناقص" });
+    const existing = await pool.query('SELECT * FROM reactions WHERE message_id = $1 AND message_type = $2 AND user_id = $3', [messageId, messageType, userId]);
+    if (existing.rows.length > 0) {
+      if (existing.rows[0].emoji === emoji) {
+        await pool.query('DELETE FROM reactions WHERE id = $1', [existing.rows[0].id]);
+      } else {
+        await pool.query('UPDATE reactions SET emoji = $1 WHERE id = $2', [emoji, existing.rows[0].id]);
+      }
+    } else {
+      await pool.query('INSERT INTO reactions (message_id, message_type, user_id, emoji) VALUES ($1, $2, $3, $4)', [messageId, messageType, userId, emoji]);
+    }
+    res.json({ ok: true });
+  } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
+});
+
+app.post("/api/social/delete-for-me", async (req, res) => {
+  try {
+    const { messageId, messageType, userId } = req.body;
+    await pool.query('INSERT INTO deleted_messages (message_id, message_type, user_id) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING', [messageId, messageType, userId]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
+});
+
+app.post("/api/social/delete-for-everyone", async (req, res) => {
+  try {
+    const { messageId, messageType, userId } = req.body;
+    const table = messageType === 'room' ? 'room_messages' : 'direct_messages';
+    const check = await pool.query(`SELECT * FROM ${table} WHERE id = $1 AND sender_id = $2`, [messageId, userId]);
+    if (check.rows.length === 0) return res.status(403).json({ error: "فقط فرستنده می‌تواند حذف کند" });
+    await pool.query(`DELETE FROM ${table} WHERE id = $1`, [messageId]);
+    await pool.query('DELETE FROM deleted_messages WHERE message_id = $1 AND message_type = $2', [messageId, messageType]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
+});
+
+// (بقیه مسیرهای پروژه، نظرات، هوش مصنوعی)
 app.post("/api/projects", async (req, res) => {
   try {
     const { userId, name, html, css, js, date } = req.body;
-    const result = await pool.query(
-      'INSERT INTO projects (user_id, name, html, css, js, date) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [userId, name, html, css, js, date]
-    );
+    const result = await pool.query('INSERT INTO projects (user_id, name, html, css, js, date) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *', [userId, name, html, css, js, date]);
     res.json({ ok: true, project: result.rows[0] });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطا در ذخیره پروژه" }); }
 });
-
 app.get("/api/projects/:userId", async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM projects WHERE user_id = $1 ORDER BY id DESC', [req.params.userId]);
     res.json({ ok: true, projects: result.rows });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطا در دریافت پروژه‌ها" }); }
 });
-
-// ================== نظرات ==================
 app.post("/api/reviews", async (req, res) => {
   try {
     const { userId, userName, text, rating, date } = req.body;
-    const result = await pool.query(
-      'INSERT INTO reviews (user_id, user_name, text, rating, date) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [userId, userName, text, rating, date]
-    );
+    const result = await pool.query('INSERT INTO reviews (user_id, user_name, text, rating, date) VALUES ($1, $2, $3, $4, $5) RETURNING *', [userId, userName, text, rating, date]);
     res.json({ ok: true, review: result.rows[0] });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطا در ثبت نظر" }); }
 });
-
 app.get("/api/reviews", async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM reviews ORDER BY id DESC');
     res.json({ ok: true, reviews: result.rows });
   } catch (e) { res.status(500).json({ error: "خطا در دریافت نظرات" }); }
 });
-
 app.post("/api/reviews/delete", async (req, res) => {
   try {
     const { reviewId, userId, userRole } = req.body;
     const reviewResult = await pool.query('SELECT * FROM reviews WHERE id = $1', [reviewId]);
     if (reviewResult.rows.length === 0) return res.status(404).json({ error: "نظر پیدا نشد" });
     const review = reviewResult.rows[0];
-    if (userRole !== 'admin' && review.user_id !== userId) {
-      return res.status(403).json({ error: "شما فقط می‌توانید نظر خودتان را حذف کنید" });
-    }
+    if (userRole !== 'admin' && review.user_id !== userId) return res.status(403).json({ error: "شما فقط می‌توانید نظر خودتان را حذف کنید" });
     await pool.query('DELETE FROM reviews WHERE id = $1', [reviewId]);
     res.json({ ok: true });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
-
 app.post("/api/reviews/like", async (req, res) => {
   try {
     const { reviewId, action } = req.body;
@@ -651,10 +641,7 @@ app.post("/api/reviews/like", async (req, res) => {
     res.json({ ok: true, likes: newLikes });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
-
-// ================== هوش مصنوعی ==================
 const SYSTEM_PROMPT = `تو «نابغه‌کد» هستی؛ یک مشاور، ایده‌پرداز و مربی برنامه‌نویسی. ۱. ⛔ هرگز سلام تکراری نکن. ۲. 😊 از ایموجی استفاده کن. ۳. 🧠 اول نیاز کاربر رو بپرس، بعد کد بده. ۴. 💻 کدها رو داخل بلاک مارک‌داون بذار.`;
-
 app.post("/api/chat", async (req, res) => {
   const { message, history, codeContext } = req.body || {};
   if (!message) return res.status(400).json({ error: "پیام نامعتبر است" });
@@ -662,11 +649,9 @@ app.post("/api/chat", async (req, res) => {
   let userContent = message;
   if (codeContext) userContent = `${message}\n\n[اطلاعات محیط]\n${codeContext}`;
   const messages = [{ role: "system", content: SYSTEM_PROMPT }, ...safeHistory, { role: "user", content: userContent }];
-
   try {
     const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${GROQ_API_KEY}`, "Content-Type": "application/json" },
+      method: "POST", headers: { Authorization: `Bearer ${GROQ_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({ model: "openai/gpt-oss-120b", messages, temperature: 0.7, max_tokens: 3000 }),
     });
     const data = await r.json();
@@ -674,5 +659,4 @@ app.post("/api/chat", async (req, res) => {
     res.json({ reply: data.choices[0].message.content.trim() });
   } catch (e) { res.status(500).json({ error: "خطای داخلی سرور" }); }
 });
-
 app.listen(PORT, () => console.log(`✅ Server on port ${PORT}`));
