@@ -42,7 +42,6 @@ async function deleteReview(reviewId, userId, userRole) { return await apiReques
 async function likeReviewAPI(reviewId, action) { return await apiRequest("/reviews/like", "POST", { reviewId, action }); }
 async function upgradeSubscription(userId, plan) { return await apiRequest("/subscribe", "POST", { userId, plan }); }
 
-// 👈 توابع آپدیت پروفایل و تبلیغات
 async function updateUserProfile(userId, name, bio, avatar) { return await apiRequest("/user/update-profile", "POST", { userId, name, bio, avatar }); }
 async function requestAdvertisement(userId, userName, phone, content, price) { return await apiRequest("/ads/request", "POST", { userId, userName, phone, content, price }); }
 async function getAdRequests() { return await apiRequest("/admin/ad-requests"); }

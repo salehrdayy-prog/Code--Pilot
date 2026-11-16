@@ -149,26 +149,23 @@ const initDB = async () => {
       );
     `);
 
-    // 👈 جدول جدید: درخواست‌های تبلیغات
     await pool.query(`
       CREATE TABLE IF NOT EXISTS ad_requests (
         id SERIAL PRIMARY KEY,
         user_id INT REFERENCES users(id) ON DELETE CASCADE,
-        user_name VARCHAR(255),
-        phone VARCHAR(255),
-        content TEXT NOT NULL,
-        price INT DEFAULT 0,
-        status VARCHAR(50) DEFAULT 'pending',
-        created_at TIMESTAMP DEFAULT NOW()
+        user_name VARCHAR(255), phone VARCHAR(255), content TEXT NOT NULL,
+        price INT DEFAULT 0, status VARCHAR(50) DEFAULT 'pending', created_at TIMESTAMP DEFAULT NOW()
       );
     `);
+
+    // 👈 حذف تبلیغ گروه نابغه پایتون
+    await pool.query(`DELETE FROM advertisements WHERE title = '💬 گروه برنامه‌نویسان پایتون';`);
 
     const checkAds = await pool.query('SELECT * FROM advertisements');
     if (checkAds.rows.length === 0) {
       await pool.query(`
         INSERT INTO advertisements (title, description, link, type, price) VALUES 
-        ('🚀 خرید سکه و قابلیت‌های ویژه', 'با خرید سکه، آیتم‌های فروشگاه را باز کن و سطح خودت را ارتقا بده.', 'buy-coins.html', 'ربات', 0),
-        ('💬 گروه برنامه‌نویسان پایتون', 'بیا اینجا با هم کد بزنیم و پروژه بسازیم. با کد دعوت عضو شو!', '#', 'گروه', 0)
+        ('🚀 خرید سکه و قابلیت‌های ویژه', 'با خرید سکه، آیتم‌های فروشگاه را باز کن و سطح خودت را ارتقا بده.', 'buy-coins.html', 'ربات', 0)
       `);
     }
 
@@ -190,20 +187,15 @@ app.get("/api/ads", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// 👈 ثبت درخواست تبلیغات
 app.post("/api/ads/request", async (req, res) => {
   try {
     const { userId, userName, phone, content, price } = req.body;
     if (!content) return res.status(400).json({ error: "متن تبلیغ را وارد کنید" });
-    await pool.query(
-      'INSERT INTO ad_requests (user_id, user_name, phone, content, price) VALUES ($1, $2, $3, $4, $5)',
-      [userId, userName, phone, content, price || 0]
-    );
+    await pool.query('INSERT INTO ad_requests (user_id, user_name, phone, content, price) VALUES ($1, $2, $3, $4, $5)', [userId, userName, phone, content, price || 0]);
     res.json({ ok: true });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// 👈 دریافت درخواست‌های تبلیغات (ادمین)
 app.get("/api/admin/ad-requests", async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM ad_requests ORDER BY id DESC');
@@ -211,10 +203,9 @@ app.get("/api/admin/ad-requests", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// 👈 تایید یا رد درخواست تبلیغات
 app.post("/api/admin/ad-requests/action", async (req, res) => {
   try {
-    const { requestId, action } = req.body; // action: 'approve' | 'reject'
+    const { requestId, action } = req.body;
     if (action === 'approve') {
       const reqResult = await pool.query('SELECT * FROM ad_requests WHERE id = $1', [requestId]);
       if (reqResult.rows.length === 0) return res.status(404).json({ error: "درخواست یافت نشد" });
@@ -285,7 +276,6 @@ app.get("/api/user/:id", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "کاربر پیدا نشد" }); }
 });
 
-// 👈 آپدیت پروفایل
 app.post("/api/user/update-profile", async (req, res) => {
   try {
     const { userId, name, bio, avatar } = req.body;
@@ -650,7 +640,7 @@ app.post("/api/social/delete-for-everyone", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ================== گزارش‌های کاربران (ادمین) ==================
+// ================== گزارش‌های کاربران ==================
 app.get("/api/admin/reports", async (req, res) => {
   try {
     const result = await pool.query(`
@@ -674,7 +664,7 @@ app.post("/api/admin/reports/delete", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// (بقیه مسیرهای پروژه، نظرات، هوش مصنوعی)
+// ================== پروژه‌ها و نظرات ==================
 app.post("/api/projects", async (req, res) => {
   try {
     const { userId, name, html, css, js, date } = req.body;
@@ -723,6 +713,8 @@ app.post("/api/reviews/like", async (req, res) => {
     res.json({ ok: true, likes: newLikes });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
+
+// ================== هوش مصنوعی ==================
 const SYSTEM_PROMPT = `تو «نابغه‌کد» هستی؛ یک مشاور، ایده‌پرداز و مربی برنامه‌نویسی. ۱. ⛔ هرگز سلام تکراری نکن. ۲. 😊 از ایموجی استفاده کن. ۳. 🧠 اول نیاز کاربر رو بپرس، بعد کد بده. ۴. 💻 کدها رو داخل بلاک مارک‌داون بذار.`;
 app.post("/api/chat", async (req, res) => {
   const { message, history, codeContext } = req.body || {};
@@ -741,4 +733,5 @@ app.post("/api/chat", async (req, res) => {
     res.json({ reply: data.choices[0].message.content.trim() });
   } catch (e) { res.status(500).json({ error: "خطای داخلی سرور" }); }
 });
+
 app.listen(PORT, () => console.log(`✅ Server on port ${PORT}`));

@@ -43,7 +43,6 @@ function switchTab(tab) {
 async function loadAdvertisements() {
     listContainer.innerHTML = '<p style="text-align:center; color:#8aa3c9; padding:20px;">در حال دریافت...</p>';
     
-    // 1. کارت درخواست تبلیغات (کارت اول)
     let html = `
         <div class="ad-card" style="background: linear-gradient(145deg, rgba(16,185,129,0.15), rgba(5,150,105,0.05)); border-color: rgba(16,185,129,0.3);">
             <div class="ad-badge" style="background: #10b98120; color: #10b981; border: 1px solid #10b98140;">💼 درخواست تبلیغات</div>
@@ -53,7 +52,6 @@ async function loadAdvertisements() {
         </div>
     `;
 
-    // 2. تبلیغات تایید شده
     const res = await getAdvertisements();
     if (res.ok && res.data.ads && res.data.ads.length > 0) {
         html += res.data.ads.map(ad => {
@@ -316,6 +314,7 @@ async function openChat(id, name, type, role, linkCode) {
     pollInterval = setInterval(loadMessages, 3000);
 }
 
+// 👈 بهینه‌سازی رندر پیام‌ها
 async function loadMessages() {
     if (!activeChat) return;
     let msgs = [];
@@ -329,7 +328,9 @@ async function loadMessages() {
 
     const isScrolledToBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 100;
     const currentCount = chatMessages.querySelectorAll('.msg-bubble').length;
-    if (currentCount === msgs.length) return;
+    
+    // 👈 اگر تعداد پیام‌ها فرقی نکرده، دوباره کل صفحه رو نساز
+    if (currentCount === msgs.length && currentCount > 0) return;
 
     chatMessages.innerHTML = '';
     if (msgs.length === 0) {
@@ -367,7 +368,7 @@ async function loadMessages() {
 
         let imageHTML = '';
         if (m.image_url) {
-            imageHTML = `<img src="${m.image_url}" class="msg-img" onclick="window.open(this.src, '_blank')">`;
+            imageHTML = `<img src="${m.image_url}" class="msg-img" onclick="event.stopPropagation(); window.open(this.src, '_blank')">`;
         }
 
         const bubble = document.createElement('div');
@@ -383,11 +384,12 @@ async function loadMessages() {
                 ${checkmark}
             </div>
             ${reactionsHTML}
-            <button class="msg-menu-btn" title="گزینه‌ها"><i class="fas fa-ellipsis-v"></i></button>
         `;
         
-        bubble.querySelector('.msg-menu-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
+        // 👈 با کلیک روی هر جای پیام، منوی گزینه‌ها باز می‌شه
+        bubble.addEventListener('click', (e) => {
+            // اگر کاربر روی لینک یا دکمه خاصی کلیک کرد، از باز شدن منو جلوگیری کن
+            if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') return;
             showMsgOptions(m.id, isMine, m.text || '');
         });
         
@@ -411,7 +413,6 @@ function cancelReply() {
     document.getElementById('replyPreviewContainer').style.display = 'none';
 }
 
-// 👈 مدیریت اینتر: Shift+Enter = خط جدید، Enter تنها = ارسال
 function handleKeyDown(event) {
     if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
@@ -426,7 +427,6 @@ function handleImageUpload(event) {
     const reader = new FileReader();
     reader.onload = (e) => {
         pendingImageBase64 = e.target.result;
-        // ارسال عکس بلافاصله
         sendMessage();
     };
     reader.readAsDataURL(file);
@@ -454,7 +454,6 @@ async function sendMessage() {
     await loadMessages();
 }
 
-// Auto-resize textarea
 messageInput.addEventListener('input', () => {
     messageInput.style.height = 'auto';
     messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
