@@ -66,7 +66,6 @@
 
         .chat-messages { position: absolute; top: 65px; bottom: 85px; left: 0; right: 0; overflow-y: auto; padding: 15px 12px; display: flex; flex-direction: column; gap: 8px; background-color: #0a0a0f; background-image: radial-gradient(rgba(139, 92, 246, 0.08) 1px, transparent 1px); background-size: 20px 20px; }
 
-        /* 👈 حباب پیام: حذف transform برای رفع کاور مشکی */
         .msg-bubble { 
             max-width: 85%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.6; 
             position: relative; word-wrap: break-word; animation: popIn 0.2s ease-out; 
@@ -122,9 +121,17 @@
         .ad-btn { display: flex; align-items: center; justify-content: center; padding: 10px 20px; border-radius: 12px; color: #fff; text-decoration: none; font-size: 14px; font-weight: 600; width: 100%; }
         .ad-btn.request { background: linear-gradient(135deg, #10b981, #059669); }
 
-        /* مودال‌ها */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-        .modal-overlay.show { display: flex; }
+        /* 👈 اصلاح باگ کاور: پنهان کردن کامل مودال‌ها تا وقتی باز نشن */
+        .modal-overlay, .msg-options-modal { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.85); z-index: 3000; 
+            display: none; /* همیشه مخفی */
+            align-items: center; justify-content: center; backdrop-filter: blur(4px); 
+        }
+        .modal-overlay.show, .msg-options-modal.show { 
+            display: flex !important; /* فقط وقتی کلاس show اضافه شد نمایش داده بشه */
+        }
+        
         .modal-box { background: #161b22; border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 20px; padding: 25px; width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto; }
         .modal-box h3 { color: #c4b5fd; margin-bottom: 15px; font-size: 18px; text-align: center; }
         .modal-box label { display: block; color: #8aa3c9; font-size: 13px; margin-bottom: 6px; margin-top: 10px; }
@@ -150,8 +157,6 @@
         .member-name { font-size: 14px; flex: 1; }
         .member-role { font-size: 11px; color: #facc15; }
 
-        .msg-options-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 2000; }
-        .msg-options-modal.show { display: block; }
         .msg-options-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(2px); }
         .msg-options-sheet { position: absolute; bottom: 0; left: 0; right: 0; background: #1a1a2e; border-radius: 20px 20px 0 0; padding: 12px 15px calc(15px + env(safe-area-inset-bottom)); animation: slideUp 0.25s cubic-bezier(0.22, 1, 0.36, 1); border-top: 1px solid rgba(139,92,246,0.3); box-shadow: 0 -10px 40px rgba(0,0,0,0.5); }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
