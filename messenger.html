@@ -43,7 +43,10 @@
         }
 
         .sidebar { width: 100%; max-width: 380px; background: #111827; border-left: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; height: 100%; transition: right 0.3s cubic-bezier(0.22, 1, 0.36, 1); z-index: 100; flex-shrink: 0; position: absolute; right: 0; top: 0; bottom: 0; }
+        /* 👈 سایدبار به صورت پیش‌فرض مخفی نیست، بلکه از راست خارج شده */
+        .sidebar { right: 0; } 
         .sidebar.hidden { right: -100%; }
+        
         .sidebar-header { padding: 15px 20px; background: rgba(17, 24, 39, 0.9); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
         .sidebar-header h2 { font-size: 16px; color: #fff; flex: 1; font-weight: 700; }
         .sidebar-header i.fa-users { color: #8b5cf6; }
@@ -204,9 +207,9 @@
 </head>
 <body>
 
-    <!-- 👈 کل برنامه داخل این لایه ثابت قرار گرفته -->
     <div class="app-wrapper">
-        <div class="sidebar hidden" id="sidebar">
+        <!-- 👈 سایدبار به صورت پیش‌فرض باز است -->
+        <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <i class="fas fa-users"></i>
                 <h2>شبکه برنامه‌نویسان</h2>
