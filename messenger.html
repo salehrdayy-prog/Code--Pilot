@@ -9,32 +9,41 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
     <style>
+        /* 👈 الگوگیری دقیق از build.html */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
-        
-        /* 👈 رفع مشکل پس‌زمینه: استفاده از fixed برای کل صفحه */
-        html, body { 
-            height: 100%; 
+        html { height: 100%; height: 100dvh; overflow: hidden; }
+        body { 
             margin: 0; 
-            padding: 0; 
-            overflow: hidden; 
+            height: 100%; 
+            height: 100dvh; 
+            min-height: 100dvh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
             background: #02030a; 
-            color: #e8edf5; 
-            position: fixed;
-            width: 100%;
-        }
-        
-        .app-container {
-            display: flex;
-            width: 100vw;
-            height: 100vh;
-            height: 100dvh;
-            overflow: hidden;
-            position: absolute;
-            top: 0;
-            left: 0;
+            overflow: hidden; 
+            color: #e8edf5;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
         }
 
-        .sidebar { width: 100%; max-width: 380px; background: #111827; border-left: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; height: 100%; transition: right 0.3s cubic-bezier(0.22, 1, 0.36, 1); z-index: 100; flex-shrink: 0; position: relative; }
+        .app-wrapper {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            max-width: 380px; /* محدودیت سایز برای دسکتاپ */
+            border-radius: 0;
+            background: #0d1117;
+            overflow: hidden;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        @media (min-width: 768px) {
+            .app-wrapper { border-radius: 48px; max-width: 450px; }
+        }
+
+        .sidebar { width: 100%; max-width: 380px; background: #111827; border-left: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; height: 100%; transition: right 0.3s cubic-bezier(0.22, 1, 0.36, 1); z-index: 100; flex-shrink: 0; position: absolute; right: 0; top: 0; bottom: 0; }
+        .sidebar.hidden { right: -100%; }
         .sidebar-header { padding: 15px 20px; background: rgba(17, 24, 39, 0.9); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
         .sidebar-header h2 { font-size: 16px; color: #fff; flex: 1; font-weight: 700; }
         .sidebar-header i.fa-users { color: #8b5cf6; }
@@ -75,8 +84,8 @@
         .dropdown-menu button:hover { background: rgba(139, 92, 246, 0.15); }
         .dropdown-menu button.danger { color: #ef4444; }
 
-        /* 👈 ساختار چت با Flexbox و چسبیدن ورودی به پایین */
-        .chat-area { flex: 1; display: flex; flex-direction: column; background: #0a0a0f; height: 100%; overflow: hidden; position: relative; width: 100%; }
+        /* 👈 ساختار چت با تکنیک 100dvh و Flexbox */
+        .chat-area { flex: 1; display: flex; flex-direction: column; background: #0a0a0f; height: 100%; width: 100%; overflow: hidden; position: relative; }
         
         .chat-header { flex-shrink: 0; padding: 10px 20px; background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 12px; z-index: 10; height: 65px; }
         .chat-header .back-btn { display: none; background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; padding: 5px; }
@@ -118,7 +127,7 @@
 
         .msg-img { max-width: 100%; border-radius: 10px; margin-top: 4px; cursor: pointer; }
 
-        /* 👈 کادر ورودی دقیقاً چسبیده به پایین */
+        /* 👈 کادر ورودی چسبیده به پایین */
         .chat-input-area-container { flex-shrink: 0; background: #111827; border-top: 1px solid rgba(255,255,255,0.05); z-index: 20; display: flex; flex-direction: column; width: 100%; }
         .reply-preview-container { display: none; padding: 8px 12px; background: #1e1e2d; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; justify-content: space-between; }
         .reply-preview-content { border-right: 3px solid #8b5cf6; padding-right: 8px; display: flex; flex-direction: column; overflow: hidden; }
@@ -189,14 +198,15 @@
             .sidebar { width: 100%; max-width: 100%; position: absolute; height: 100%; right: 0; z-index: 200; }
             .sidebar.hidden { right: -100%; }
             .chat-header .back-btn { display: block; }
+            .app-wrapper { max-width: 100%; border-radius: 0; }
         }
     </style>
 </head>
 <body>
 
-    <!-- 👈 کل برنامه داخل این لایه ثابت قرار گرفته تا از باگ‌های ارتفاع جلوگیری کنه -->
-    <div class="app-container">
-        <div class="sidebar" id="sidebar">
+    <!-- 👈 کل برنامه داخل این لایه ثابت قرار گرفته -->
+    <div class="app-wrapper">
+        <div class="sidebar hidden" id="sidebar">
             <div class="sidebar-header">
                 <i class="fas fa-users"></i>
                 <h2>شبکه برنامه‌نویسان</h2>
@@ -258,96 +268,12 @@
         </div>
     </div>
 
-    <!-- مودال‌ها خارج از لایه اصلی هستن تا روی همه چیز قرار بگیرن -->
-    <div class="modal-overlay" id="settingsModal">
-        <div class="modal-box">
-            <h3>⚙️ تنظیمات</h3>
-            <div class="settings-section">
-                <h4>پروفایل من</h4>
-                <div class="profile-avatar-edit" id="settingsAvatar" onclick="document.getElementById('avatarUpload').click()">👤</div>
-                <input type="file" id="avatarUpload" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)">
-                <label>نام</label>
-                <input type="text" id="settingsName" placeholder="نام شما">
-                <label>بیوگرافی</label>
-                <textarea id="settingsBio" placeholder="درباره خودت بنویس..." rows="3"></textarea>
-                <button class="btn-confirm" style="width:100%; padding:12px; border-radius:10px; border:none; margin-top:10px; cursor:pointer; font-family:inherit;" onclick="saveProfile()">💾 ذخیره پروفایل</button>
-            </div>
-            <div class="settings-section">
-                <h4>اعلان‌ها</h4>
-                <div class="settings-row">
-                    <span>اعلان پیام‌های جدید</span>
-                    <div class="toggle-switch on" id="notifMsg" onclick="toggleSetting('notifMsg')"></div>
-                </div>
-                <div class="settings-row">
-                    <span>اعلان گروه‌ها</span>
-                    <div class="toggle-switch on" id="notifGroup" onclick="toggleSetting('notifGroup')"></div>
-                </div>
-            </div>
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeSettingsModal()">بستن</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="adRequestModal">
-        <div class="modal-box">
-            <h3>📢 درخواست تبلیغات</h3>
-            <p style="color:#8aa3c9; font-size:13px; margin-bottom:15px;">درخواست شما به ادمین ارسال می‌شه. بعد از تایید، تبلیغت تو بخش تبلیغات نمایش داده می‌شه.</p>
-            <label>متن تبلیغ</label>
-            <textarea id="adContent" placeholder="متن تبلیغ خود را بنویسید..." rows="4"></textarea>
-            <label>قیمت پیشنهادی (تومان - اختیاری)</label>
-            <input type="number" id="adPrice" placeholder="مثلاً: 50000">
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeAdRequestModal()">انصراف</button>
-                <button class="btn-confirm" onclick="submitAdRequest()">ارسال درخواست</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="createRoomModal">
-        <div class="modal-box">
-            <h3>🚀 ساخت گروه یا کانال</h3>
-            <label>نوع:</label>
-            <select id="roomType">
-                <option value="group">👥 گروه</option>
-                <option value="channel">📢 کانال</option>
-            </select>
-            <label>نام:</label>
-            <input type="text" id="roomName" placeholder="نام گروه">
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeCreateRoomModal()">انصراف</button>
-                <button class="btn-confirm" onclick="createRoom()">ساخت</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="joinModal">
-        <div class="modal-box">
-            <h3>🔗 پیوستن به گروه</h3>
-            <label>کد دعوت:</label>
-            <input type="text" id="joinLinkCode" placeholder="کد دعوت">
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeJoinModal()">انصراف</button>
-                <button class="btn-confirm" onclick="joinRoom()">پیوستن</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="roomInfoModal">
-        <div class="modal-box">
-            <h3 id="roomInfoTitle">اطلاعات گروه</h3>
-            <p style="color: #8aa3c9; font-size: 13px; margin-bottom: 15px; text-align: center;">کد دعوت: <strong id="roomLinkCode" style="color: #facc15;"></strong></p>
-            <div class="modal-actions" style="margin-bottom: 15px;">
-                <button class="btn-confirm" onclick="copyInviteLink()" style="background: #238636;">📋 کپی لینک</button>
-                <button class="btn-cancel" onclick="deleteRoom()" style="background: #da3633; color: white;">🗑 حذف گروه</button>
-            </div>
-            <label>اعضا (<span id="roomMembersCount">0</span>):</label>
-            <div class="member-list" id="roomMembersList"></div>
-            <div class="modal-actions" style="margin-top: 15px;">
-                <button class="btn-cancel" onclick="closeRoomInfo()">بستن</button>
-            </div>
-        </div>
-    </div>
+    <!-- مودال‌ها -->
+    <div class="modal-overlay" id="settingsModal">...</div>
+    <div class="modal-overlay" id="adRequestModal">...</div>
+    <div class="modal-overlay" id="createRoomModal">...</div>
+    <div class="modal-overlay" id="joinModal">...</div>
+    <div class="modal-overlay" id="roomInfoModal">...</div>
 
     <div class="msg-options-modal" id="msgOptionsModal">
         <div class="msg-options-overlay" onclick="closeMsgOptions()"></div>
