@@ -9,27 +9,21 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
     <style>
-        /* 👈 کپی دقیق از تکنیک build.html */
+        /* 👈 رفع قطعی مشکل کاور و چسبیدن ورودی به پایین */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
         html { height: 100%; height: 100dvh; overflow: hidden; }
         body { 
             margin: 0; 
             height: 100%; 
             height: 100dvh; 
-            min-height: 100dvh; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            background: #02030a; 
             overflow: hidden; 
+            background: #02030a; 
             color: #e8edf5;
-            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            position: relative;
         }
 
-        /* کانتینر اصلی که کل صفحه رو پر می‌کنه */
-        .phone {
+        .app-wrapper {
             display: flex;
-            flex-direction: row;
             width: 100%;
             height: 100%;
             max-width: 100%;
@@ -39,7 +33,7 @@
         }
 
         @media (min-width: 768px) {
-            .phone { max-width: 450px; border-radius: 48px; border: 1px solid rgba(255,255,255,0.05); }
+            .app-wrapper { max-width: 450px; border-radius: 48px; border: 1px solid rgba(255,255,255,0.05); margin: 0 auto; }
         }
 
         .sidebar { width: 100%; max-width: 380px; background: #111827; border-left: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; height: 100%; transition: right 0.3s cubic-bezier(0.22, 1, 0.36, 1); z-index: 100; flex-shrink: 0; position: absolute; right: 0; top: 0; bottom: 0; }
@@ -85,8 +79,11 @@
         .dropdown-menu button:hover { background: rgba(139, 92, 246, 0.15); }
         .dropdown-menu button.danger { color: #ef4444; }
 
-        /* 👈 چت‌آریا با Flexbox دقیقاً مثل build.html */
-        .chat-area { flex: 1; display: flex; flex-direction: column; background: #0a0a0f; height: 100%; width: 100%; overflow: hidden; position: relative; }
+        /* 👈 چت‌آریا با ساختار Fixed و Flex */
+        .chat-area { 
+            flex: 1; display: flex; flex-direction: column; background: #0a0a0f; 
+            height: 100%; width: 100%; overflow: hidden; position: relative; 
+        }
         
         .chat-header { flex-shrink: 0; padding: 10px 20px; background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 12px; z-index: 10; height: 65px; }
         .chat-header .back-btn { display: none; background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; padding: 5px; }
@@ -96,8 +93,8 @@
         .chat-header .status { font-size: 12px; color: #4ade80; display: flex; align-items: center; gap: 4px; margin-top: 2px; }
         .chat-header .status::before { content: ''; width: 6px; height: 6px; background: #4ade80; border-radius: 50%; display: inline-block; }
 
-        /* پیام‌ها فضای باقی‌مانده رو پر می‌کنن */
-        .chat-messages { flex: 1; overflow-y: auto; padding: 15px 12px; display: flex; flex-direction: column; gap: 8px; background-color: #0a0a0f; background-image: radial-gradient(rgba(139, 92, 246, 0.08) 1px, transparent 1px); background-size: 20px 20px; min-height: 0; }
+        /* پیام‌ها: فضای بین هدر و کادر ورودی رو پر می‌کنه */
+        .chat-messages { flex: 1; overflow-y: auto; padding: 15px 12px 90px 12px; display: flex; flex-direction: column; gap: 8px; background-color: #0a0a0f; background-image: radial-gradient(rgba(139, 92, 246, 0.08) 1px, transparent 1px); background-size: 20px 20px; min-height: 0; }
 
         .msg-bubble { 
             max-width: 85%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.6; 
@@ -129,15 +126,26 @@
 
         .msg-img { max-width: 100%; border-radius: 10px; margin-top: 4px; cursor: pointer; }
 
-        /* 👈 کادر ورودی به عنوان آخرین فرزند flex، همیشه پایین می‌چسبه */
-        .chat-input-area-container { flex-shrink: 0; background: #111827; border-top: 1px solid rgba(255,255,255,0.05); z-index: 20; display: flex; flex-direction: column; width: 100%; }
+        /* 👈 کادر ورودی: چسبیده به پایین صفحه */
+        .chat-input-area-container { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            right: 0; 
+            background: #111827; 
+            border-top: 1px solid rgba(255,255,255,0.05); 
+            z-index: 100; 
+            display: flex; 
+            flex-direction: column; 
+            width: 100%; 
+        }
         .reply-preview-container { display: none; padding: 8px 12px; background: #1e1e2d; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; justify-content: space-between; }
         .reply-preview-content { border-right: 3px solid #8b5cf6; padding-right: 8px; display: flex; flex-direction: column; overflow: hidden; }
         .reply-preview-name { font-size: 11px; color: #8b5cf6; font-weight: bold; }
         .reply-preview-text { font-size: 12px; color: #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .cancel-reply-btn { background: transparent; border: none; color: #ef4444; font-size: 18px; cursor: pointer; padding: 4px; }
 
-        .chat-input-area { padding: 10px 12px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); display: flex; gap: 8px; align-items: flex-end; min-height: 72px; width: 100%; box-sizing: border-box; }
+        .chat-input-area { padding: 10px 12px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); display: flex; gap: 8px; align-items: flex-end; min-height: 72px; width: 100%; box-sizing: border-box; background: #111827; }
         .chat-input-area textarea { flex: 1; padding: 12px 18px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.03); color: #fff; font-size: 14px; outline: none; font-family: inherit; resize: none; max-height: 120px; min-height: 44px; line-height: 1.5; }
         .chat-input-area textarea:focus { border-color: #8b5cf6; background: rgba(139, 92, 246, 0.05); }
         .chat-input-area .icon-btn { width: 44px; height: 44px; flex-shrink: 0; }
@@ -200,15 +208,14 @@
             .sidebar { width: 100%; max-width: 100%; position: absolute; height: 100%; right: 0; z-index: 200; }
             .sidebar.hidden { right: -100%; }
             .chat-header .back-btn { display: block; }
-            .phone { max-width: 100%; border-radius: 0; }
         }
     </style>
 </head>
 <body>
 
-    <!-- 👈 کانتینر اصلی دقیقاً مثل build.html -->
-    <div class="phone">
-        <div class="sidebar" id="sidebar">
+    <!-- کانتینر اصلی -->
+    <div class="app-wrapper">
+        <div class="sidebar hidden" id="sidebar">
             <div class="sidebar-header">
                 <i class="fas fa-users"></i>
                 <h2>شبکه برنامه‌نویسان</h2>
@@ -249,6 +256,7 @@
                 </div>
             </div>
 
+            <!-- کادر ورودی با position: fixed به پایین چسبیده -->
             <div class="chat-input-area-container" id="chatInputArea" style="display: none;">
                 <div class="reply-preview-container" id="replyPreviewContainer">
                     <div class="reply-preview-content">
@@ -270,7 +278,7 @@
         </div>
     </div>
 
-    <!-- مودال‌ها -->
+    <!-- مودال‌ها و... (دقیقاً مثل قبل) -->
     <div class="modal-overlay" id="settingsModal">...</div>
     <div class="modal-overlay" id="adRequestModal">...</div>
     <div class="modal-overlay" id="createRoomModal">...</div>
