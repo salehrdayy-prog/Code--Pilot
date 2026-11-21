@@ -99,14 +99,17 @@ const initDB = async () => {
       );
     `);
 
+    // 👈 جدول گروه‌ها با فیلدهای avatar و description
     await pool.query(`
       CREATE TABLE IF NOT EXISTS chat_rooms (
         id SERIAL PRIMARY KEY, name VARCHAR(255), type VARCHAR(50) DEFAULT 'group',
         owner_id INT REFERENCES users(id) ON DELETE CASCADE, link_code VARCHAR(50) UNIQUE,
-        created_at TIMESTAMP DEFAULT NOW()
+        avatar TEXT DEFAULT '', description TEXT DEFAULT '', created_at TIMESTAMP DEFAULT NOW()
       );
     `);
     await pool.query(`ALTER TABLE chat_rooms ADD COLUMN IF NOT EXISTS link_code VARCHAR(50) UNIQUE;`);
+    await pool.query(`ALTER TABLE chat_rooms ADD COLUMN IF NOT EXISTS avatar TEXT DEFAULT '';`);
+    await pool.query(`ALTER TABLE chat_rooms ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';`);
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS room_members (
@@ -151,23 +154,11 @@ const initDB = async () => {
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS ad_requests (
-        id SERIAL PRIMARY KEY,
-        user_id INT REFERENCES users(id) ON DELETE CASCADE,
+        id SERIAL PRIMARY KEY, user_id INT REFERENCES users(id) ON DELETE CASCADE,
         user_name VARCHAR(255), phone VARCHAR(255), content TEXT NOT NULL,
         price INT DEFAULT 0, status VARCHAR(50) DEFAULT 'pending', created_at TIMESTAMP DEFAULT NOW()
       );
     `);
-
-    // 👈 حذف تبلیغ گروه نابغه پایتون
-    await pool.query(`DELETE FROM advertisements WHERE title = '💬 گروه برنامه‌نویسان پایتون';`);
-
-    const checkAds = await pool.query('SELECT * FROM advertisements');
-    if (checkAds.rows.length === 0) {
-      await pool.query(`
-        INSERT INTO advertisements (title, description, link, type, price) VALUES 
-        ('🚀 خرید سکه و قابلیت‌های ویژه', 'با خرید سکه، آیتم‌های فروشگاه را باز کن و سطح خودت را ارتقا بده.', 'buy-coins.html', 'ربات', 0)
-      `);
-    }
 
     console.log("✅ Tables ready");
   } catch (e) { console.error("❌ Error creating tables:", e); }
@@ -438,7 +429,7 @@ app.get("/api/social/chats/:userId", async (req, res) => {
     `, [uid]);
 
     const rooms = await pool.query(`
-      SELECT r.id, r.name, r.type as role, 'room' as chat_type,
+      SELECT r.id, r.name, r.type as role, 'room' as chat_type, r.avatar, r.description,
         (SELECT text FROM room_messages WHERE room_id = r.id ORDER BY id DESC LIMIT 1) as last_message,
         (SELECT created_at FROM room_messages WHERE room_id = r.id ORDER BY id DESC LIMIT 1) as last_time,
         0 as unread_count, false as is_pinned, false as is_blocked, r.link_code
@@ -507,11 +498,15 @@ app.post("/api/social/pin", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
+// 👈 ساخت گروه با avatar و description
 app.post("/api/social/create-room", async (req, res) => {
   try {
-    const { ownerId, name, type } = req.body;
+    const { ownerId, name, type, description, avatar } = req.body;
     const linkCode = crypto.randomBytes(4).toString('hex');
-    const roomResult = await pool.query('INSERT INTO chat_rooms (name, type, owner_id, link_code) VALUES ($1, $2, $3, $4) RETURNING *', [name, type, ownerId, linkCode]);
+    const roomResult = await pool.query(
+      'INSERT INTO chat_rooms (name, type, owner_id, link_code, description, avatar) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [name, type, ownerId, linkCode, description || '', avatar || '']
+    );
     const room = roomResult.rows[0];
     await pool.query('INSERT INTO room_members (room_id, user_id, role) VALUES ($1, $2, $3)', [room.id, ownerId, 'admin']);
     res.json({ ok: true, room });
@@ -545,6 +540,17 @@ app.delete("/api/social/room/:roomId", async (req, res) => {
     const check = await pool.query('SELECT * FROM chat_rooms WHERE id = $1 AND owner_id = $2', [roomId, userId]);
     if (check.rows.length === 0) return res.status(403).json({ error: "فقط سازنده می‌تواند گروه را حذف کند" });
     await pool.query('DELETE FROM chat_rooms WHERE id = $1', [roomId]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
+});
+
+// 👈 تغییر لینک دعوت گروه
+app.post("/api/social/room/change-link", async (req, res) => {
+  try {
+    const { roomId, userId, newLink } = req.body;
+    const check = await pool.query('SELECT * FROM chat_rooms WHERE id = $1 AND owner_id = $2', [roomId, userId]);
+    if (check.rows.length === 0) return res.status(403).json({ error: "فقط سازنده می‌تواند لینک را تغییر دهد" });
+    await pool.query('UPDATE chat_rooms SET link_code = $1 WHERE id = $2', [newLink, roomId]);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
@@ -640,7 +646,6 @@ app.post("/api/social/delete-for-everyone", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ================== گزارش‌های کاربران ==================
 app.get("/api/admin/reports", async (req, res) => {
   try {
     const result = await pool.query(`
@@ -664,7 +669,7 @@ app.post("/api/admin/reports/delete", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ================== پروژه‌ها و نظرات ==================
+// (بقیه مسیرهای پروژه، نظرات، هوش مصنوعی)
 app.post("/api/projects", async (req, res) => {
   try {
     const { userId, name, html, css, js, date } = req.body;
@@ -713,8 +718,6 @@ app.post("/api/reviews/like", async (req, res) => {
     res.json({ ok: true, likes: newLikes });
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
-
-// ================== هوش مصنوعی ==================
 const SYSTEM_PROMPT = `تو «نابغه‌کد» هستی؛ یک مشاور، ایده‌پرداز و مربی برنامه‌نویسی. ۱. ⛔ هرگز سلام تکراری نکن. ۲. 😊 از ایموجی استفاده کن. ۳. 🧠 اول نیاز کاربر رو بپرس، بعد کد بده. ۴. 💻 کدها رو داخل بلاک مارک‌داون بذار.`;
 app.post("/api/chat", async (req, res) => {
   const { message, history, codeContext } = req.body || {};

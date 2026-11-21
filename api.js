@@ -68,10 +68,15 @@ async function unblockSocialUser(userId, targetId) { return await apiRequest("/s
 async function reportSocialUser(userId, targetId, reason) { return await apiRequest("/social/report", "POST", { userId, targetId, reason }); }
 async function pinSocialUser(userId, targetId) { return await apiRequest("/social/pin", "POST", { userId, targetId }); }
 
-async function createSocialRoom(ownerId, name, type) { return await apiRequest("/social/create-room", "POST", { ownerId, name, type }); }
+// 👈 تابع ساخت گروه با توضیحات و عکس
+async function createSocialRoom(ownerId, name, type, description = '', avatar = '') { 
+  return await apiRequest("/social/create-room", "POST", { ownerId, name, type, description, avatar }); 
+}
 async function joinSocialRoom(userId, linkCode) { return await apiRequest("/social/join-room", "POST", { userId, linkCode }); }
 async function getRoomMembers(roomId) { return await apiRequest(`/social/room-members/${roomId}`); }
 async function deleteSocialRoom(roomId, userId) { return await apiRequest(`/social/room/${roomId}`, "DELETE", { userId }); }
+// 👈 تابع تغییر لینک گروه
+async function changeRoomLink(roomId, userId, newLink) { return await apiRequest("/social/room/change-link", "POST", { roomId, userId, newLink }); }
 
 async function getRoomMessages(roomId, userId) { 
   const query = userId ? `?userId=${userId}` : '';
