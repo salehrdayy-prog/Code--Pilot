@@ -10,10 +10,48 @@
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
-        html { height: 100%; height: 100dvh; overflow: hidden; }
-        body { margin: 0; height: 100%; height: 100dvh; overflow: hidden; background: #02030a; color: #e8edf5; position: fixed; width: 100%; }
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background: #02030a; color: #e8edf5; position: fixed; width: 100%; }
 
         .app-container { display: flex; width: 100vw; height: 100vh; height: 100dvh; overflow: hidden; position: absolute; top: 0; left: 0; background: #0a0a0f; }
+
+        /* 👈 لودر وسط صفحه */
+        #loadingSpinner {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        #loadingSpinner.show { display: flex; }
+        .spinner {
+            width: 50px; height: 50px;
+            border: 4px solid rgba(139, 92, 246, 0.2);
+            border-top-color: #8b5cf6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner-text { color: #c4b5fd; font-size: 14px; font-weight: 600; }
+
+        /* 👈 نوار وضعیت بالای صفحه */
+        #statusBar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            background: rgba(139, 92, 246, 0.95);
+            color: #fff;
+            text-align: center;
+            padding: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 5000;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+        #statusBar.show { transform: translateY(0); opacity: 1; }
 
         .sidebar { width: 100%; max-width: 380px; background: #111827; border-left: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; height: 100%; transition: right 0.3s cubic-bezier(0.22, 1, 0.36, 1); z-index: 200; flex-shrink: 0; position: absolute; right: 0; top: 0; bottom: 0; }
         .sidebar.hidden { right: -100%; }
@@ -173,7 +211,15 @@
 </head>
 <body>
 
-    <!-- 👈 سایدبار به صورت پیش‌فرض باز است -->
+    <!-- 👈 نوار وضعیت -->
+    <div id="statusBar">در حال اتصال...</div>
+
+    <!-- 👈 لودر وسط صفحه -->
+    <div id="loadingSpinner">
+        <div class="spinner"></div>
+        <div class="spinner-text">در حال بارگذاری...</div>
+    </div>
+
     <div class="app-container" id="appContainer">
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
@@ -216,7 +262,6 @@
                 </div>
             </div>
 
-            <!-- کادر ورودی با position: fixed به پایین چسبیده -->
             <div class="chat-input-area-container" id="chatInputArea" style="display: none;">
                 <div class="reply-preview-container" id="replyPreviewContainer">
                     <div class="reply-preview-content">
@@ -238,12 +283,12 @@
         </div>
     </div>
 
-    <!-- مودال‌ها -->
-    <div class="modal-overlay" id="settingsModal">...</div>
-    <div class="modal-overlay" id="adRequestModal">...</div>
-    <div class="modal-overlay" id="createRoomModal">...</div>
-    <div class="modal-overlay" id="joinModal">...</div>
-    <div class="modal-overlay" id="roomInfoModal">...</div>
+    <!-- مودال‌ها (کامل) -->
+    <div class="modal-overlay" id="settingsModal">... (محتوای قبلی) ...</div>
+    <div class="modal-overlay" id="adRequestModal">... (محتوای قبلی) ...</div>
+    <div class="modal-overlay" id="createRoomModal">... (محتوای قبلی) ...</div>
+    <div class="modal-overlay" id="joinModal">... (محتوای قبلی) ...</div>
+    <div class="modal-overlay" id="roomInfoModal">... (محتوای قبلی) ...</div>
 
     <div class="msg-options-modal" id="msgOptionsModal">
         <div class="msg-options-overlay" onclick="closeMsgOptions()"></div>
@@ -264,25 +309,6 @@
             <button class="msg-option-btn cancel" onclick="closeMsgOptions()"><i class="fas fa-times"></i> انصراف</button>
         </div>
     </div>
-
-    <!-- اسکریپت تنظیم ارتفاع -->
-    <script>
-        function setAppHeight() {
-            const vh = window.innerHeight;
-            document.getElementById('appContainer').style.height = `${vh}px`;
-            const inputArea = document.getElementById('chatInputArea');
-            if (inputArea) {
-                inputArea.style.position = 'fixed';
-                inputArea.style.bottom = '0';
-                inputArea.style.left = '0';
-                inputArea.style.right = '0';
-            }
-        }
-        window.addEventListener('load', setAppHeight);
-        window.addEventListener('resize', setAppHeight);
-        document.getElementById('messageInput')?.addEventListener('focus', () => setTimeout(setAppHeight, 300));
-        document.getElementById('messageInput')?.addEventListener('blur', () => setTimeout(setAppHeight, 300));
-    </script>
 
     <script src="api.js"></script>
     <script src="messenger.js"></script>

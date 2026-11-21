@@ -1,7 +1,3 @@
-// ==========================================
-// 👈 جایگزین کل کد messenger.js (فقط بخش‌های مربوط به نمایش سایدبار تغییر کرده)
-// ==========================================
-
 const session = JSON.parse(localStorage.getItem('session'));
 const currentUser = JSON.parse(localStorage.getItem('loggedInUser'));
 let activeChat = null; 
@@ -26,10 +22,32 @@ const chatStatus = document.getElementById('chatStatus');
 const memberCountSpan = document.getElementById('memberCount');
 const searchBox = document.getElementById('searchBox');
 
+// 👈 المان‌های جدید برای لودر و نوار وضعیت
+const loadingSpinner = document.getElementById('loadingSpinner');
+const statusBar = document.getElementById('statusBar');
+
+function showLoader(text = 'در حال بارگذاری...') {
+    loadingSpinner.querySelector('.spinner-text').innerText = text;
+    loadingSpinner.classList.add('show');
+    statusBar.innerText = text;
+    statusBar.classList.add('show');
+}
+
+function hideLoader() {
+    loadingSpinner.classList.remove('show');
+    setTimeout(() => {
+        statusBar.classList.remove('show');
+    }, 800); // بعد از 0.8 ثانیه نوار وضعیت محو میشه
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     if (!session || !currentUser) { window.location.href = 'login.html'; return; }
+    
+    showLoader('در حال اتصال...');
     await loadCurrentProfile();
     await loadChats();
+    hideLoader();
+
     setInterval(() => { if (currentTab === 'chats') loadChats(); }, 5000);
 });
 
@@ -38,6 +56,7 @@ function switchTab(tab) {
     document.getElementById('tabChats').classList.toggle('active', tab === 'chats');
     document.getElementById('tabUsers').classList.toggle('active', tab === 'users');
     document.getElementById('tabAds').classList.toggle('active', tab === 'ads');
+
     if (tab === 'users') { searchBox.style.display = 'block'; loadAllUsers(); }
     else if (tab === 'chats') { searchBox.style.display = 'none'; loadChats(); }
     else if (tab === 'ads') { searchBox.style.display = 'none'; loadAdvertisements(); }
@@ -45,6 +64,7 @@ function switchTab(tab) {
 
 // ==================== تبلیغات ====================
 async function loadAdvertisements() {
+    showLoader('در حال دریافت تبلیغات...');
     listContainer.innerHTML = '<p style="text-align:center; color:#8aa3c9; padding:20px;">در حال دریافت...</p>';
     
     let html = `
@@ -80,6 +100,7 @@ async function loadAdvertisements() {
         }).join('');
     }
     listContainer.innerHTML = html;
+    hideLoader();
 }
 
 function openAdRequestModal() { document.getElementById('adRequestModal').classList.add('show'); }
@@ -262,11 +283,13 @@ async function joinRoom() {
 }
 
 async function loadAllUsers() {
+    showLoader('در حال دریافت کاربران...');
     listContainer.innerHTML = '<p style="text-align:center; color:#8aa3c9; padding:20px;">در حال دریافت...</p>';
     const res = await getSocialUsers(session.id);
     if (!res.ok) return;
     allUsersList = res.data.users;
     renderUsersList(allUsersList);
+    hideLoader();
 }
 function renderUsersList(users) {
     if (users.length === 0) { listContainer.innerHTML = '<p style="text-align:center; color:#8aa3c9; padding:20px;">کاربری نیست</p>'; return; }
@@ -311,7 +334,10 @@ async function openChat(id, name, type, role, linkCode) {
     chatHeader.style.display = 'flex'; chatMessages.style.display = 'flex'; chatInputArea.style.display = 'flex';
     emptyChat.style.display = 'none';
 
+    showLoader('در حال دریافت پیام‌ها...');
     await loadMessages();
+    hideLoader();
+
     if (type === 'direct') await markSocialAsRead(session.id, id);
 
     if (pollInterval) clearInterval(pollInterval);
@@ -411,4 +437,105 @@ function setReply(msgId, senderName, text) {
     messageInput.focus();
 }
 function cancelReply() {
-    activeReply = n
+    activeReply = null;
+    document.getElementById('replyPreviewContainer').style.display = 'none';
+}
+
+function handleKeyDown(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+    }
+}
+
+function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) return alert('عکس باید کمتر از ۵ مگابایت باشد');
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        pendingImageBase64 = e.target.result;
+        sendMessage();
+    };
+    reader.readAsDataURL(file);
+}
+
+async function sendMessage() {
+    const text = messageInput.value.trim();
+    const imageUrl = pendingImageBase64;
+    
+    if ((!text && !imageUrl) || !activeChat) return;
+    
+    const replyId = activeReply ? activeReply.id : null;
+    messageInput.value = '';
+    messageInput.style.height = '44px';
+    pendingImageBase64 = null;
+    cancelReply();
+    messageInput.focus();
+
+    if (activeChat.type === 'direct') {
+        await sendSocialMessage(session.id, activeChat.id, text, replyId, imageUrl);
+    } else {
+        const res = await sendRoomMessage(session.id, activeChat.id, text, replyId, imageUrl);
+        if (!res.ok) alert(res.error);
+    }
+    await loadMessages();
+}
+
+messageInput.addEventListener('input', () => {
+    messageInput.style.height = 'auto';
+    messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
+});
+
+function showMsgOptions(msgId, isMine, text) {
+    currentMsgId = msgId;
+    currentMsgIsMine = isMine;
+    document.getElementById('btnDeleteForEveryone').style.display = isMine ? 'flex' : 'none';
+    document.getElementById('msgOptionsModal').dataset.msgText = text;
+    const bubble = document.querySelector(`.msg-bubble[data-msg-id="${msgId}"]`);
+    const senderName = bubble.querySelector('.msg-sender-name') ? bubble.querySelector('.msg-sender-name').innerText : (isMine ? "شما" : activeChat.name);
+    document.getElementById('msgOptionsModal').dataset.senderName = senderName;
+    document.getElementById('msgOptionsModal').classList.add('show');
+}
+function closeMsgOptions() {
+    document.getElementById('msgOptionsModal').classList.remove('show');
+    currentMsgId = null;
+}
+function replyToMessage() {
+    const modal = document.getElementById('msgOptionsModal');
+    setReply(currentMsgId, modal.dataset.senderName, modal.dataset.msgText);
+    closeMsgOptions();
+}
+function copyMessageText() {
+    navigator.clipboard.writeText(document.getElementById('msgOptionsModal').dataset.msgText).then(() => {
+        alert('📋 کپی شد'); closeMsgOptions();
+    });
+}
+async function reactToCurrentMessage(emoji) {
+    if (!currentMsgId) return;
+    const msgType = activeChat.type === 'room' ? 'room' : 'direct';
+    await reactToMessage(currentMsgId, msgType, session.id, emoji);
+    closeMsgOptions();
+    await loadMessages();
+}
+async function deleteForMe() {
+    if (!currentMsgId) return;
+    const msgType = activeChat.type === 'room' ? 'room' : 'direct';
+    const res = await deleteMessageForMe(currentMsgId, msgType, session.id);
+    if (res.ok) {
+        closeMsgOptions();
+        const bubble = document.querySelector(`.msg-bubble[data-msg-id="${currentMsgId}"]`);
+        if (bubble) bubble.remove();
+    } else alert('❌ ' + res.error);
+}
+async function deleteForEveryone() {
+    if (!currentMsgId || !currentMsgIsMine) return;
+    if (!confirm('حذف برای همه؟')) return;
+    const msgType = activeChat.type === 'room' ? 'room' : 'direct';
+    const res = await deleteMessageForEveryone(currentMsgId, msgType, session.id);
+    if (res.ok) {
+        closeMsgOptions();
+        const bubble = document.querySelector(`.msg-bubble[data-msg-id="${currentMsgId}"]`);
+        if (bubble) bubble.remove();
+    } else alert('❌ ' + res.error);
+}
