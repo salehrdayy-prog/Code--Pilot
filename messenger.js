@@ -1,9 +1,9 @@
-function readStoredJSON(key, fallback = null) {
-    try { const value = localStorage.getItem(key); return value ? JSON.parse(value) : fallback; }
-    catch (error) { console.warn(`داده ذخیره‌شده ${key} معتبر نیست.`, error); return fallback; }
-}
-const session = readStoredJSON('session');
-const currentUser = readStoredJSON('loggedInUser');
+// ==========================================
+// 👈 جایگزین کل کد messenger.js (فقط بخش‌های مربوط به نمایش سایدبار تغییر کرده)
+// ==========================================
+
+const session = JSON.parse(localStorage.getItem('session'));
+const currentUser = JSON.parse(localStorage.getItem('loggedInUser'));
 let activeChat = null; 
 let pollInterval = null;
 let currentTab = 'chats';
@@ -13,26 +13,6 @@ let currentMsgIsMine = false;
 let activeReply = null;
 let pendingImageBase64 = null;
 let currentProfile = { name: '', bio: '', avatar: '' };
-let activeChatRequestKey = 0;
-let lastRenderedMessagesSignature = '';
-let messagesLoadSequence = 0;
-let chatsLoadSequence = 0;
-let isSendingMessage = false;
-function escapeHTML(value) {
-    return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-function safeImageUrl(value) {
-    const url = String(value || '').trim();
-    return /^(https?:\/\/|data:image\/(png|jpeg|jpg|gif|webp);base64,)/i.test(url) ? url : '';
-}
-function syncChatInputHeight() {
-    if (chatInputArea && chatMessages) {
-        const inputHeight = Math.ceil(chatInputArea.getBoundingClientRect().height);
-        document.documentElement.style.setProperty('--chat-input-height', `${inputHeight}px`);
-    }
-    const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    document.documentElement.style.setProperty('--app-height', `${Math.ceil(viewportHeight)}px`);
-}
 
 const listContainer = document.getElementById('listContainer');
 const chatMessages = document.getElementById('chatMessages');
@@ -50,11 +30,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!session || !currentUser) { window.location.href = 'login.html'; return; }
     await loadCurrentProfile();
     await loadChats();
-    document.querySelectorAll('.toggle-switch').forEach(el => el.classList.toggle('on', localStorage.getItem(el.id) === 'true'));
-    if ('ResizeObserver' in window && chatInputArea) new ResizeObserver(syncChatInputHeight).observe(chatInputArea);
-    window.addEventListener('resize', syncChatInputHeight);
-    if (window.visualViewport) window.visualViewport.addEventListener('resize', syncChatInputHeight);
-    syncChatInputHeight();
     setInterval(() => { if (currentTab === 'chats') loadChats(); }, 5000);
 });
 
@@ -95,9 +70,9 @@ async function loadAdvertisements() {
             return `
             <div class="ad-card">
                 <div class="ad-badge" style="background: ${badgeColor}20; color: ${badgeColor}; border: 1px solid ${badgeColor}40;">${badgeText}</div>
-                <h3 class="ad-title">${escapeHTML(ad.title)}</h3>
-                <p class="ad-desc">${escapeHTML(ad.description)}</p>
-                <a href="${escapeHTML((/^https?:\/\//i.test(String(ad.link || '')) || String(ad.link || '').startsWith('/')) ? ad.link : '#')}" class="ad-btn" style="background: linear-gradient(135deg, ${badgeColor}, #6d28d9);">
+                <h3 class="ad-title">${ad.title}</h3>
+                <p class="ad-desc">${ad.description}</p>
+                <a href="${ad.link || '#'}" class="ad-btn" style="background: linear-gradient(135deg, ${badgeColor}, #6d28d9);">
                     مشاهده <i class="fas fa-arrow-left" style="margin-right: 5px;"></i>
                 </a>
             </div>
@@ -139,25 +114,24 @@ function openSettingsModal() {
     document.getElementById('settingsBio').value = currentProfile.bio;
     const av = document.getElementById('settingsAvatar');
     if (currentProfile.avatar) {
-        av.style.backgroundImage = `url("${safeImageUrl(currentProfile.avatar)}")`;
-        av.style.backgroundSize = 'cover'; av.innerText = '';
-    } else { av.style.backgroundImage = ''; av.innerText = '👤'; }
+        av.style.backgroundImage = `url(${currentProfile.avatar})`;
+        av.style.backgroundSize = 'cover';
+        av.innerText = '';
+    }
     document.getElementById('settingsModal').classList.add('show');
 }
 function closeSettingsModal() { document.getElementById('settingsModal').classList.remove('show'); }
 
 function handleAvatarUpload(event) {
-    const file = event.target.files && event.target.files[0];
+    const file = event.target.files[0];
     if (!file) return;
-    if (!['image/jpeg','image/png','image/webp','image/gif'].includes(file.type)) { alert('فقط فایل تصویری مجاز است.'); event.target.value = ''; return; }
-    if (file.size > 2 * 1024 * 1024) { alert('حجم عکس پروفایل باید کمتر از ۲ مگابایت باشد.'); event.target.value = ''; return; }
     const reader = new FileReader();
-    reader.onerror = () => alert('خواندن تصویر ناموفق بود.');
-    reader.onload = e => {
+    reader.onload = (e) => {
         currentProfile.avatar = e.target.result;
         const av = document.getElementById('settingsAvatar');
-        av.style.backgroundImage = `url("${currentProfile.avatar}")`;
-        av.style.backgroundSize = 'cover'; av.innerText = '';
+        av.style.backgroundImage = `url(${currentProfile.avatar})`;
+        av.style.backgroundSize = 'cover';
+        av.innerText = '';
     };
     reader.readAsDataURL(file);
 }
@@ -181,38 +155,38 @@ function toggleSetting(id) {
 
 // ==================== چت‌ها ====================
 async function loadChats() {
-    const requestId = ++chatsLoadSequence;
-    try {
     const res = await getSocialChats(session.id);
-    if (requestId !== chatsLoadSequence || !res || !res.ok) return;
-    const chats = Array.isArray(res.data?.chats) ? res.data.chats : [];
-    if (!chats.length) {
-        listContainer.innerHTML = `<div style="text-align:center;padding:30px 15px;color:#8aa3c9;"><i class="fas fa-inbox" style="font-size:40px;opacity:.3;margin-bottom:10px;display:block;"></i><p style="font-size:13px;">هنوز چتی نداری.</p></div>`;
+    if (!res.ok) return;
+    const chats = res.data.chats;
+    if (chats.length === 0) {
+        listContainer.innerHTML = `<div style="text-align:center; padding:30px 15px; color:#8aa3c9;"><i class="fas fa-inbox" style="font-size:40px; opacity:0.3; margin-bottom:10px; display:block;"></i><p style="font-size:13px;">هنوز چتی نداری.</p></div>`;
         return;
     }
     listContainer.innerHTML = chats.map(c => {
-        const isRoom = c.chat_type === 'room', id = Number(c.id);
-        if (!Number.isSafeInteger(id)) return '';
+        const isRoom = c.chat_type === 'room';
         const icon = isRoom ? (c.role === 'channel' ? '📢' : '👥') : '👤';
-        const avatar = safeImageUrl(c.avatar);
-        const avatarHTML = avatar && !isRoom ? `<div class="contact-avatar" style="background-image:url('${escapeHTML(avatar)}');background-size:cover;"></div>` : `<div class="contact-avatar ${!isRoom ? 'online' : ''}">${icon}</div>`;
+        const avatarHTML = c.avatar && !isRoom ? `<div class="contact-avatar" style="background-image:url('${c.avatar}'); background-size:cover;"></div>` : `<div class="contact-avatar ${!isRoom ? 'online' : ''}">${icon}</div>`;
         const badge = c.role === 'admin' && !isRoom ? '<span class="admin-badge">ادمین</span>' : '';
-        return `<div class="contact-item ${activeChat && activeChat.id === id ? 'active' : ''}" data-chat-id="${id}" data-chat-name="${escapeHTML(c.name)}" data-chat-type="${isRoom ? 'room' : 'direct'}" data-chat-role="${escapeHTML(c.role)}" data-link-code="${escapeHTML(c.link_code || '')}">
-            ${avatarHTML}<div class="contact-info"><div class="contact-name">${escapeHTML(c.name)} ${badge}</div><div class="contact-last-msg">${escapeHTML(c.last_message || '...')}</div></div>
-            ${c.unread_count > 0 ? `<div class="unread-badge">${Number(c.unread_count) || 0}</div>` : ''}
-            ${c.is_pinned ? '<i class="fas fa-thumbtack pin-icon"></i>' : ''}
-            ${!isRoom ? `<button class="chat-actions-btn" onclick="toggleDropdown(event,${id})" aria-label="گزینه‌های گفتگو"><i class="fas fa-ellipsis-v"></i></button>
-            <div class="dropdown-menu" id="dropdown-${id}">
-            <button onclick="event.stopPropagation();pinUser(${id})"><i class="fas fa-thumbtack"></i> ${c.is_pinned ? 'لغو سنجاق' : 'سنجاق'}</button>
-            <button class="danger" onclick="event.stopPropagation();toggleBlock(${id},${Boolean(c.is_blocked)})"><i class="fas fa-ban"></i> ${c.is_blocked ? 'لغو بلاک' : 'بلاک'}</button>
-            <button class="danger" onclick="event.stopPropagation();reportUser(${id})"><i class="fas fa-exclamation-triangle"></i> گزارش</button></div>` : ''}
-        </div>`;
-    }).join('');
-    listContainer.querySelectorAll('[data-chat-id]').forEach(item => item.addEventListener('click', e => {
-        if (e.target.closest('.chat-actions-btn,.dropdown-menu')) return;
-        openChat(Number(item.dataset.chatId), item.dataset.chatName, item.dataset.chatType, item.dataset.chatRole, item.dataset.linkCode);
-    }));
-    } catch (error) { console.error('خطا در دریافت گفتگوها:', error); }
+        
+        return `
+        <div class="contact-item ${activeChat && activeChat.id === c.id ? 'active' : ''}" onclick="openChat(${c.id}, '${c.name.replace(/'/g, "\\'")}', '${c.chat_type}', '${c.role}', '${c.link_code || ''}')">
+            ${avatarHTML}
+            <div class="contact-info">
+                <div class="contact-name">${c.name} ${badge}</div>
+                <div class="contact-last-msg">${c.last_message || '...'}</div>
+            </div>
+            ${c.unread_count > 0 ? `<div class="unread-badge">${c.unread_count}</div>` : ''}
+            ${c.is_pinned ? `<i class="fas fa-thumbtack pin-icon"></i>` : ''}
+            ${!isRoom ? `
+            <button class="chat-actions-btn" onclick="toggleDropdown(event, ${c.id})"><i class="fas fa-ellipsis-v"></i></button>
+            <div class="dropdown-menu" id="dropdown-${c.id}">
+                <button onclick="event.stopPropagation(); pinUser(${c.id})"><i class="fas fa-thumbtack"></i> ${c.is_pinned ? 'لغو سنجاق' : 'سنجاق'}</button>
+                <button class="danger" onclick="event.stopPropagation(); toggleBlock(${c.id}, ${c.is_blocked})"><i class="fas fa-ban"></i> ${c.is_blocked ? 'لغو بلاک' : 'بلاک'}</button>
+                <button class="danger" onclick="event.stopPropagation(); reportUser(${c.id})"><i class="fas fa-exclamation-triangle"></i> گزارش</button>
+            </div>
+            ` : ''}
+        </div>
+    `}).join('');
 }
 
 function toggleDropdown(event, userId) {
@@ -249,33 +223,22 @@ async function openRoomInfo() {
     if (res.ok) {
         document.getElementById('roomMembersCount').innerText = res.data.members.length;
         document.getElementById('roomMembersList').innerHTML = res.data.members.map(m => `
-            <div class="member-item"><div class="member-avatar">👤</div><div class="member-name">${escapeHTML(m.name)}</div>
+            <div class="member-item"><div class="member-avatar">👤</div><div class="member-name">${m.name}</div>
                 ${m.group_role === 'admin' ? '<span class="member-role">ادمین</span>' : ''}
             </div>
         `).join('');
     }
 }
 function closeRoomInfo() { document.getElementById('roomInfoModal').classList.remove('show'); }
-async function copyInviteLink() {
-    const code = String(activeChat?.link_code || '');
-    if (!code) return alert('کد دعوت در دسترس نیست.');
-    try {
-        if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(code);
-        else { const field = document.createElement('textarea'); field.value = code; document.body.appendChild(field); field.select(); document.execCommand('copy'); field.remove(); }
-        alert('📋 کپی شد.');
-    } catch (error) { alert('کپی خودکار ممکن نشد؛ کد دعوت را دستی کپی کنید: ' + code); }
-}
+function copyInviteLink() { navigator.clipboard.writeText(activeChat.link_code); alert('📋 کپی شد.'); }
 async function deleteRoom() {
     if (!confirm('حذف گروه؟')) return;
     const res = await deleteSocialRoom(activeChat.id, session.id);
     if (res.ok) {
         alert('🗑 حذف شد'); closeRoomInfo();
-        ++activeChatRequestKey; ++messagesLoadSequence;
-        if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
-        activeChat = null; lastRenderedMessagesSignature = '';
         document.getElementById('sidebar').classList.remove('hidden');
         chatHeader.style.display = 'none'; chatMessages.style.display = 'none'; chatInputArea.style.display = 'none';
-        loadChats();
+        activeChat = null; loadChats();
     } else { alert('❌ ' + res.error); }
 }
 
@@ -300,38 +263,32 @@ async function joinRoom() {
 
 async function loadAllUsers() {
     listContainer.innerHTML = '<p style="text-align:center; color:#8aa3c9; padding:20px;">در حال دریافت...</p>';
-    try {
-        const res = await getSocialUsers(session.id);
-        if (!res || !res.ok) { listContainer.innerHTML = '<p style="text-align:center;color:#f87171;padding:20px;">دریافت کاربران ناموفق بود.</p>'; return; }
-        allUsersList = Array.isArray(res.data?.users) ? res.data.users : [];
-        renderUsersList(allUsersList);
-    } catch (error) { console.error(error); listContainer.innerHTML = '<p style="text-align:center;color:#f87171;padding:20px;">خطا در دریافت کاربران.</p>'; }
+    const res = await getSocialUsers(session.id);
+    if (!res.ok) return;
+    allUsersList = res.data.users;
+    renderUsersList(allUsersList);
 }
 function renderUsersList(users) {
-    if (!users.length) { listContainer.innerHTML = '<p style="text-align:center;color:#8aa3c9;padding:20px;">کاربری نیست</p>'; return; }
+    if (users.length === 0) { listContainer.innerHTML = '<p style="text-align:center; color:#8aa3c9; padding:20px;">کاربری نیست</p>'; return; }
     listContainer.innerHTML = users.map(u => {
-        const id = Number(u.id); if (!Number.isSafeInteger(id)) return '';
-        const avatar = safeImageUrl(u.avatar);
-        const av = avatar ? `<div class="contact-avatar" style="background-image:url('${escapeHTML(avatar)}');background-size:cover;"></div>` : '<div class="contact-avatar">👤</div>';
-        return `<div class="contact-item" data-user-id="${id}" data-user-name="${escapeHTML(u.name)}" data-user-role="${escapeHTML(u.role)}">${av}
-            <div class="contact-info"><div class="contact-name">${escapeHTML(u.name)} ${u.role === 'admin' ? '<span class="admin-badge">ادمین</span>' : ''}</div>
-            <div class="contact-last-msg">${escapeHTML(u.bio || (u.plan === 'pro' ? '👑 ویژه' : '🟢 رایگان'))}</div></div></div>`;
+        const av = u.avatar ? `<div class="contact-avatar" style="background-image:url('${u.avatar}'); background-size:cover;"></div>` : `<div class="contact-avatar">👤</div>`;
+        return `
+        <div class="contact-item" onclick="openChat(${u.id}, '${u.name.replace(/'/g, "\\'")}', 'direct', '${u.role}', '')">
+            ${av}
+            <div class="contact-info">
+                <div class="contact-name">${u.name} ${u.role === 'admin' ? '<span class="admin-badge">ادمین</span>' : ''}</div>
+                <div class="contact-last-msg">${u.bio || (u.plan === 'pro' ? '👑 ویژه' : '🟢 رایگان')}</div>
+            </div>
+        </div>`;
     }).join('');
-    listContainer.querySelectorAll('[data-user-id]').forEach(item => item.addEventListener('click', () =>
-        openChat(Number(item.dataset.userId), item.dataset.userName, 'direct', item.dataset.userRole, '')));
 }
-
 function filterUsers() {
     const term = document.getElementById('searchInput').value.toLowerCase().trim();
     if (!term) { renderUsersList(allUsersList); return; }
-    renderUsersList(allUsersList.filter(u => String(u.name || '').toLowerCase().includes(term)));
+    renderUsersList(allUsersList.filter(u => u.name.toLowerCase().includes(term)));
 }
 
 function showSidebar() {
-    ++activeChatRequestKey;
-    ++messagesLoadSequence;
-    if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
-    activeChat = null; lastRenderedMessagesSignature = '';
     document.getElementById('sidebar').classList.remove('hidden');
     chatHeader.style.display = 'none'; chatMessages.style.display = 'none'; chatInputArea.style.display = 'none';
     memberCountSpan.innerText = '';
@@ -339,11 +296,7 @@ function showSidebar() {
 }
 
 async function openChat(id, name, type, role, linkCode) {
-    const requestKey = ++activeChatRequestKey;
-    ++messagesLoadSequence;
-    if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
     activeChat = { id, name, type, role, link_code: linkCode };
-    lastRenderedMessagesSignature = '';
     cancelReply();
     chatName.innerText = name;
     chatAvatar.innerText = type === 'room' ? (role === 'channel' ? '📢' : '👥') : (role === 'admin' ? '🛡️' : '👤');
@@ -351,7 +304,6 @@ async function openChat(id, name, type, role, linkCode) {
     
     if (type === 'room') {
         const memRes = await getRoomMembers(id);
-        if (requestKey !== activeChatRequestKey) return;
         memberCountSpan.innerText = memRes.ok ? `(${memRes.data.members.length} عضو)` : '';
     } else { memberCountSpan.innerText = ''; }
 
@@ -360,57 +312,95 @@ async function openChat(id, name, type, role, linkCode) {
     emptyChat.style.display = 'none';
 
     await loadMessages();
-    if (requestKey !== activeChatRequestKey) return;
-    if (requestKey !== activeChatRequestKey) return;
-    pollInterval = setInterval(() => { if (activeChat && requestKey === activeChatRequestKey) loadMessages(); }, 3000);
+    if (type === 'direct') await markSocialAsRead(session.id, id);
+
+    if (pollInterval) clearInterval(pollInterval);
+    pollInterval = setInterval(loadMessages, 3000);
 }
 
 // 👈 بهینه‌سازی رندر پیام‌ها
 async function loadMessages() {
     if (!activeChat) return;
-    const chat = { ...activeChat }, requestKey = activeChatRequestKey;
-    const loadId = ++messagesLoadSequence;
-    try {
-    const res = chat.type === 'direct' ? await getSocialHistory(session.id, chat.id) : await getRoomMessages(chat.id, session.id);
-    if (loadId !== messagesLoadSequence || requestKey !== activeChatRequestKey || !activeChat || activeChat.id !== chat.id || activeChat.type !== chat.type) return;
-    if (!res || !res.ok) return;
-    const msgs = Array.isArray(res.data?.messages) ? res.data.messages : [];
-    if (chat.type === 'direct' && msgs.some(m => Number(m.sender_id) !== Number(session.id) && !m.is_read)) {
-        await markSocialAsRead(session.id, chat.id);
-        if (loadId !== messagesLoadSequence || requestKey !== activeChatRequestKey) return;
+    let msgs = [];
+    if (activeChat.type === 'direct') {
+        const res = await getSocialHistory(session.id, activeChat.id);
+        if (res.ok) msgs = res.data.messages;
+    } else {
+        const res = await getRoomMessages(activeChat.id, session.id);
+        if (res.ok) msgs = res.data.messages;
     }
-    const signature = JSON.stringify(msgs);
-    if (signature === lastRenderedMessagesSignature) return;
-    const wasAtBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 100;
+
+    const isScrolledToBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 100;
+    const currentCount = chatMessages.querySelectorAll('.msg-bubble').length;
+    
+    // 👈 اگر تعداد پیام‌ها فرقی نکرده، دوباره کل صفحه رو نساز
+    if (currentCount === msgs.length && currentCount > 0) return;
+
     chatMessages.innerHTML = '';
-    if (!msgs.length) {
-        chatMessages.innerHTML = '<p style="text-align:center;color:#8aa3c9;font-size:13px;margin-top:20px;">شروع کن!</p>';
-        lastRenderedMessagesSignature = signature; return;
+    if (msgs.length === 0) {
+        chatMessages.innerHTML = '<p style="text-align:center; color:#8aa3c9; font-size:13px; margin-top:20px;">شروع کن!</p>';
+        return;
     }
+
     msgs.forEach(m => {
-        const mine = Number(m.sender_id) === Number(session.id);
-        const time = m.created_at ? new Date(m.created_at).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}) : '';
-        const sender = chat.type === 'room' && !mine ? `<span class="msg-sender-name">${escapeHTML(m.sender_name)}</span>` : '';
-        const checks = mine && chat.type === 'direct' ? (m.is_read ? '<span style="color:#4ade80;margin-right:4px;font-size:12px;">✓✓</span>' : '<span style="color:#8aa3c9;margin-right:4px;font-size:12px;">✓</span>') : '';
-        const reply = m.reply_to_id && m.reply_text ? `<div class="reply-quote"><span class="reply-name">${escapeHTML(m.reply_sender_name)}</span><span class="reply-text">${escapeHTML(String(m.reply_text).slice(0,50))}${String(m.reply_text).length > 50 ? '...' : ''}</span></div>` : '';
-        const grouped = {};
-        if (Array.isArray(m.reactions)) m.reactions.forEach(r => { const e = String(r.emoji || ''); grouped[e] = (grouped[e] || 0) + 1; });
-        const reactions = Object.entries(grouped).length ? `<div class="msg-reactions">${Object.entries(grouped).map(([e,n]) => `<span class="reaction-badge">${escapeHTML(e)} ${n}</span>`).join('')}</div>` : '';
-        const image = safeImageUrl(m.image_url);
-        const img = image ? `<img src="${escapeHTML(image)}" class="msg-img" alt="تصویر پیام" loading="lazy">` : '';
+        const isMine = m.sender_id === session.id;
+        const time = new Date(m.created_at).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+        const senderName = activeChat.type === 'room' && !isMine ? `<span class="msg-sender-name">${m.sender_name}</span>` : '';
+
+        let checkmark = '';
+        if (isMine && activeChat.type === 'direct') {
+            checkmark = m.is_read 
+                ? `<span style="color: #4ade80; margin-right: 4px; font-size: 12px;">✓✓</span>` 
+                : `<span style="color: #8aa3c9; margin-right: 4px; font-size: 12px;">✓</span>`;
+        }
+
+        let replyHTML = '';
+        if (m.reply_to_id && m.reply_text) {
+            replyHTML = `<div class="reply-quote"><span class="reply-name">${m.reply_sender_name}</span><span class="reply-text">${m.reply_text.substring(0, 50)}${m.reply_text.length > 50 ? '...' : ''}</span></div>`;
+        }
+
+        let reactionsHTML = '';
+        if (m.reactions && m.reactions.length > 0) {
+            const counts = {};
+            m.reactions.forEach(r => { counts[r.emoji] = (counts[r.emoji] || 0) + 1; });
+            reactionsHTML = `<div class="msg-reactions">`;
+            for (const [emoji, count] of Object.entries(counts)) {
+                reactionsHTML += `<span class="reaction-badge">${emoji} ${count}</span>`;
+            }
+            reactionsHTML += `</div>`;
+        }
+
+        let imageHTML = '';
+        if (m.image_url) {
+            imageHTML = `<img src="${m.image_url}" class="msg-img" onclick="event.stopPropagation(); window.open(this.src, '_blank')">`;
+        }
+
         const bubble = document.createElement('div');
-        bubble.className = `msg-bubble ${mine ? 'outgoing' : 'incoming'}`;
-        bubble.dataset.msgId = String(m.id);
-        bubble.innerHTML = `${sender}${reply}${img}<div style="word-wrap:break-word;white-space:pre-wrap;">${escapeHTML(m.text || '')}</div>
-            <div style="display:flex;justify-content:flex-end;align-items:center;gap:4px;margin-top:4px;"><span class="msg-time" style="position:static;">${escapeHTML(time)}</span>${checks}</div>${reactions}`;
-        const imageElement = bubble.querySelector('.msg-img');
-        if (imageElement) imageElement.addEventListener('click', e => { e.stopPropagation(); window.open(image,'_blank','noopener,noreferrer'); });
-        bubble.addEventListener('click', e => { if (!e.target.closest('a,button,img')) showMsgOptions(m.id,mine,m.text || ''); });
+        bubble.className = `msg-bubble ${isMine ? 'outgoing' : 'incoming'}`;
+        bubble.dataset.msgId = m.id;
+        bubble.innerHTML = `
+            ${senderName}
+            ${replyHTML}
+            ${imageHTML}
+            <div style="word-wrap: break-word;">${m.text || ''}</div>
+            <div style="display: flex; justify-content: flex-end; align-items: center; gap: 4px; margin-top: 4px;">
+                <span class="msg-time" style="position: static;">${time}</span>
+                ${checkmark}
+            </div>
+            ${reactionsHTML}
+        `;
+        
+        bubble.addEventListener('click', (e) => {
+            if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') return;
+            showMsgOptions(m.id, isMine, m.text || '');
+        });
+        
         chatMessages.appendChild(bubble);
     });
-    lastRenderedMessagesSignature = signature;
-    if (wasAtBottom) chatMessages.scrollTop = chatMessages.scrollHeight;
-    } catch (error) { console.error('خطا در دریافت پیام‌ها:', error); }
+    
+    if (isScrolledToBottom || currentCount === 0) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
 }
 
 function setReply(msgId, senderName, text) {
@@ -421,114 +411,4 @@ function setReply(msgId, senderName, text) {
     messageInput.focus();
 }
 function cancelReply() {
-    activeReply = null;
-    document.getElementById('replyPreviewContainer').style.display = 'none';
-}
-
-function handleKeyDown(event) {
-    if (event.key === 'Enter' && !event.shiftKey) {
-        event.preventDefault();
-        sendMessage();
-    }
-}
-
-function handleImageUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    if (!['image/jpeg','image/png','image/webp','image/gif'].includes(file.type)) { alert('فقط فایل تصویری مجاز است.'); event.target.value = ''; return; }
-    if (file.size > 5 * 1024 * 1024) { alert('عکس باید کمتر از ۵ مگابایت باشد'); event.target.value = ''; return; }
-    const reader = new FileReader();
-    reader.onerror = () => alert('خواندن عکس ناموفق بود.');
-    reader.onload = (e) => {
-        pendingImageBase64 = e.target.result;
-        sendMessage();
-    };
-    reader.readAsDataURL(file);
-}
-
-async function sendMessage() {
-    const text = messageInput.value.trim(), imageUrl = pendingImageBase64;
-    if (isSendingMessage || (!text && !imageUrl) || !activeChat) return;
-    const chat = { ...activeChat }, replyId = activeReply ? activeReply.id : null;
-    isSendingMessage = true;
-    try {
-        const res = chat.type === 'direct'
-            ? await sendSocialMessage(session.id, chat.id, text, replyId, imageUrl)
-            : await sendRoomMessage(session.id, chat.id, text, replyId, imageUrl);
-        if (!res || !res.ok) { alert('❌ ' + (res?.error || 'ارسال پیام انجام نشد.')); return; }
-        if (activeChat && activeChat.id === chat.id && activeChat.type === chat.type) {
-            if (messageInput.value.trim() === text && pendingImageBase64 === imageUrl) {
-                messageInput.value = ''; messageInput.style.height = '44px';
-                pendingImageBase64 = null;
-                const imageInput = document.getElementById('imageUpload');
-                if (imageInput) imageInput.value = '';
-                cancelReply(); syncChatInputHeight();
-            }
-            await loadMessages();
-        }
-    } catch (error) { console.error(error); alert('❌ خطا در ارسال پیام. متن شما حفظ شد.'); }
-    finally { isSendingMessage = false; }
-}
-
-messageInput.addEventListener('input', () => {
-    messageInput.style.height = 'auto';
-    messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
-    syncChatInputHeight();
-});
-
-function showMsgOptions(msgId, isMine, text) {
-    currentMsgId = msgId;
-    currentMsgIsMine = isMine;
-    document.getElementById('btnDeleteForEveryone').style.display = isMine ? 'flex' : 'none';
-    document.getElementById('msgOptionsModal').dataset.msgText = text;
-    const bubble = [...document.querySelectorAll('.msg-bubble')].find(el => el.dataset.msgId === String(msgId));
-    const senderName = bubble?.querySelector('.msg-sender-name')?.innerText || (isMine ? "شما" : (activeChat?.name || 'کاربر'));
-    document.getElementById('msgOptionsModal').dataset.senderName = senderName;
-    document.getElementById('msgOptionsModal').classList.add('show');
-}
-function closeMsgOptions() {
-    document.getElementById('msgOptionsModal').classList.remove('show');
-    currentMsgId = null;
-}
-function replyToMessage() {
-    const modal = document.getElementById('msgOptionsModal');
-    setReply(currentMsgId, modal.dataset.senderName, modal.dataset.msgText);
-    closeMsgOptions();
-}
-async function copyMessageText() {
-    try { await navigator.clipboard.writeText(document.getElementById('msgOptionsModal').dataset.msgText || ''); alert('📋 کپی شد'); closeMsgOptions(); }
-    catch (error) { alert('امکان کپی خودکار وجود ندارد؛ متن را انتخاب و کپی کنید.'); }
-}
-async function reactToCurrentMessage(emoji) {
-    if (!currentMsgId || !activeChat) return;
-    const msgType = activeChat.type === 'room' ? 'room' : 'direct';
-    const res = await reactToMessage(currentMsgId, msgType, session.id, emoji);
-    if (!res || !res.ok) { alert('❌ ' + (res?.error || 'ثبت واکنش انجام نشد.')); return; }
-    closeMsgOptions();
-    await loadMessages();
-}
-async function deleteForMe() {
-    if (!currentMsgId) return;
-    const msgType = activeChat.type === 'room' ? 'room' : 'direct';
-    const res = await deleteMessageForMe(currentMsgId, msgType, session.id);
-    if (res.ok) {
-        const deletedId = currentMsgId;
-        closeMsgOptions();
-        const bubble = [...chatMessages.querySelectorAll('.msg-bubble')].find(el => el.dataset.msgId === String(deletedId));
-        if (bubble) bubble.remove();
-        lastRenderedMessagesSignature = '';
-    } else alert('❌ ' + res.error);
-}
-async function deleteForEveryone() {
-    if (!currentMsgId || !currentMsgIsMine) return;
-    if (!confirm('حذف برای همه؟')) return;
-    const msgType = activeChat.type === 'room' ? 'room' : 'direct';
-    const res = await deleteMessageForEveryone(currentMsgId, msgType, session.id);
-    if (res.ok) {
-        const deletedId = currentMsgId;
-        closeMsgOptions();
-        const bubble = [...chatMessages.querySelectorAll('.msg-bubble')].find(el => el.dataset.msgId === String(deletedId));
-        if (bubble) bubble.remove();
-        lastRenderedMessagesSignature = '';
-    } else alert('❌ ' + res.error);
-}
+    activeReply = n
