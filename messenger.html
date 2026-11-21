@@ -10,12 +10,11 @@
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
-        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background: #02030a; color: #e8edf5; position: fixed; width: 100%; }
+        html { height: 100%; height: 100dvh; overflow: hidden; }
+        body { margin: 0; height: 100%; height: 100dvh; overflow: hidden; background: #02030a; color: #e8edf5; position: fixed; width: 100%; }
 
-        /* کانتینر اصلی */
         .app-container { display: flex; width: 100vw; height: 100vh; height: 100dvh; overflow: hidden; position: absolute; top: 0; left: 0; background: #0a0a0f; }
 
-        /* سایدبار */
         .sidebar { width: 100%; max-width: 380px; background: #111827; border-left: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; height: 100%; transition: right 0.3s cubic-bezier(0.22, 1, 0.36, 1); z-index: 200; flex-shrink: 0; position: absolute; right: 0; top: 0; bottom: 0; }
         .sidebar.hidden { right: -100%; }
         
@@ -59,7 +58,6 @@
         .dropdown-menu button:hover { background: rgba(139, 92, 246, 0.15); }
         .dropdown-menu button.danger { color: #ef4444; }
 
-        /* چت‌آریا */
         .chat-area { flex: 1; display: flex; flex-direction: column; background: #0a0a0f; height: 100%; width: 100%; overflow: hidden; position: relative; }
         
         .chat-header { flex-shrink: 0; padding: 10px 20px; background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 12px; z-index: 10; height: 65px; }
@@ -102,7 +100,6 @@
 
         .msg-img { max-width: 100%; border-radius: 10px; margin-top: 4px; cursor: pointer; }
 
-        /* کادر ورودی */
         .chat-input-area-container { position: fixed; bottom: 0; left: 0; right: 0; background: #111827; border-top: 1px solid rgba(255,255,255,0.05); z-index: 500; display: flex; flex-direction: column; width: 100%; }
         .reply-preview-container { display: none; padding: 8px 12px; background: #1e1e2d; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; justify-content: space-between; }
         .reply-preview-content { border-right: 3px solid #8b5cf6; padding-right: 8px; display: flex; flex-direction: column; overflow: hidden; }
@@ -120,7 +117,6 @@
         .empty-chat i { font-size: 70px; color: rgba(139, 92, 246, 0.15); margin-bottom: 15px; }
         .empty-chat h3 { color: #c4b5fd; margin-bottom: 10px; font-size: 18px; }
 
-        /* آگهی و کارت‌ها */
         .ad-card { background: linear-gradient(145deg, rgba(139,92,246,0.1), rgba(109,40,217,0.05)); border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 18px; padding: 18px; margin-bottom: 12px; position: relative; overflow: hidden; transition: 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .ad-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; margin-bottom: 10px; }
         .ad-title { font-size: 16px; color: #fff; font-weight: 700; margin-bottom: 6px; }
@@ -128,7 +124,6 @@
         .ad-btn { display: flex; align-items: center; justify-content: center; padding: 10px 20px; border-radius: 12px; color: #fff; text-decoration: none; font-size: 14px; font-weight: 600; width: 100%; }
         .ad-btn.request { background: linear-gradient(135deg, #10b981, #059669); }
 
-        /* مودال‌ها */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .modal-overlay.show { display: flex; }
         .modal-box { background: #161b22; border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 20px; padding: 25px; width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto; }
@@ -178,7 +173,7 @@
 </head>
 <body>
 
-    <!-- 👈 سایدبار به صورت پیش‌فرض باز است (بدون کلاس hidden) -->
+    <!-- 👈 سایدبار به صورت پیش‌فرض باز است -->
     <div class="app-container" id="appContainer">
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
@@ -270,7 +265,7 @@
         </div>
     </div>
 
-    <!-- 👈 اسکریپت تنظیم ارتفاع -->
+    <!-- اسکریپت تنظیم ارتفاع -->
     <script>
         function setAppHeight() {
             const vh = window.innerHeight;
