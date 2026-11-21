@@ -22,22 +22,27 @@ const chatStatus = document.getElementById('chatStatus');
 const memberCountSpan = document.getElementById('memberCount');
 const searchBox = document.getElementById('searchBox');
 
-// 👈 المان‌های جدید برای لودر و نوار وضعیت
 const loadingSpinner = document.getElementById('loadingSpinner');
 const statusBar = document.getElementById('statusBar');
 
 function showLoader(text = 'در حال بارگذاری...') {
-    loadingSpinner.querySelector('.spinner-text').innerText = text;
-    loadingSpinner.classList.add('show');
-    statusBar.innerText = text;
-    statusBar.classList.add('show');
+    if(loadingSpinner) {
+        loadingSpinner.querySelector('.spinner-text').innerText = text;
+        loadingSpinner.classList.add('show');
+    }
+    if(statusBar) {
+        statusBar.innerText = text;
+        statusBar.classList.add('show');
+    }
 }
 
 function hideLoader() {
-    loadingSpinner.classList.remove('show');
-    setTimeout(() => {
-        statusBar.classList.remove('show');
-    }, 800); // بعد از 0.8 ثانیه نوار وضعیت محو میشه
+    if(loadingSpinner) loadingSpinner.classList.remove('show');
+    if(statusBar) {
+        setTimeout(() => {
+            statusBar.classList.remove('show');
+        }, 800);
+    }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -175,6 +180,7 @@ function toggleSetting(id) {
 }
 
 // ==================== چت‌ها ====================
+// 👈 رفع باگ آنلاین: کلاس online از آواتارها حذف شد
 async function loadChats() {
     const res = await getSocialChats(session.id);
     if (!res.ok) return;
@@ -186,7 +192,8 @@ async function loadChats() {
     listContainer.innerHTML = chats.map(c => {
         const isRoom = c.chat_type === 'room';
         const icon = isRoom ? (c.role === 'channel' ? '📢' : '👥') : '👤';
-        const avatarHTML = c.avatar && !isRoom ? `<div class="contact-avatar" style="background-image:url('${c.avatar}'); background-size:cover;"></div>` : `<div class="contact-avatar ${!isRoom ? 'online' : ''}">${icon}</div>`;
+        // دیگه کلاس online اضافه نمیشه
+        const avatarHTML = c.avatar && !isRoom ? `<div class="contact-avatar" style="background-image:url('${c.avatar}'); background-size:cover;"></div>` : `<div class="contact-avatar">${icon}</div>`;
         const badge = c.role === 'admin' && !isRoom ? '<span class="admin-badge">ادمین</span>' : '';
         
         return `
@@ -282,6 +289,7 @@ async function joinRoom() {
     else alert('❌ ' + res.error);
 }
 
+// 👈 رفع باگ آنلاین: کلاس online از آواتارها حذف شد
 async function loadAllUsers() {
     showLoader('در حال دریافت کاربران...');
     listContainer.innerHTML = '<p style="text-align:center; color:#8aa3c9; padding:20px;">در حال دریافت...</p>';
@@ -291,9 +299,11 @@ async function loadAllUsers() {
     renderUsersList(allUsersList);
     hideLoader();
 }
+
 function renderUsersList(users) {
     if (users.length === 0) { listContainer.innerHTML = '<p style="text-align:center; color:#8aa3c9; padding:20px;">کاربری نیست</p>'; return; }
     listContainer.innerHTML = users.map(u => {
+        // دیگه کلاس online اضافه نمیشه
         const av = u.avatar ? `<div class="contact-avatar" style="background-image:url('${u.avatar}'); background-size:cover;"></div>` : `<div class="contact-avatar">👤</div>`;
         return `
         <div class="contact-item" onclick="openChat(${u.id}, '${u.name.replace(/'/g, "\\'")}', 'direct', '${u.role}', '')">
@@ -305,6 +315,7 @@ function renderUsersList(users) {
         </div>`;
     }).join('');
 }
+
 function filterUsers() {
     const term = document.getElementById('searchInput').value.toLowerCase().trim();
     if (!term) { renderUsersList(allUsersList); return; }
