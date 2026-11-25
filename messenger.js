@@ -144,8 +144,8 @@ async function showUserProfile(userId, name, bio, avatar) {
 function closeUserProfile() { document.getElementById('userProfileModal').classList.remove('show'); viewingProfileId = null; }
 function startChatFromProfile() {
     if (!viewingProfileId) return;
-    closeUserProfile();
     const user = allUsersList.find(u => u.id === viewingProfileId);
+    closeUserProfile();
     if (user) openChat(user.id, user.name, 'direct', user.role, '');
 }
 
@@ -163,9 +163,9 @@ async function loadChats() {
         const icon = isRoom ? (c.role === 'channel' ? '📢' : '👥') : '👤';
         let avatarHTML;
         if (c.avatar) {
-            avatarHTML = `<div class="contact-avatar" style="background-image:url('${c.avatar}'); background-size:cover;" onclick="event.stopPropagation(); ${isRoom ? `openRoomInfo()` : `showUserProfile(${c.id}, '${c.name.replace(/'/g, "\\'")}', '${(c.bio || '').replace(/'/g, "\\'")}', '${c.avatar}')`}"></div>`;
+            avatarHTML = `<div class="contact-avatar" style="background-image:url('${c.avatar}'); background-size:cover;" onclick="event.stopPropagation(); ${isRoom ? `openChat(${c.id}, '${c.name.replace(/'/g, "\\'")}', '${c.chat_type}', '${c.role}', '${c.link_code || ''}')` : `showUserProfile(${c.id}, '${c.name.replace(/'/g, "\\'")}', '${(c.bio || '').replace(/'/g, "\\'")}', '${c.avatar}')`}"></div>`;
         } else {
-            avatarHTML = `<div class="contact-avatar" onclick="event.stopPropagation(); ${isRoom ? `openRoomInfo()` : `showUserProfile(${c.id}, '${c.name.replace(/'/g, "\\'")}', '${(c.bio || '').replace(/'/g, "\\'")}', '')`}">${icon}</div>`;
+            avatarHTML = `<div class="contact-avatar" onclick="event.stopPropagation(); ${isRoom ? `openChat(${c.id}, '${c.name.replace(/'/g, "\\'")}', '${c.chat_type}', '${c.role}', '${c.link_code || ''}')` : `showUserProfile(${c.id}, '${c.name.replace(/'/g, "\\'")}', '${(c.bio || '').replace(/'/g, "\\'")}', '')`}">${icon}</div>`;
         }
         const badge = c.role === 'admin' && !isRoom ? '<span class="admin-badge">ادمین</span>' : '';
         return `
