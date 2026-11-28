@@ -1,88 +1,44 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const $ = id => document.getElementById(id);
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ورود | نابغه‌کد</title>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;display:flex;justify-content:center;align-items:center;background:#000;color:#fff;font-family:tahoma,sans-serif;padding:20px}
+    .card{width:100%;max-width:380px;padding:30px 22px;border-radius:18px;background:#181818;box-shadow:0 0 30px rgba(138,92,255,.2);text-align:center}
+    h2{margin:0 0 12px;font-size:22px}
+    p.sub{color:#aaa;font-size:13px;line-height:1.9;margin:0 0 20px}
+    form{display:flex;flex-direction:column;gap:12px}
+    input{width:100%;padding:13px;border-radius:12px;border:1px solid #ddd;background:#f1f1f1;color:#111;font-size:14px;font-family:inherit}
+    input:focus{outline:none;border-color:#8a5cff}
+    button{padding:13px;border-radius:12px;border:0;background:linear-gradient(135deg,#8a5cff,#6a7cff);color:#fff;font-size:15px;font-weight:bold;cursor:pointer;font-family:inherit;width:100%}
+    button:disabled{opacity:.6;cursor:not-allowed}
+    .msg{min-height:20px;margin:10px 0 0;font-size:12px;color:#ff8a80;line-height:1.8}
+    .footer{margin-top:18px;color:#aaa;font-size:13px}
+    .footer a{color:#a78bfa;text-decoration:none;font-weight:bold}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>ورود به نابغه‌کد</h2>
+    <p class="sub">شماره موبایل یا ایمیل و رمز عبور خود را وارد کنید.</p>
 
-  const form = $('loginForm');
-  if (!form) return;
+    <form id="loginForm">
+      <input id="loginInput" type="text" placeholder="شماره موبایل یا ایمیل" autocomplete="username" required>
+      <input id="password" type="password" placeholder="رمز عبور" autocomplete="current-password" required>
+      <button type="submit">ورود</button>
+    </form>
 
-  const loginInput = $('loginInput');
-  const passwordInput = $('password');
-  const messageBox = $('loginMessage');
-  const submitBtn = form.querySelector('button[type="submit"]');
+    <p id="loginMessage" class="msg"></p>
 
-  function showMessage(message, type = 'error') {
-    if (!messageBox) return;
-    messageBox.textContent = message;
-    messageBox.style.color = type === 'success' ? '#69db91' : '#ff8a80';
-  }
+    <div class="footer">
+      حساب نداری؟ <a href="register.html">ثبت نام کن</a>
+    </div>
+  </div>
 
-  function setBusy(btn, busy, text) {
-    if (!btn) return;
-    btn.disabled = busy;
-    btn.textContent = busy ? 'در حال بررسی...' : text;
-  }
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const loginValue = loginInput?.value.trim() || '';
-    const password = passwordInput?.value || '';
-
-    if (!loginValue || !password) {
-      showMessage('شماره/ایمیل و رمز عبور را وارد کنید.');
-      return;
-    }
-
-    if (typeof loginUser !== 'function') {
-      showMessage('تابع loginUser در api.js پیدا نشد.');
-      return;
-    }
-
-    setBusy(submitBtn, true);
-    showMessage('در حال ورود...', 'info');
-
-    try {
-      const result = await loginUser(loginValue, password);
-
-      // ✅ دقت: نتیجه از apiRequest همیشه { ok, data } یا { ok:false, error } هست
-      if (!result || !result.ok) {
-        const msg = result?.error || result?.data?.error || 'خطا در ورود';
-        showMessage(msg);
-        setBusy(submitBtn, false, 'ورود');
-        return;
-      }
-
-      // ✅ data مستقیم user هست (چون server.js این‌طوری برمی‌گردونه)
-      const user = result.data?.user || result.data;
-
-      if (!user || !user.id) {
-        showMessage('پاسخ سرور معتبر نیست.');
-        setBusy(submitBtn, false, 'ورود');
-        return;
-      }
-
-      // ذخیره در localStorage
-      localStorage.setItem('session', JSON.stringify({
-        id: user.id,
-        role: user.role || 'user'
-      }));
-      localStorage.setItem('loggedInUser', JSON.stringify(user));
-      localStorage.setItem('username', user.name || 'کاربر');
-      localStorage.setItem('userXP', String(user.xp ?? 0));
-      localStorage.setItem('userCoins', String(user.coins ?? 0));
-      localStorage.setItem('userPlan', user.plan || 'free');
-      localStorage.setItem('userLevel', user.role === 'admin' ? '🛡️ ادمین' : '🟢 مبتدی');
-      localStorage.setItem('loggedIn', 'true');
-
-      showMessage('ورود موفق! در حال انتقال...', 'success');
-
-      setTimeout(() => {
-        window.location.href = user.role === 'admin' ? 'admin.html' : 'ideas.html';
-      }, 500);
-
-    } catch (err) {
-      console.error('Login error:', err);
-      showMessage('خطای غیرمنتظره: ' + (err.message || err));
-      setBusy(submitBtn, false, 'ورود');
-    }
-  });
-});
+  <script src="api.js"></script>
+  <script src="login.js"></script>
+</body>
+</html>
