@@ -1,39 +1,96 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ورود</title>
-
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000000">
+  <title>ورود | نابغه‌کد</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    *{box-sizing:border-box}
+    body.auth-page{min-height:100vh;margin:0;padding:20px;display:flex;justify-content:center;align-items:center;background:#000;color:#fff;font-family:tahoma,sans-serif}
+    .auth-box{width:100%;max-width:380px;padding:32px 25px;border-radius:18px;background:#181818;box-shadow:0 0 50px #000,0 0 25px rgba(138,92,255,.2),inset 0 0 0 1px #2f2f2f;text-align:center}
+    .auth-box h2{margin:0 0 12px;font-size:25px;color:#fff}
+    .auth-subtitle{margin:0 0 24px;color:#aaa;font-size:13px;line-height:2}
+    .auth-box form{display:flex;flex-direction:column;gap:14px}
+    .auth-box input{width:100%;padding:14px;border-radius:12px;background:#f1f1f1;border:1px solid #ddd;color:#111;font-size:14px;outline:none;font-family:inherit}
+    .auth-box input:focus{border-color:#8a5cff;box-shadow:0 0 0 3px rgba(138,92,255,.2)}
+    .auth-box button{width:100%;margin-top:5px;padding:14px;border-radius:12px;border:0;background:linear-gradient(135deg,#8a5cff,#6a7cff);color:#fff;font-size:15px;font-weight:bold;cursor:pointer;font-family:inherit}
+    .auth-box button:disabled{opacity:.6;cursor:not-allowed}
+    .auth-box .secondary-btn{background:#303030;border:1px solid #555}
+    .auth-message{min-height:22px;margin:12px 0 0;font-size:12px;line-height:1.8;color:#ff8a80}
+    .auth-message.info{color:#b9a8ff}
+    .auth-message.success{color:#69db91}
+    .otp-input{direction:ltr;text-align:center;font-size:25px!important;letter-spacing:12px;font-weight:bold}
+    .auth-footer{margin-top:20px;color:#aaa;font-size:13px}
+    .auth-footer a{color:#a78bfa;text-decoration:none;font-weight:bold}
+    .hidden{display:none!important}
+    .resend-row{margin-top:12px;font-size:12px;color:#aaa}
+    .resend-row button{width:auto;margin:0;padding:4px 8px;background:transparent;color:#b9a8ff;font-size:12px}
+    .security-note{margin:15px 0 0;color:#888;font-size:11px;line-height:1.9}
+  </style>
 </head>
-
 <body class="auth-page">
 
-<div class="auth-box">
+  <main class="auth-box">
+    <h2>ورود به نابغه‌کد</h2>
+    <p class="auth-subtitle" id="loginSubtitle">
+      ایمیل یا شماره موبایل خود را وارد کنید تا کد ورود برایتان ارسال شود.
+    </p>
 
-<h2>ورود</h2>
+    <form id="loginForm" novalidate>
+      <section id="loginDetailsStep">
+        <input id="loginInput" name="loginInput" type="text"
+          autocomplete="username" placeholder="ایمیل یا شماره موبایل" required>
+        <button id="requestCodeBtn" type="submit">ارسال کد ورود</button>
+      </section>
 
-<form id="loginForm">
+      <section id="loginOtpStep" class="hidden">
+        <input id="otpCode" name="otpCode" class="otp-input"
+          type="text" inputmode="numeric" autocomplete="one-time-code"
+          maxlength="6" placeholder="------" required>
 
-<input type="text" id="loginInput" placeholder="ایمیل یا شماره" required>
-<div class="password-box">
-  <input type="password" id="password" placeholder="رمز عبور" required>
-  <span class="toggle-password">👁️</span>
-</div>
+        <button id="verifyCodeBtn" type="button">تأیید کد و ورود</button>
+        <button id="backToLoginBtn" class="secondary-btn" type="button">بازگشت</button>
 
-<button type="submit">ورود</button>
+        <div class="resend-row">
+          کد را دریافت نکردید؟
+          <button id="resendCodeBtn" type="button">ارسال مجدد کد</button>
+        </div>
 
-</form>
+        <p class="security-note">
+          کد ورود ۵ دقیقه اعتبار دارد. آن را در اختیار هیچ‌کس قرار ندهید؛
+          تیم نابغه‌کد هرگز کد شما را درخواست نمی‌کند.
+        </p>
+      </section>
+    </form>
 
-<p><a href="forgot.html">رمز عبور را فراموش کرده‌اید؟</a></p>
+    <p id="loginMessage" class="auth-message" role="status" aria-live="polite"></p>
 
-<p>حساب نداری؟ <a href="register.html">ثبت‌نام</a></p>
+    <div class="auth-footer">
+      حساب کاربری نداری؟ <a href="register.html">ثبت نام کن</a>
+    </div>
+  </main>
 
-</div>
+  <script src="api.js"></script>
+  <script src="login.js"></script>
+  <script src="tour.js"></script>
 
-<script src="api.js"></script>
-<script src="login.js"></script>
+  <script>
+    (function(){
+      try{
+        const session=localStorage.getItem('session');
+        const loggedIn=localStorage.getItem('loggedIn');
+
+        if(session && loggedIn==='true'){
+          const user=JSON.parse(localStorage.getItem('loggedInUser')||'{}');
+          window.location.replace(
+            user.role==='admin'?'admin.html':'ideas.html'
+          );
+        }
+      }catch(e){}
+    })();
+  </script>
 
 </body>
 </html>
