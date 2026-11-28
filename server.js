@@ -619,18 +619,33 @@ app.post("/api/social/room/change-link", async (req, res) => {
 app.get("/api/social/history/:user1Id/:user2Id", async (req, res) => {
   try {
     const { user1Id, user2Id } = req.params;
-        const { user1Id, user2Id } = req.params;
+
     const result = await pool.query(`
-      SELECT dm.*, 
-        (SELECT text FROM direct_messages WHERE id = dm.reply_to_id) as reply_text,
-        (SELECT u.name FROM direct_messages rdm JOIN users u ON rdm.sender_id = u.id WHERE rdm.id = dm.reply_to_id) as reply_sender_name,
-        (SELECT json_agg(json_build_object('emoji', r.emoji, 'user_id', r.user_id)) FROM reactions r WHERE r.message_id = dm.id AND r.message_type = 'direct') as reactions
-      FROM direct_messages dm WHERE ((dm.sender_id = $1 AND dm.receiver_id = $2) OR (dm.sender_id = $2 AND dm.receiver_id = $1))
-      AND dm.id NOT IN (SELECT message_id FROM deleted_messages WHERE message_type = 'direct' AND user_id = $1)
+      SELECT dm.*,
+        (SELECT text FROM direct_messages WHERE id = dm.reply_to_id) AS reply_text,
+        (SELECT u.name FROM direct_messages rdm JOIN users u ON rdm.sender_id = u.id WHERE rdm.id = dm.reply_to_id) AS reply_sender_name,
+        (SELECT json_agg(json_build_object('emoji', r.emoji, 'user_id', r.user_id))
+         FROM reactions r
+         WHERE r.message_id = dm.id AND r.message_type = 'direct') AS reactions
+      FROM direct_messages dm
+      WHERE (
+        (dm.sender_id = $1 AND dm.receiver_id = $2)
+        OR
+        (dm.sender_id = $2 AND dm.receiver_id = $1)
+      )
+      AND dm.id NOT IN (
+        SELECT message_id
+        FROM deleted_messages
+        WHERE message_type = 'direct' AND user_id = $1
+      )
       ORDER BY dm.created_at ASC
     `, [user1Id, user2Id]);
+
     res.json({ ok: true, messages: result.rows });
-  } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "خطای سرور" });
+  }
 });
 
 app.post("/api/social/read", async (req, res) => {
