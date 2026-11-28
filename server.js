@@ -4,6 +4,7 @@ import pg from "pg";
 import "dotenv/config";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
+import nodemailer from "nodemailer";
 
 const { Pool } = pg;
 
@@ -11,6 +12,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const SUPABASE_DB_URL = process.env.SUPABASE_DB_URL;
+const EMAIL_USER = process.env.EMAIL_USER;
+const EMAIL_PASS = process.env.EMAIL_PASS;
+const otpTransporter = EMAIL_USER && EMAIL_PASS ? nodemailer.createTransport({ service: "gmail", auth: { user: EMAIL_USER, pass: EMAIL_PASS } }) : null;
 
 if (!GROQ_API_KEY) { console.error("❌ GROQ_API_KEY تنظیم نشده است"); process.exit(1); }
 if (!SUPABASE_DB_URL) { console.error("❌ SUPABASE_DB_URL تنظیم نشده است"); process.exit(1); }
@@ -19,7 +23,6 @@ const pool = new Pool({ connectionString: SUPABASE_DB_URL, ssl: { rejectUnauthor
 
 pool.connect().then(() => console.log("✅ Connected to Supabase (PostgreSQL)")).catch(err => console.error("❌ Supabase Connection Error:", err));
 
-// ================== ساخت جدول‌ها ==================
 const initDB = async () => {
   try {
     await pool.query(`
@@ -34,7 +37,9 @@ const initDB = async () => {
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_plain VARCHAR(255);`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT DEFAULT '';`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT DEFAULT '';`);
-    
+    await pool.query(`CREATE TABLE IF NOT EXISTS email_otps (id BIGSERIAL PRIMARY KEY, email VARCHAR(254) NOT NULL, purpose VARCHAR(20) NOT NULL, code_hash TEXT NOT NULL, payload JSONB, expires_at TIMESTAMPTZ NOT NULL, attempts INT NOT NULL DEFAULT 0, last_sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS email_otps_lookup_idx ON email_otps(email, purpose, created_at DESC);`);
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS orders (
         id SERIAL PRIMARY KEY, buyer_id INT REFERENCES users(id), buyer_name VARCHAR(255),
@@ -43,14 +48,14 @@ const initDB = async () => {
       );
     `);
     await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_code VARCHAR(255);`);
-    
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS projects (
         id SERIAL PRIMARY KEY, user_id INT REFERENCES users(id), name VARCHAR(255),
         html TEXT, css TEXT, js TEXT, date VARCHAR(255)
       );
     `);
-    
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS reviews (
         id SERIAL PRIMARY KEY, user_id INT REFERENCES users(id), user_name VARCHAR(255),
@@ -154,7 +159,8 @@ const initDB = async () => {
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS ad_requests (
-        id SERIAL PRIMARY KEY, user_id INT REFERENCES users(id) ON DELETE CASCADE,
+        id SERIAL PRIMARY KEY,
+        user_id INT REFERENCES users(id) ON DELETE CASCADE,
         user_name VARCHAR(255), phone VARCHAR(255), content TEXT NOT NULL,
         price INT DEFAULT 0, status VARCHAR(50) DEFAULT 'pending', created_at TIMESTAMP DEFAULT NOW()
       );
@@ -163,12 +169,12 @@ const initDB = async () => {
     console.log("✅ Tables ready");
   } catch (e) { console.error("❌ Error creating tables:", e); }
 };
-initDB();
+
+const initDBPromise = initDB();
 
 app.use(cors());
 app.use(express.json({ limit: "20mb" }));
 
-// ================== API ها ==================
 app.get("/health", (_req, res) => res.json({ ok: true, status: "Live" }));
 
 // ================== تبلیغات ==================
@@ -220,45 +226,104 @@ app.post("/api/admin/ad-requests/delete", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
 });
 
-// ================== ثبت‌نام و ورود ==================
-app.post("/api/register", async (req, res) => {
+// ================== احراز هویت با کد یک‌بارمصرف ایمیل ==================
+const normalizeEmail = value => String(value || "").trim().toLowerCase();
+const normalizePhone = value => String(value || "").replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/\D/g, "");
+const otpDigest = (email, purpose, code) => crypto.createHmac("sha256", EMAIL_PASS || SUPABASE_DB_URL).update(`${email}:${purpose}:${code}`).digest("hex");
+async function sendEmailOtp(email, code, purpose) {
+  if (!otpTransporter) throw new Error("تنظیمات ارسال ایمیل روی سرور کامل نیست (EMAIL_USER و EMAIL_PASS).");
+  await otpTransporter.sendMail({
+    from: `نابغه‌کد <${EMAIL_USER}>`, to: email,
+    subject: purpose === "register" ? "کد تأیید ثبت‌نام نابغه‌کد" : "کد ورود به نابغه‌کد",
+    text: `کد تأیید شما: ${code}\nاین کد تا ۵ دقیقه معتبر است. آن را در اختیار هیچ‌کس قرار ندهید.`,
+    html: `<div dir="rtl" style="font-family:tahoma,sans-serif;background:#111827;color:#fff;padding:28px;border-radius:16px;text-align:center"><h2>نابغه‌کد</h2><p>کد تأیید شما</p><div style="font-size:32px;letter-spacing:8px;font-weight:bold;background:#252b3b;padding:18px;border-radius:12px">${code}</div><p>این کد تا ۵ دقیقه معتبر است.</p><small>کد را با هیچ‌کس به اشتراک نگذارید؛ تیم نابغه‌کد هرگز کد شما را درخواست نمی‌کند.</small></div>`
+  });
+}
+async function issueOtp(email, purpose, payload, res) {
+  const recent = await pool.query(`SELECT created_at FROM email_otps WHERE email=$1 AND purpose=$2 ORDER BY created_at DESC LIMIT 1`, [email, purpose]);
+  if (recent.rows[0] && Date.now() - new Date(recent.rows[0].created_at).getTime() < 60000) return res.status(429).json({ ok:false, error:"برای ارسال دوباره کد، ۶۰ ثانیه صبر کنید." });
+  const code = String(crypto.randomInt(0, 1000000)).padStart(6, "0");
+  await pool.query(`INSERT INTO email_otps(email,purpose,code_hash,payload,expires_at) VALUES($1,$2,$3,$4,NOW()+INTERVAL '5 minutes')`, [email,purpose,otpDigest(email,purpose,code),payload ? JSON.stringify(payload) : null]);
+  try { await sendEmailOtp(email, code, purpose); }
+  catch (error) { await pool.query(`DELETE FROM email_otps WHERE email=$1 AND purpose=$2 AND created_at > NOW()-INTERVAL '1 minute'`, [email,purpose]); throw error; }
+  return res.json({ ok:true, message:"کد تأیید به ایمیل شما ارسال شد." });
+}
+async function verifyOtp(email, purpose, code) {
+  const result = await pool.query(`SELECT * FROM email_otps WHERE email=$1 AND purpose=$2 AND expires_at>NOW() ORDER BY created_at DESC LIMIT 1`, [email,purpose]);
+  const row = result.rows[0];
+  if (!row) return { error:"کد منقضی شده یا درخواست کد پیدا نشد." };
+  if (row.attempts >= 5) { await pool.query(`DELETE FROM email_otps WHERE id=$1`, [row.id]); return { error:"تعداد تلاش بیش از حد مجاز است؛ کد جدید بگیرید." }; }
+  if (!crypto.timingSafeEqual(Buffer.from(row.code_hash), Buffer.from(otpDigest(email,purpose,String(code || ""))))) {
+    await pool.query(`UPDATE email_otps SET attempts=attempts+1 WHERE id=$1`, [row.id]); return { error:"کد تأیید اشتباه است." };
+  }
+  await pool.query(`DELETE FROM email_otps WHERE id=$1`, [row.id]);
+  return { row };
+}
+app.post("/api/auth/register/request", async (req,res) => {
   try {
-    const { name, phone, email, password } = req.body;
-    const role = req.body.role || 'user';
-    const existing = await pool.query('SELECT * FROM users WHERE phone = $1 OR email = $2', [phone, email]);
-    if (existing.rows.length > 0) return res.status(400).json({ error: "شماره یا ایمیل تکراری است" });
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const plainForView = role === 'admin' ? null : password;
-    const newUser = await pool.query(
-      `INSERT INTO users (name, phone, email, password, password_plain, role) 
-       VALUES ($1, $2, $3, $4, $5, $6) 
-       RETURNING id, name, phone, email, role, coins, xp, plan, bio, avatar`,
-      [name, phone, email, hashedPassword, plainForView, role]
-    );
-    res.json({ ok: true, user: newUser.rows[0] });
-  } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
+    const name=String(req.body?.name||"").trim(), phone=normalizePhone(req.body?.phone), email=normalizeEmail(req.body?.email);
+    if(name.length<3 || name.length>50 || !/^09\d{9}$/.test(phone) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ok:false,error:"اطلاعات واردشده معتبر نیست."});
+    const exists=await pool.query(`SELECT id FROM users WHERE phone=$1 OR LOWER(email)=LOWER($2) LIMIT 1`,[phone,email]);
+    if(exists.rows.length) return res.status(409).json({ok:false,error:"این شماره موبایل یا ایمیل قبلاً ثبت شده است."});
+    return await issueOtp(email,"register",{name,phone},res);
+  } catch(e) { console.error("Register OTP error:",e); res.status(500).json({ok:false,error:e.message||"ارسال کد انجام نشد."}); }
+});
+app.post("/api/auth/register/verify", async(req,res)=>{
+  try { const email=normalizeEmail(req.body?.email), code=String(req.body?.code||"").replace(/\D/g,"");
+    const verified=await verifyOtp(email,"register",code); if(verified.error) return res.status(400).json({ok:false,error:verified.error});
+    const data=verified.row.payload||{}; if(!data.name||!data.phone) return res.status(400).json({ok:false,error:"اطلاعات ثبت‌نام معتبر نیست؛ دوباره کد بگیرید."});
+    const created=await pool.query(`INSERT INTO users(name,phone,email,password,password_plain,role) VALUES($1,$2,$3,NULL,NULL,'user') RETURNING id,name,phone,email,role,coins,xp,plan,bio,avatar`,[data.name,data.phone,email]);
+    res.json({ok:true,user:created.rows[0]});
+  } catch(e) { console.error("Register verify error:",e); res.status(500).json({ok:false,error:"ساخت حساب انجام نشد."}); }
+});
+app.post("/api/auth/login/request", async(req,res)=>{
+  try { const value=String(req.body?.loginValue||"").trim(); if(!value) return res.status(400).json({ok:false,error:"ایمیل یا شماره موبایل را وارد کنید."});
+    const phone=normalizePhone(value), email=normalizeEmail(value);
+    const found=await pool.query(`SELECT email, role FROM users WHERE LOWER(email)=LOWER($1) OR phone=$2 LIMIT 1`,[email,phone]);
+    if(!found.rows.length || !found.rows[0].email) return res.status(404).json({ok:false,error:"حسابی با این مشخصات پیدا نشد یا ایمیل ثبت نشده است."});
+    if(found.rows[0].role === "admin") return res.status(403).json({ok:false,error:"ورود مدیر با ایمیل و رمز عبور انجام می‌شود."});
+    return await issueOtp(normalizeEmail(found.rows[0].email),"login",{loginValue:value},res);
+  } catch(e) { console.error("Login OTP error:",e); res.status(500).json({ok:false,error:e.message||"ارسال کد ورود انجام نشد."}); }
+});
+app.post("/api/auth/login/verify", async(req,res)=>{
+  try { const value=String(req.body?.loginValue||"").trim(), phone=normalizePhone(value), email=normalizeEmail(value), code=String(req.body?.code||"").replace(/\D/g,"");
+    const found=await pool.query(`SELECT * FROM users WHERE LOWER(email)=LOWER($1) OR phone=$2 LIMIT 1`,[email,phone]);
+    if(!found.rows.length) return res.status(404).json({ok:false,error:"حساب کاربری پیدا نشد."});
+    const user=found.rows[0];
+    if(user.role === "admin") return res.status(403).json({ok:false,error:"ورود مدیر با ایمیل و رمز عبور انجام می‌شود."});
+    const verified=await verifyOtp(normalizeEmail(user.email),"login",code); if(verified.error) return res.status(400).json({ok:false,error:verified.error});
+    delete user.password; delete user.password_plain; res.json({ok:true,user});
+  } catch(e) { console.error("Login verify error:",e); res.status(500).json({ok:false,error:"ورود انجام نشد."}); }
 });
 
-app.post("/api/login", async (req, res) => {
+// مسیرهای قدیمی رمزعبور برای سازگاری موقت؛ نقش کاربر از سمت مرورگر پذیرفته نمی‌شود.
+app.post("/api/register", async (_req, res) => {
+  return res.status(410).json({ ok:false, error:"ثبت‌نام فقط با تأیید کد ایمیلی انجام می‌شود." });
+});
+app.post("/api/login", async (req,res)=>{
   try {
-    const { loginValue, password } = req.body;
-    const result = await pool.query('SELECT * FROM users WHERE phone = $1 OR email = $1', [loginValue]);
-    if (result.rows.length === 0) return res.status(401).json({ error: "شماره/ایمیل یا رمز اشتباه است" });
-    const user = result.rows[0];
-    let isMatch = false;
-    if (user.password && user.password.startsWith('$2b$')) {
-      isMatch = await bcrypt.compare(password, user.password);
-    } else {
-      if (password === user.password) {
-        isMatch = true;
-        const hashed = await bcrypt.hash(password, 10);
-        await pool.query('UPDATE users SET password = $1 WHERE id = $2', [hashed, user.id]);
-      }
+    const loginValue=String(req.body?.loginValue || "").trim();
+    const password=String(req.body?.password || "");
+    if(!loginValue || !password) return res.status(400).json({ok:false,error:"ایمیل و رمز عبور را وارد کنید."});
+    const result=await pool.query(`SELECT * FROM users WHERE LOWER(email)=LOWER($1) LIMIT 1`,[loginValue]);
+    if(!result.rows.length) return res.status(401).json({ok:false,error:"ایمیل یا رمز عبور اشتباه است."});
+    const user=result.rows[0];
+    if(user.role !== "admin") return res.status(403).json({ok:false,error:"کاربران عادی باید با کد یک‌بارمصرف ایمیل وارد شوند."});
+    let isMatch=false;
+    if(user.password && /^\$2[aby]\$/.test(user.password)) {
+      isMatch=await bcrypt.compare(password,user.password);
+    } else if(password === user.password) {
+      isMatch=true;
+      const hashed=await bcrypt.hash(password,10);
+      await pool.query(`UPDATE users SET password=$1, password_plain=NULL WHERE id=$2`,[hashed,user.id]);
     }
-    if (!isMatch) return res.status(401).json({ error: "شماره/ایمیل یا رمز اشتباه است" });
+    if(!isMatch) return res.status(401).json({ok:false,error:"ایمیل یا رمز عبور اشتباه است."});
     delete user.password; delete user.password_plain;
-    res.json({ ok: true, user });
-  } catch (e) { console.error(e); res.status(500).json({ error: "خطای سرور" }); }
+    res.json({ok:true,user});
+  } catch(e) {
+    console.error("Admin login error:",e);
+    res.status(500).json({ok:false,error:"خطای سرور در ورود مدیر."});
+  }
 });
 
 app.get("/api/user/:id", async (req, res) => {
@@ -272,12 +337,7 @@ app.post("/api/user/update-profile", async (req, res) => {
   try {
     const { userId, name, bio, avatar } = req.body;
     const result = await pool.query(
-      `UPDATE users SET 
-        name = COALESCE(NULLIF($1, ''), name), 
-        bio = COALESCE($2, bio), 
-        avatar = COALESCE($3, avatar) 
-       WHERE id = $4 
-       RETURNING id, name, phone, email, role, coins, xp, plan, bio, avatar`,
+      `UPDATE users SET name = COALESCE(NULLIF($1, ''), name), bio = COALESCE($2, bio), avatar = COALESCE($3, avatar) WHERE id = $4 RETURNING id, name, phone, email, role, coins, xp, plan, bio, avatar`,
       [name, bio, avatar, userId]
     );
     res.json({ ok: true, user: result.rows[0] });
@@ -508,10 +568,7 @@ app.post("/api/social/create-room", async (req, res) => {
   try {
     const { ownerId, name, type, description, avatar } = req.body;
     const linkCode = crypto.randomBytes(4).toString('hex');
-    const roomResult = await pool.query(
-      'INSERT INTO chat_rooms (name, type, owner_id, link_code, description, avatar) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [name, type, ownerId, linkCode, description || '', avatar || '']
-    );
+    const roomResult = await pool.query('INSERT INTO chat_rooms (name, type, owner_id, link_code, description, avatar) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *', [name, type, ownerId, linkCode, description || '', avatar || '']);
     const room = roomResult.rows[0];
     await pool.query('INSERT INTO room_members (room_id, user_id, role) VALUES ($1, $2, $3)', [room.id, ownerId, 'admin']);
     res.json({ ok: true, room });
@@ -562,6 +619,7 @@ app.post("/api/social/room/change-link", async (req, res) => {
 app.get("/api/social/history/:user1Id/:user2Id", async (req, res) => {
   try {
     const { user1Id, user2Id } = req.params;
+        const { user1Id, user2Id } = req.params;
     const result = await pool.query(`
       SELECT dm.*, 
         (SELECT text FROM direct_messages WHERE id = dm.reply_to_id) as reply_text,
@@ -650,6 +708,7 @@ app.post("/api/social/delete-for-everyone", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "خطای سرور" }); }
 });
 
+// ================== گزارش‌های کاربران ==================
 app.get("/api/admin/reports", async (req, res) => {
   try {
     const result = await pool.query(`
@@ -743,7 +802,4 @@ app.post("/api/chat", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "خطای داخلی سرور" }); }
 });
 
-// 👈 خط حیاتی: راه‌اندازی سرور روی پورت (با 0.0.0.0 برای Render)
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Server is running on port ${PORT}`);
-});
+initDBPromise.then(() => app.listen(PORT, "0.0.0.0", () => console.log(`✅ Server on port ${PORT}`))).catch(error => { console.error("❌ Database initialization failed:", error); process.exit(1); });
