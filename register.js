@@ -1,210 +1,225 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const $ = id => document.getElementById(id);
+document.addEventListener("DOMContentLoaded", () => {
 
-  const form = $('registerForm');
-  if (!form) return;
+const form = document.getElementById('registerForm');
 
-  const nameInput = $('name');
-  const phoneInput = $('phone');
-  const emailInput = $('email');
-  const codeInput = $('code');
-  const informationStep = $('informationStep');
-  const verificationStep = $('verificationStep');
-  const requestCodeBtn = $('requestCodeBtn');
-  const verifyCodeBtn = $('verifyCodeBtn');
-  const backBtn = $('backBtn');
-  const subtitle = document.querySelector('.subtitle');
+const nameInput = document.getElementById('name');
+const phoneInput = document.getElementById('phone');
+const emailInput = document.getElementById('email');
+const passwordInput = document.getElementById('password');
 
-  if (!nameInput || !phoneInput || !emailInput || !codeInput ||
-      !informationStep || !verificationStep || !requestCodeBtn ||
-      !verifyCodeBtn || !backBtn) {
-    console.error('Register form markup is incomplete.');
-    return;
-  }
+const rulesBox = document.querySelector(".password-rules");
 
-  let registrationDetails = null;
-  let requestInProgress = false;
-  let verifyInProgress = false;
+// ======================
+// 👑 ساخت ادمین (همون کد قبلی)
+// ======================
+async function createDefaultAdmin() {
+const res = await apiRequest('/admin/users');
+if (res.ok && res.data.users) {
+const hasAdmin = res.data.users.find(u => u.role === 'admin');
+if (!hasAdmin) {
+await apiRequest('/register', 'POST', {
+name: 'Admin',
+phone: '09876543210',
+email: 'admin@gmail.com',
+password: '654321',
+role: 'admin'
+});
+console.log('✅ Default admin created');
+}
+}
+}
+createDefaultAdmin();
 
-  function normalizeDigits(value) {
-    return String(value || '')
-      .replace(/[۰-۹]/g, digit => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(digit)))
-      .replace(/[٠-٩]/g, digit => String('٠١٢٣٤٥٦٧٨٩'.indexOf(digit)));
-  }
+// ======================
+// 🎯 helper
+// ======================
+function setMessage(el, input, text, status) {
+if (!el || !input) return;
+el.textContent = text;
+el.style.color = status === "valid" ? "#00c853" : "#ff3d00";
 
-  function setError(id, input, message = '') {
-    const errorElement = $(id);
-    if (errorElement) errorElement.textContent = message;
-    if (input) {
-      input.classList.toggle('invalid', Boolean(message));
-      if (!message) input.classList.remove('invalid');
-    }
-  }
+input.classList.remove("valid", "invalid");  
+input.classList.add(status);
 
-  function showStatus(message, isError = false) {
-    if (!subtitle) return;
-    subtitle.textContent = message;
-    subtitle.style.color = isError ? '#ff8a70' : '#aaa';
-  }
+}
 
-  function setBusy(button, busy, busyText, normalText) {
-    button.disabled = busy;
-    button.textContent = busy ? busyText : normalText;
-  }
+// ======================
+// 👤 NAME (اعتبارسنجی زنده)
+// ======================
+nameInput.addEventListener("input", async () => {
+const name = nameInput.value.trim();
+const rule = document.getElementById("name-error");
 
-  function validateDetails() {
-    const name = nameInput.value.trim();
-    const phone = normalizeDigits(phoneInput.value).replace(/\s+/g, '');
-    const email = emailInput.value.trim().toLowerCase();
-    let valid = true;
+if (!name) {  
+  setMessage(rule, nameInput, "", "");  
+  return;  
+}  
 
-    setError('name-error', nameInput);
-    setError('phone-error', phoneInput);
-    setError('email-error', emailInput);
+if (name.length < 3) {  
+  setMessage(rule, nameInput, "نام باید حداقل ۳ حرف باشد", "invalid");  
+  return;  
+}  
 
-    if (name.length < 3 || name.length > 50) {
-      setError('name-error', nameInput, 'نام باید بین ۳ تا ۵۰ نویسه باشد.');
-      valid = false;
-    }
+// چک کردن تکراری بودن از دیتابیس ابری  
+const res = await apiRequest('/admin/users');  
+if (res.ok && res.data.users) {  
+  const isDuplicate = res.data.users.some(u => u.name === name);  
+  if (isDuplicate) {  
+    setMessage(rule, nameInput, "نام تکراری است", "invalid");  
+  } else {  
+    setMessage(rule, nameInput, "✔️ قابل استفاده است", "valid");  
+  }  
+}
 
-    if (!/^09\d{9}$/.test(phone)) {
-      setError('phone-error', phoneInput, 'شماره موبایل باید با 09 شروع شود و ۱۱ رقم باشد.');
-      valid = false;
-    }
+});
 
-    if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('email-error', emailInput, 'آدرس ایمیل معتبر نیست.');
-      valid = false;
-    }
+// ======================
+// 📱 PHONE (اعتبارسنجی زنده)
+// ======================
+phoneInput.addEventListener("input", async () => {
+const phone = phoneInput.value.replace(/\s/g, '');
+const rule = document.getElementById("phone-error");
 
-    return { valid, name, phone, email };
-  }
+if (!phone) {  
+  setMessage(rule, phoneInput, "", "");  
+  return;  
+}  
 
-  [nameInput, phoneInput, emailInput].forEach(input => {
-    input.addEventListener('input', () => {
-      if (input === phoneInput) input.value = normalizeDigits(input.value);
-      setError(`${input.id}-error`, input);
-    });
-  });
+if (!/^09\d{9}$/.test(phone)) {  
+  setMessage(rule, phoneInput, "شماره معتبر نیست", "invalid");  
+  return;  
+}  
 
-  codeInput.addEventListener('input', () => {
-    codeInput.value = normalizeDigits(codeInput.value).replace(/\D/g, '').slice(0, 6);
-    setError('code-error', codeInput);
-  });
+// چک کردن تکراری بودن از دیتابیس ابری  
+const res = await apiRequest('/admin/users');  
+if (res.ok && res.data.users) {  
+  const isDuplicate = res.data.users.some(u => u.phone === phone);  
+  if (isDuplicate) {  
+    setMessage(rule, phoneInput, "شماره تکراری است", "invalid");  
+  } else {  
+    setMessage(rule, phoneInput, "✔️ شماره معتبر است", "valid");  
+  }  
+}
 
-  form.addEventListener('submit', async event => {
-    event.preventDefault();
-    if (requestInProgress || verifyInProgress) return;
+});
 
-    const details = validateDetails();
-    if (!details.valid) return;
+// ======================
+// 📧 EMAIL (اعتبارسنجی زنده)
+// ======================
+emailInput.addEventListener("input", async () => {
+const email = emailInput.value.trim();
+const rule = document.getElementById("email-error");
 
-    if (typeof requestRegistrationCode !== 'function') {
-      showStatus('تابع ارسال کد در api.js پیدا نشد.', true);
-      return;
-    }
+if (!email) {  
+  setMessage(rule, emailInput, "", "");  
+  return;  
+}  
 
-    registrationDetails = details;
-    requestInProgress = true;
-    setBusy(requestCodeBtn, true, 'در حال ارسال...', 'ارسال کد تأیید');
-    showStatus('در حال ارسال کد تأیید به ایمیل شما...');
+if (!/^\S+@\S+\.\S+$/.test(email)) {  
+  setMessage(rule, emailInput, "ایمیل معتبر نیست", "invalid");  
+  return;  
+}  
 
-    try {
-      const result = await requestRegistrationCode(details.name, details.phone, details.email);
-      if (!result?.ok) {
-        showStatus(result?.error || result?.data?.error || 'ارسال کد انجام نشد.', true);
-        return;
-      }
+// چک کردن تکراری بودن از دیتابیس ابری  
+const res = await apiRequest('/admin/users');  
+if (res.ok && res.data.users) {  
+  const isDuplicate = res.data.users.some(u => u.email === email);  
+  if (isDuplicate) {  
+    setMessage(rule, emailInput, "ایمیل تکراری است", "invalid");  
+  } else {  
+    setMessage(rule, emailInput, "✔️ ایمیل معتبر است", "valid");  
+  }  
+}
 
-      informationStep.classList.add('hidden');
-      verificationStep.classList.remove('hidden');
-      codeInput.value = '';
-      showStatus('کد ۶ رقمی به ایمیل شما ارسال شد. اعتبار کد ۵ دقیقه است؛ آن را در اختیار دیگران قرار ندهید.');
-      codeInput.focus();
-    } catch (error) {
-      console.error('Registration code request failed:', error);
-      showStatus(error.message || 'ارتباط با سرور برقرار نشد.', true);
-    } finally {
-      requestInProgress = false;
-      setBusy(requestCodeBtn, false, 'در حال ارسال...', 'ارسال کد تأیید');
-    }
-  });
+});
 
-  backBtn.addEventListener('click', () => {
-    if (requestInProgress || verifyInProgress) return;
-    verificationStep.classList.add('hidden');
-    informationStep.classList.remove('hidden');
-    setError('code-error', codeInput);
-    codeInput.value = '';
-    showStatus('برای دریافت کد تأیید، اطلاعات خود را وارد کنید.');
-  });
+// ======================
+// 🔐 PASSWORD (اعتبارسنجی زنده)
+// ======================
+rulesBox.style.display = "none";
 
-  verifyCodeBtn.addEventListener('click', async () => {
-    if (verifyInProgress || requestInProgress) return;
+passwordInput.addEventListener("focus", () => {
+if (passwordInput.value) rulesBox.style.display = "block";
+});
 
-    const code = normalizeDigits(codeInput.value).replace(/\D/g, '');
-    setError('code-error', codeInput);
+passwordInput.addEventListener("input", () => {
+const value = passwordInput.value;
 
-    if (!registrationDetails) {
-      showStatus('ابتدا اطلاعات ثبت‌نام را وارد و کد تأیید را درخواست کنید.', true);
-      verificationStep.classList.add('hidden');
-      informationStep.classList.remove('hidden');
-      return;
-    }
+if (!value) {  
+  rulesBox.style.display = "none";  
+  passwordInput.classList.remove("valid", "invalid");  
+  return;  
+}  
 
-    if (!/^\d{6}$/.test(code)) {
-      setError('code-error', codeInput, 'کد تأیید باید دقیقاً ۶ رقم باشد.');
-      codeInput.focus();
-      return;
-    }
+rulesBox.style.display = "block";  
 
-    if (typeof verifyRegistrationCode !== 'function') {
-      showStatus('تابع تأیید کد در api.js پیدا نشد.', true);
-      return;
-    }
+const rules = {  
+  length: value.length >= 8,  
+  lower: /[a-z]/.test(value),  
+  upper: /[A-Z]/.test(value),  
+  number: /\d/.test(value),  
+  special: /[@#$%^&*!?]/.test(value),  
+};  
 
-    verifyInProgress = true;
-    setBusy(verifyCodeBtn, true, 'در حال بررسی...', 'تأیید و ساخت حساب');
-    backBtn.disabled = true;
-    showStatus('در حال بررسی کد تأیید...');
+const toggleRule = (id, ok) => {  
+  const el = document.getElementById(id);  
+  if (el) el.style.color = ok ? "#00c853" : "#ff3d00";  
+};  
 
-    try {
-      const result = await verifyRegistrationCode(registrationDetails.email, code);
-      if (!result?.ok) {
-        setError('code-error', codeInput,
-          result?.error || result?.data?.error || 'کد تأیید اشتباه است یا اعتبار آن تمام شده است.');
-        return;
-      }
+toggleRule("rule-length", rules.length);  
+toggleRule("rule-lower", rules.lower);  
+toggleRule("rule-upper", rules.upper);  
+toggleRule("rule-number", rules.number);  
+toggleRule("rule-special", rules.special);  
 
-      const data = result.data?.data || result.data || result;
-      const user = data?.user || data;
+if (Object.values(rules).every(v => v)) {  
+  passwordInput.classList.add("valid");  
+  passwordInput.classList.remove("invalid");  
+} else {  
+  passwordInput.classList.add("invalid");  
+  passwordInput.classList.remove("valid");  
+}
 
-      if (!user?.id) {
-        showStatus('پاسخ سرور معتبر نیست؛ اطلاعات حساب دریافت نشد.', true);
-        return;
-      }
+});
 
-      const safeUser = { ...user, role: 'user' };
+passwordInput.addEventListener("blur", () => {
+if (!passwordInput.value) rulesBox.style.display = "none";
+});
 
-      localStorage.removeItem('authToken');
-      localStorage.setItem('session', JSON.stringify({ id: user.id, role: 'user' }));
-      localStorage.setItem('loggedIn', 'true');
-      localStorage.setItem('loggedInUser', JSON.stringify(safeUser));
-      localStorage.setItem('username', user.name || registrationDetails.name);
-      localStorage.setItem('userXP', String(user.xp ?? 0));
-      localStorage.setItem('userCoins', String(user.coins ?? 0));
-      localStorage.setItem('userPlan', user.plan || 'free');
-      localStorage.setItem('userLevel', '🟢 مبتدی');
+// ======================
+// 🚀 SUBMIT
+// ======================
+form.addEventListener('submit', async (e) => {
+e.preventDefault();
 
-      showStatus('حساب شما با موفقیت ساخته شد؛ در حال انتقال...', false);
-      window.location.href = 'assessment.html';
-    } catch (error) {
-      console.error('Registration verification failed:', error);
-      showStatus(error.message || 'ارتباط با سرور برقرار نشد.', true);
-    } finally {
-      verifyInProgress = false;
-      setBusy(verifyCodeBtn, false, 'در حال بررسی...', 'تأیید و ساخت حساب');
-      backBtn.disabled = false;
-    }
-  });
+const name = nameInput.value.trim();  
+const phone = phoneInput.value.replace(/\s/g, '');  
+const email = emailInput.value.trim();  
+const password = passwordInput.value;  
+
+const submitBtn = form.querySelector('button');  
+submitBtn.disabled = true;  
+submitBtn.textContent = "در حال ثبت...";  
+
+const result = await registerUser(name, phone, email, password);  
+
+if (!result.ok) {  
+  alert(result.error);  
+  submitBtn.disabled = false;  
+  submitBtn.textContent = "ثبت نام";  
+  return;  
+}  
+
+const user = result.data.user;  
+
+localStorage.setItem('session', JSON.stringify({ id: user.id, role: user.role }));  
+localStorage.setItem('loggedInUser', JSON.stringify(user));  
+localStorage.setItem('username', user.name);  
+localStorage.setItem('userXP', 0);  
+localStorage.setItem('userCoins', 0);  
+
+window.location.href = "assessment.html";
+
+});
+
 });
