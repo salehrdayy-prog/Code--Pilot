@@ -1,158 +1,249 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById('loginForm');
-  const loginInput = document.getElementById('loginInput');
-  const passwordInput = document.getElementById('password');
-  const btn = form.querySelector('button');
-  const toggle = document.querySelector('.toggle-password');
+document.addEventListener('DOMContentLoaded', () => {
+  const $ = id => document.getElementById(id);
 
-  // ===== نمایش پیام =====
-  function showMessage(text, type = 'error') {
-    let msgBox = document.getElementById('login-msg');
-    if (!msgBox) {
-      msgBox = document.createElement('div');
-      msgBox.id = 'login-msg';
-      msgBox.style.cssText = `margin-top:15px;padding:12px 16px;border-radius:10px;font-size:14px;text-align:center;font-weight:500;transition:0.3s;line-height:1.6;display:none;`;
-      form.appendChild(msgBox);
-    }
-    const styles = {
-      error: ['rgba(239,68,68,0.15)', 'rgba(239,68,68,0.4)', '#f87171'],
-      success: ['rgba(34,197,94,0.15)', 'rgba(34,197,94,0.4)', '#4ade80'],
-      info: ['rgba(139,92,246,0.15)', 'rgba(139,92,246,0.4)', '#c4b5fd']
-    };
-    const [bg, border, color] = styles[type] || styles.error;
-    msgBox.style.background = bg;
-    msgBox.style.border = `1px solid ${border}`;
-    msgBox.style.color = color;
-    msgBox.textContent = text;
-    msgBox.style.display = text ? 'block' : 'none';
+  const form = $('loginForm');
+  if (!form) return;
+
+  const loginInput = $('loginInput');
+  const otpInput = $('otpCode');
+  const detailsStep = $('loginDetailsStep');
+  const otpStep = $('loginOtpStep');
+  const requestBtn = $('requestCodeBtn');
+  const verifyBtn = $('verifyCodeBtn');
+  const backBtn = $('backToLoginBtn');
+  const resendBtn = $('resendCodeBtn');
+  const messageBox = $('loginMessage');
+  const subtitle = $('loginSubtitle');
+
+  let currentLoginValue = '';
+  let requestInProgress = false;
+  let verifyInProgress = false;
+
+  function normalizeDigits(value) {
+    return String(value || '')
+      .replace(/[۰-۹]/g, d => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
+      .replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
   }
 
-  // ===== فیلد کد امنیتی (مخفی به طور پیش‌فرض) =====
-  function ensureAdminSecretField() {
-    let field = document.getElementById('adminSecretWrap');
-    if (!field) {
-      field = document.createElement('div');
-      field.id = 'adminSecretWrap';
-      field.style.cssText = 'margin-top: 15px; display: none;';
-      field.innerHTML = `
-        <input type="password" id="adminSecret" placeholder="🔐 کد امنیتی ۶ رقمی ادمین" 
-          style="width:100%;padding:12px 16px;border-radius:10px;border:1px solid rgba(139,92,246,0.5);background:rgba(139,92,246,0.1);color:#e8edf5;font-size:14px;outline:none;font-family:inherit;">
-      `;
-      form.appendChild(field);
-    }
-    return field;
+  function showMessage(message, type = 'error') {
+    messageBox.textContent = message;
+    messageBox.className = `auth-message${type === 'error' ? '' : ` ${type}`}`;
   }
 
-  // ===== نمایش/مخفی رمز =====
-  if (toggle) {
-    toggle.addEventListener('click', () => {
-      if (passwordInput.type === "password") {
-        passwordInput.type = "text";
-        toggle.textContent = "🙈";
-      } else {
-        passwordInput.type = "password";
-        toggle.textContent = "👁️";
+  function setBusy(button, busy, busyText, normalText) {
+    if (!button) return;
+    button.disabled = busy;
+    button.textContent = busy ? busyText : normalText;
+  }
+
+  function normalizeLoginValue() {
+    const value = normalizeDigits(loginInput.value).trim();
+    return value.includes('@') ? value.toLowerCase() : value.replace(/\s+/g, '');
+  }
+
+  function validateLoginValue(value) {
+    if (!value) {
+      showMessage('ایمیل یا شماره موبایل را وارد کنید.');
+      loginInput.focus();
+      return false;
+    }
+
+    if (value.includes('@')) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        showMessage('آدرس ایمیل معتبر نیست.');
+        loginInput.focus();
+        return false;
       }
-    });
-  }
-
-  // ===== ارسال فرم =====
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (btn.disabled) return;
-    showMessage('');
-
-    const rawLogin = loginInput.value.trim();
-    const password = passwordInput.value;
-    const adminSecretEl = document.getElementById('adminSecret');
-    const adminSecret = adminSecretEl ? adminSecretEl.value.trim() : '';
-
-    if (!rawLogin) return showMessage('⚠️ ایمیل یا شماره موبایل را وارد کنید', 'error');
-    if (!password) return showMessage('⚠️ رمز عبور را وارد کنید', 'error');
-
-    const loginValue = rawLogin.includes('@') ? rawLogin : rawLogin.replace(/\s/g, '');
-
-    if (typeof loginUser !== 'function') {
-      return showMessage('❌ api.js لود نشده. صفحه را رفرش کنید.', 'error');
+    } else if (!/^09\d{9}$/.test(value)) {
+      showMessage('شماره موبایل باید با 09 شروع شود و ۱۱ رقم باشد.');
+      loginInput.focus();
+      return false;
     }
 
-    btn.disabled = true;
-    btn.textContent = "در حال بررسی...";
-    showMessage('⏳ در حال اتصال به سرور...', 'info');
+    return true;
+  }
+
+  function extractData(result) {
+    return result?.data?.data || result?.data || result;
+  }
+
+  async function requestCode() {
+    if (requestInProgress) return;
+
+    const loginValue = normalizeLoginValue();
+    if (!validateLoginValue(loginValue)) return;
+
+    if (typeof requestLoginCode !== 'function') {
+      showMessage('تابع درخواست کد در api.js پیدا نشد.');
+      return;
+    }
+
+    currentLoginValue = loginValue;
+    requestInProgress = true;
+
+    setBusy(requestBtn, true, 'در حال ارسال...', 'ارسال کد ورود');
+    resendBtn.disabled = true;
+
+    showMessage('در حال ارسال کد تأیید به ایمیل مرتبط با حساب...', 'info');
 
     try {
-      // ارسال درخواست با کد امنیتی (اگه وجود داشت)
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000);
+      const result = await requestLoginCode(currentLoginValue);
 
-      let result;
-      try {
-        const res = await fetch("https://code-pilot-5.onrender.com/api/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ loginValue, password, adminSecret }),
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-        const data = await res.json().catch(() => ({}));
-        
-        // اگه سرور کد امنیتی خواست، فیلد رو نشون بده
-        if (res.status === 403 && data.needAdminSecret) {
-          const field = ensureAdminSecretField();
-          field.style.display = 'block';
-          document.getElementById('adminSecret').focus();
-          showMessage('🔐 این حساب ادمین است. لطفاً کد امنیتی را وارد کنید.', 'info');
-          btn.disabled = false;
-          btn.textContent = "ورود";
-          return;
-        }
-
-        if (!res.ok) {
-          result = { ok: false, error: data.error || "خطا در ارتباط با سرور" };
-        } else {
-          result = { ok: true, data };
-        }
-      } catch (fetchErr) {
-        clearTimeout(timeoutId);
-        if (fetchErr.name === 'AbortError') {
-          result = { ok: false, error: "سرور پاسخ نداد (احتمالاً در حال بیدار شدن است). لطفاً دوباره تلاش کنید." };
-        } else {
-          throw fetchErr;
-        }
+      if (!result?.ok) {
+        showMessage(result?.error || result?.data?.error || 'ارسال کد انجام نشد.');
+        return;
       }
 
-      if (!result.ok) {
-        return showMessage('❌ ' + result.error, 'error');
+      const data = extractData(result);
+
+      detailsStep.classList.add('hidden');
+      otpStep.classList.remove('hidden');
+
+      subtitle.textContent =
+        data?.message || 'کد ورود به ایمیل مرتبط با حساب شما ارسال شد.';
+
+      showMessage('ایمیل خود را بررسی کنید و کد ۶ رقمی را وارد کنید.', 'success');
+
+      otpInput.value = '';
+      otpInput.focus();
+
+    } catch (error) {
+      console.error(error);
+      showMessage(error.message || 'ارتباط با سرور برقرار نشد.');
+
+    } finally {
+      requestInProgress = false;
+      setBusy(requestBtn, false, 'در حال ارسال...', 'ارسال کد ورود');
+      resendBtn.disabled = false;
+    }
+  }
+
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    requestCode();
+  });
+
+  loginInput.addEventListener('input', () => {
+    loginInput.value = normalizeDigits(loginInput.value);
+    showMessage('');
+  });
+
+  otpInput.addEventListener('input', () => {
+    otpInput.value = normalizeDigits(otpInput.value)
+      .replace(/\D/g, '')
+      .slice(0, 6);
+
+    showMessage('');
+  });
+
+  backBtn.addEventListener('click', () => {
+    if (verifyInProgress || requestInProgress) return;
+
+    otpStep.classList.add('hidden');
+    detailsStep.classList.remove('hidden');
+
+    otpInput.value = '';
+    currentLoginValue = '';
+
+    subtitle.textContent =
+      'ایمیل یا شماره موبایل خود را وارد کنید تا کد ورود برایتان ارسال شود.';
+
+    showMessage('');
+    loginInput.focus();
+  });
+
+  resendBtn.addEventListener('click', requestCode);
+
+  verifyBtn.addEventListener('click', async () => {
+    if (verifyInProgress) return;
+
+    const code = normalizeDigits(otpInput.value).replace(/\D/g, '');
+
+    if (!currentLoginValue) {
+      showMessage('ابتدا درخواست کد ورود را انجام دهید.');
+      return;
+    }
+
+    if (!/^\d{6}$/.test(code)) {
+      showMessage('کد تأیید باید دقیقاً ۶ رقم باشد.');
+      otpInput.focus();
+      return;
+    }
+
+    if (typeof verifyLoginCode !== 'function') {
+      showMessage('تابع تأیید کد در api.js پیدا نشد.');
+      return;
+    }
+
+    verifyInProgress = true;
+
+    setBusy(verifyBtn, true, 'در حال بررسی...', 'تأیید کد و ورود');
+    backBtn.disabled = true;
+    resendBtn.disabled = true;
+
+    showMessage('در حال بررسی کد تأیید...', 'info');
+
+    try {
+      const result = await verifyLoginCode(currentLoginValue, code);
+
+      if (!result?.ok) {
+        showMessage(
+          result?.error ||
+          result?.data?.error ||
+          'کد اشتباه است یا اعتبار آن تمام شده است.'
+        );
+        return;
       }
 
-      const user = result.data && result.data.user;
-      if (!user || !user.id) {
-        return showMessage('❌ پاسخ سرور نامعتبر است.', 'error');
+      const data = extractData(result);
+      const user = data?.user || result?.user;
+      const token = data?.token || result?.token;
+
+      if (!user?.id) {
+        showMessage('پاسخ سرور معتبر نیست؛ اطلاعات حساب دریافت نشد.');
+        return;
       }
 
-      // ذخیره در حافظه
-      localStorage.setItem('session', JSON.stringify({ id: user.id, role: user.role || 'user' }));
-      localStorage.setItem('loggedInUser', JSON.stringify(user));
+      const safeUser = { ...user };
+      const session = {
+        id: user.id,
+        role: user.role || 'user'
+      };
+
+      if (token) {
+        localStorage.setItem('authToken', token);
+      } else {
+        localStorage.removeItem('authToken');
+      }
+
+      localStorage.setItem('session', JSON.stringify(session));
+      localStorage.setItem('loggedInUser', JSON.stringify(safeUser));
       localStorage.setItem('username', user.name || 'کاربر');
-      localStorage.setItem('userXP', user.xp || 0);
-      localStorage.setItem('userCoins', user.coins || 0);
+      localStorage.setItem('userXP', String(user.xp ?? 0));
+      localStorage.setItem('userCoins', String(user.coins ?? 0));
       localStorage.setItem('userPlan', user.plan || 'free');
-      localStorage.setItem('userLevel', user.role === 'admin' ? '🛡️ ادمین' : '🟢 مبتدی');
+      localStorage.setItem(
+        'userLevel',
+        user.role === 'admin' ? '🛡️ ادمین' : '🟢 مبتدی'
+      );
       localStorage.setItem('loggedIn', 'true');
 
-      showMessage('✅ ورود موفق! در حال انتقال...', 'success');
+      showMessage('ورود موفق بود؛ در حال انتقال...', 'success');
 
-      setTimeout(() => {
-        if (user.role === "admin") window.location.href = "admin.html";
-        else window.location.href = "ideas.html";
+      window.setTimeout(() => {
+        window.location.href =
+          user.role === 'admin' ? 'admin.html' : 'ideas.html';
       }, 500);
 
-    } catch (err) {
-      console.error('🔴 خطا:', err);
-      showMessage('❌ خطای شبکه: ' + err.message, 'error');
+    } catch (error) {
+      console.error(error);
+      showMessage(error.message || 'ارتباط با سرور برقرار نشد.');
+
     } finally {
-      btn.disabled = false;
-      btn.textContent = "ورود";
+      verifyInProgress = false;
+      setBusy(verifyBtn, false, 'در حال بررسی...', 'تأیید کد و ورود');
+      backBtn.disabled = false;
+      resendBtn.disabled = false;
     }
   });
 });
