@@ -3,95 +3,225 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#000000">
   <title>ورود | نابغه‌کد</title>
-  <link rel="stylesheet" href="style.css">
   <style>
-    *{box-sizing:border-box}
-    body.auth-page{min-height:100vh;margin:0;padding:20px;display:flex;justify-content:center;align-items:center;background:#000;color:#fff;font-family:tahoma,sans-serif}
-    .auth-box{width:100%;max-width:380px;padding:32px 25px;border-radius:18px;background:#181818;box-shadow:0 0 50px #000,0 0 25px rgba(138,92,255,.2),inset 0 0 0 1px #2f2f2f;text-align:center}
-    .auth-box h2{margin:0 0 12px;font-size:25px;color:#fff}
-    .auth-subtitle{margin:0 0 24px;color:#aaa;font-size:13px;line-height:2}
-    .auth-box form{display:flex;flex-direction:column;gap:14px}
-    .auth-box input{width:100%;padding:14px;border-radius:12px;background:#f1f1f1;border:1px solid #ddd;color:#111;font-size:14px;outline:none;font-family:inherit}
-    .auth-box input:focus{border-color:#8a5cff;box-shadow:0 0 0 3px rgba(138,92,255,.2)}
-    .auth-box button{width:100%;margin-top:5px;padding:14px;border-radius:12px;border:0;background:linear-gradient(135deg,#8a5cff,#6a7cff);color:#fff;font-size:15px;font-weight:bold;cursor:pointer;font-family:inherit}
-    .auth-box button:disabled{opacity:.6;cursor:not-allowed}
-    .auth-box .secondary-btn{background:#303030;border:1px solid #555}
-    .auth-message{min-height:22px;margin:12px 0 0;font-size:12px;line-height:1.8;color:#ff8a80}
-    .auth-message.info{color:#b9a8ff}
-    .auth-message.success{color:#69db91}
-    .otp-input{direction:ltr;text-align:center;font-size:25px!important;letter-spacing:12px;font-weight:bold}
-    .auth-footer{margin-top:20px;color:#aaa;font-size:13px}
-    .auth-footer a{color:#a78bfa;text-decoration:none;font-weight:bold}
+    body{font-family:tahoma,sans-serif;background:#000;color:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;padding:20px;box-sizing:border-box}
+    .auth-box{width:100%;max-width:380px;padding:30px 22px;border-radius:18px;background:#181818;box-shadow:0 0 30px rgba(138,92,255,.2);text-align:center}
+    h2{margin:0 0 12px;font-size:22px}
+    .sub{color:#aaa;font-size:13px;line-height:1.9;margin:0 0 20px}
+    form{display:flex;flex-direction:column;gap:12px}
+    input{width:100%;padding:13px;border-radius:12px;border:1px solid #ddd;background:#f1f1f1;color:#111;font-size:14px;font-family:inherit;box-sizing:border-box}
+    input:focus{outline:none;border-color:#8a5cff}
+    button{padding:13px;border-radius:12px;border:0;background:linear-gradient(135deg,#8a5cff,#6a7cff);color:#fff;font-size:15px;font-weight:bold;cursor:pointer;font-family:inherit;width:100%}
+    button:disabled{opacity:.6;cursor:not-allowed}
+    .secondary{background:#303030;border:1px solid #555}
+    .msg{min-height:20px;margin:10px 0 0;font-size:12px;color:#ff8a80;line-height:1.8}
+    .msg.info{color:#b9a8ff}
+    .msg.success{color:#69db91}
     .hidden{display:none!important}
-    .resend-row{margin-top:12px;font-size:12px;color:#aaa}
-    .resend-row button{width:auto;margin:0;padding:4px 8px;background:transparent;color:#b9a8ff;font-size:12px}
-    .security-note{margin:15px 0 0;color:#888;font-size:11px;line-height:1.9}
+    .otp{direction:ltr;text-align:center;font-size:22px!important;letter-spacing:10px;font-weight:bold}
+    .footer{margin-top:18px;color:#aaa;font-size:13px}
+    .footer a{color:#a78bfa;text-decoration:none;font-weight:bold}
   </style>
 </head>
-<body class="auth-page">
-
+<body>
   <main class="auth-box">
     <h2>ورود به نابغه‌کد</h2>
-    <p class="auth-subtitle" id="loginSubtitle">
-      ایمیل یا شماره موبایل خود را وارد کنید تا کد ورود برایتان ارسال شود.
-    </p>
+    <p class="sub" id="subtitle">ایمیل یا شماره موبایل خود را وارد کنید.</p>
 
-    <form id="loginForm" novalidate>
-      <section id="loginDetailsStep">
-        <input id="loginInput" name="loginInput" type="text"
-          autocomplete="username" placeholder="ایمیل یا شماره موبایل" required>
+    <form id="loginForm">
+      <section id="step1">
+        <input id="loginInput" type="text" placeholder="ایمیل یا شماره موبایل" autocomplete="username">
         <button id="requestCodeBtn" type="submit">ارسال کد ورود</button>
       </section>
 
-      <section id="loginOtpStep" class="hidden">
-        <input id="otpCode" name="otpCode" class="otp-input"
-          type="text" inputmode="numeric" autocomplete="one-time-code"
-          maxlength="6" placeholder="------" required>
-
+      <section id="step2" class="hidden">
+        <input id="otpCode" class="otp" type="text" inputmode="numeric" maxlength="6" placeholder="------">
         <button id="verifyCodeBtn" type="button">تأیید کد و ورود</button>
-        <button id="backToLoginBtn" class="secondary-btn" type="button">بازگشت</button>
-
-        <div class="resend-row">
-          کد را دریافت نکردید؟
-          <button id="resendCodeBtn" type="button">ارسال مجدد کد</button>
-        </div>
-
-        <p class="security-note">
-          کد ورود ۵ دقیقه اعتبار دارد. آن را در اختیار هیچ‌کس قرار ندهید؛
-          تیم نابغه‌کد هرگز کد شما را درخواست نمی‌کند.
-        </p>
+        <button id="backBtn" class="secondary" type="button">بازگشت</button>
       </section>
     </form>
 
-    <p id="loginMessage" class="auth-message" role="status" aria-live="polite"></p>
+    <p id="msg" class="msg"></p>
 
-    <div class="auth-footer">
-      حساب کاربری نداری؟ <a href="register.html">ثبت نام کن</a>
+    <div class="footer">
+      حساب نداری؟ <a href="register.html">ثبت نام کن</a>
     </div>
   </main>
 
-  <script src="api.js"></script>
-  <script src="login.js"></script>
-  <script src="debug.js"></script>
-  <!-- tour.js عمداً حذف شد که با فرم تداخل نداشته باشه -->
+  <!-- پنل دیباگ - همیشه بالای صفحه -->
+  <div id="dbg" style="position:fixed;top:0;left:0;right:0;height:40vh;background:#000;color:#0f0;font-family:monospace;font-size:11px;padding:8px;overflow-y:auto;z-index:999999;direction:ltr;text-align:left;border-bottom:2px solid #0f0"></div>
 
   <script>
-    (function(){
-      try{
-        const session=localStorage.getItem('session');
-        const loggedIn=localStorage.getItem('loggedIn');
+    // ========== دیباگر اول از همه ==========
+    const dbg = document.getElementById('dbg');
+    function log(text, color) {
+      const line = document.createElement('div');
+      line.style.color = color || '#0f0';
+      line.style.padding = '2px 4px';
+      line.style.borderBottom = '1px solid #1a1a1a';
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+      dbg.appendChild(line);
+      dbg.scrollTop = dbg.scrollHeight;
+    }
+    log('🚀 شروع بارگذاری login.html', '#0ff');
 
-        if(session && loggedIn==='true'){
-          const user=JSON.parse(localStorage.getItem('loggedInUser')||'{}');
-          window.location.replace(
-            user.role==='admin'?'admin.html':'ideas.html'
-          );
-        }
-      }catch(e){}
-    })();
+    window.addEventListener('error', (e) => log(`❌ ERROR: ${e.message} @ ${e.filename?.split('/').pop()}:${e.lineno}`, '#f55'));
+    window.addEventListener('unhandledrejection', (e) => log(`❌ PROMISE: ${e.reason?.message || e.reason}`, '#f55'));
+
+    // رصد fetch
+    const of = window.fetch;
+    window.fetch = async function(...args) {
+      const url = typeof args[0] === 'string' ? args[0] : args[0]?.url;
+      const method = args[1]?.method || 'GET';
+      log(`📤 ${method} ${url}`, '#0ff');
+      try {
+        const res = await of.apply(this, args);
+        const clone = res.clone();
+        let body = '';
+        try { body = await clone.text(); } catch(e) {}
+        const short = body.length > 300 ? body.substring(0, 300) + '...' : body;
+        log(`${res.ok ? '📥' : '⚠️'} ${res.status} ${url} → ${short}`, res.ok ? '#0f0' : '#ff0');
+        return res;
+      } catch (err) {
+        log(`❌ FETCH FAIL: ${url} → ${err.message}`, '#f55');
+        throw err;
+      }
+    };
+
+    // ========== منطق لاگین (بدون وابستگی به api.js) ==========
+    const API_BASE = 'https://code-pilot-5.onrender.com';
+
+    async function apiRequest(endpoint, method, body) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 90000);
+      try {
+        const res = await fetch(API_BASE + endpoint, {
+          method: method || 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          body: body ? JSON.stringify(body) : undefined,
+          signal: controller.signal
+        });
+        const txt = await res.text();
+        let data;
+        try { data = JSON.parse(txt); } catch { data = { raw: txt }; }
+        if (!res.ok) return { ok: false, error: data?.error || 'خطا', data };
+        return { ok: true, data };
+      } catch (e) {
+        if (e.name === 'AbortError') return { ok: false, error: 'سرور پاسخ نداد' };
+        return { ok: false, error: 'شبکه: ' + e.message };
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    // ========== المان‌ها ==========
+    const form = document.getElementById('loginForm');
+    const loginInput = document.getElementById('loginInput');
+    const otpCode = document.getElementById('otpCode');
+    const step1 = document.getElementById('step1');
+    const step2 = document.getElementById('step2');
+    const requestBtn = document.getElementById('requestCodeBtn');
+    const verifyBtn = document.getElementById('verifyCodeBtn');
+    const backBtn = document.getElementById('backBtn');
+    const msg = document.getElementById('msg');
+    const subtitle = document.getElementById('subtitle');
+
+    let currentValue = '';
+
+    function showMsg(t, type) {
+      msg.textContent = t;
+      msg.className = 'msg' + (type ? ' ' + type : '');
+    }
+
+    function normalizeDigits(v) {
+      return String(v || '')
+        .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+        .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+    }
+
+    // ========== ارسال کد ==========
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const value = normalizeDigits(loginInput.value).trim();
+      log(`📩 فرم ثبت شد. مقدار: "${value}"`, '#ff0');
+
+      if (!value) { showMsg('ایمیل یا شماره را وارد کن'); return; }
+
+      currentValue = value;
+      requestBtn.disabled = true;
+      requestBtn.textContent = 'در حال ارسال...';
+      showMsg('در حال ارسال...', 'info');
+
+      // بیدار کردن سرور
+      log('⏰ بیدار کردن سرور...', '#0ff');
+      try { await fetch(API_BASE + '/health'); } catch {}
+      log('✅ سرور بیدار شد', '#0f0');
+
+      const result = await apiRequest('/api/auth/login/request', 'POST', { loginValue: value });
+      log(`نتیجه: ${JSON.stringify(result)}`, result.ok ? '#0f0' : '#f55');
+
+      if (!result.ok) {
+        showMsg(result.error || 'ارسال نشد');
+        requestBtn.disabled = false;
+        requestBtn.textContent = 'ارسال کد ورود';
+        return;
+      }
+
+      step1.classList.add('hidden');
+      step2.classList.remove('hidden');
+      subtitle.textContent = 'کد ۶ رقمی ارسال شد';
+      showMsg('کد را وارد کن', 'success');
+      requestBtn.disabled = false;
+      requestBtn.textContent = 'ارسال کد ورود';
+      otpCode.focus();
+    });
+
+    // ========== بازگشت ==========
+    backBtn.addEventListener('click', () => {
+      step2.classList.add('hidden');
+      step1.classList.remove('hidden');
+      otpCode.value = '';
+      showMsg('');
+    });
+
+    // ========== تأیید کد ==========
+    verifyBtn.addEventListener('click', async () => {
+      const code = normalizeDigits(otpCode.value).replace(/\D/g, '');
+      log(`🔐 کد: "${code}"`, '#ff0');
+
+      if (code.length !== 6) { showMsg('کد باید ۶ رقم باشد'); return; }
+
+      verifyBtn.disabled = true;
+      verifyBtn.textContent = 'در حال بررسی...';
+      showMsg('در حال بررسی...', 'info');
+
+      const result = await apiRequest('/api/auth/login/verify', 'POST', { loginValue: currentValue, code });
+      log(`نتیجه: ${JSON.stringify(result)}`, result.ok ? '#0f0' : '#f55');
+
+      if (!result.ok) {
+        showMsg(result.error || 'کد اشتباه');
+        verifyBtn.disabled = false;
+        verifyBtn.textContent = 'تأیید کد و ورود';
+        return;
+      }
+
+      const user = result.data?.user;
+      if (!user?.id) { showMsg('پاسخ سرور نامعتبر'); verifyBtn.disabled = false; verifyBtn.textContent = 'تأیید کد و ورود'; return; }
+
+      localStorage.setItem('session', JSON.stringify({ id: user.id, role: user.role || 'user' }));
+      localStorage.setItem('loggedInUser', JSON.stringify(user));
+      localStorage.setItem('username', user.name || 'کاربر');
+      localStorage.setItem('userXP', String(user.xp ?? 0));
+      localStorage.setItem('userCoins', String(user.coins ?? 0));
+      localStorage.setItem('userPlan', user.plan || 'free');
+      localStorage.setItem('loggedIn', 'true');
+
+      showMsg('ورود موفق! در حال انتقال...', 'success');
+      setTimeout(() => {
+        window.location.href = user.role === 'admin' ? 'admin.html' : 'ideas.html';
+      }, 800);
+    });
   </script>
-
 </body>
 </html>
