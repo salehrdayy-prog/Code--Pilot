@@ -1,6 +1,26 @@
-const session = JSON.parse(localStorage.getItem('session'));
-const currentUser = JSON.parse(localStorage.getItem('loggedInUser'));
-let activeChat = null; 
+// ============ چک امنیتی اول ============
+let session = null;
+let currentUser = null;
+try {
+  session = JSON.parse(localStorage.getItem('session'));
+  currentUser = JSON.parse(localStorage.getItem('loggedInUser'));
+} catch (e) {
+  session = null;
+  currentUser = null;
+}
+
+// اگه session نبود، لاگین کن
+if (!session || !session.id) {
+  window.location.href = 'login.html';
+  throw new Error('No session');
+}
+
+// اگه currentUser نبود، از session استفاده کن
+if (!currentUser) {
+  currentUser = { id: session.id, name: localStorage.getItem('username') || 'کاربر' };
+}
+
+let activeChat = null;
 let pollInterval = null;
 let currentTab = 'chats';
 let allUsersList = [];
@@ -12,6 +32,7 @@ let pendingRoomAvatarBase64 = '';
 let currentProfile = { name: '', bio: '', avatar: '' };
 let viewingProfileId = null;
 
+// ... بقیه کد مثل قبل
 const listContainer = document.getElementById('listContainer');
 const chatMessages = document.getElementById('chatMessages');
 const chatHeader = document.getElementById('chatHeader');
